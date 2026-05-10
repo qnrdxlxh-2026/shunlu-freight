@@ -1,0 +1,23 @@
+# 敏感数据 - 不上传
+data/db.json
+tunnel_url.txt
+tunnel-manager.log
+
+# 依赖
+node_modules/
+
+# macOS
+.DS_Store
+*.swp
+*.swo
+
+# IDE
+.vscode/
+.idea/
+
+# 日志
+*.log
+npm-debug.log*
+
+# 微信小程序编译产物
+miniprogram/*/dist/

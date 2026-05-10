@@ -1,0 +1,41 @@
+<view class="find-goods-page">
+  <view class="header">
+    <text class="title">附近货源</text>
+    <text class="tip">智能匹配，就近派单</text>
+  </view>
+
+  <view class="goods-list" wx:if="{{!loading}}">
+    <view class="goods-item" wx:for="{{goods}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
+      <view class="goods-header">
+        <view class="route">
+          <text class="from">{{item.start_addr}}</text>
+          <text class="arrow">→</text>
+          <text class="to">{{item.end_addr}}</text>
+        </view>
+        <view class="price">¥{{item.price}}</view>
+      </view>
+
+      <view class="goods-info">
+        <text class="weight">{{item.weight}}kg</text>
+        <text class="dot">·</text>
+        <text class="distance">{{item.distance}}</text>
+      </view>
+
+      <view class="goods-footer">
+        <view class="match-score">
+          <text class="star" wx:for="{{item.stars}}" wx:key="index" wx:for-item="star">★</text>
+          <text class="match-text">匹配度</text>
+        </view>
+        <view class="take-btn" catchtap="takeOrder" data-id="{{item.id}}">立即接单</view>
+      </view>
+    </view>
+
+    <view class="empty" wx:if="{{goods.length == 0}}">
+      <text>附近暂无货源</text>
+    </view>
+  </view>
+
+  <view class="loading" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+</view>

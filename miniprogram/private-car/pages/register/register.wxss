@@ -1,0 +1,100 @@
+/* pages/register/register.wxss */
+.register-container {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding: 40rpx;
+}
+
+.header {
+  text-align: center;
+  padding: 40rpx 0;
+}
+
+.title {
+  display: block;
+  font-size: 44rpx;
+  font-weight: bold;
+  color: #1890ff;
+  margin-bottom: 10rpx;
+}
+
+.subtitle {
+  display: block;
+  font-size: 28rpx;
+  color: #999;
+}
+
+.form-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 20rpx 30rpx;
+  margin-bottom: 40rpx;
+}
+
+.input-item {
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+  display: flex;
+  align-items: center;
+}
+
+.input-item:last-child {
+  border-bottom: none;
+}
+
+.label {
+  width: 160rpx;
+  font-size: 30rpx;
+  color: #333;
+}
+
+.input {
+  flex: 1;
+  font-size: 30rpx;
+}
+
+.picker {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 30rpx;
+  color: #333;
+}
+
+.arrow {
+  color: #ccc;
+}
+
+.btn-register {
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  color: #fff;
+  font-size: 34rpx;
+  font-weight: bold;
+  border-radius: 50rpx;
+  padding: 28rpx 0;
+  margin-bottom: 20rpx;
+}
+
+.agreement {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 20rpx;
+}
+
+.agreement checkbox {
+  margin-right: 10rpx;
+}
+
+.footer-link {
+  text-align: center;
+  font-size: 28rpx;
+  color: #666;
+}
+
+.primary {
+  color: #1890ff;
+}

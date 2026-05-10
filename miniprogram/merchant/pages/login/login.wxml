@@ -1,0 +1,27 @@
+<!--登录页-->
+<view class="login-container">
+  <view class="logo-section">
+    <image class="logo" src="/assets/logo.svg" mode="aspectFit"></image>
+    <text class="title">顺路货运</text>
+    <text class="subtitle">商家端</text>
+  </view>
+  
+  <view class="form-section">
+    <view class="form-item">
+      <image class="form-icon" src="/assets/phone.svg"></image>
+      <input class="form-input" type="number" maxlength="11" placeholder="请输入手机号" value="{{phone}}" bindinput="onPhoneInput" />
+    </view>
+    
+    <view class="form-item">
+      <image class="form-icon" src="/assets/password.svg"></image>
+      <input class="form-input" password placeholder="请输入密码" value="{{password}}" bindinput="onPasswordInput" />
+    </view>
+    
+    <button class="btn-login" bindtap="handleLogin" loading="{{loading}}">登录</button>
+    
+    <view class="register-link" bindtap="goRegister">
+      <text>还没有账号？</text>
+      <text class="link">立即注册</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,136 @@
+/*顺路货运 司机端 全局样式*/
+
+/*全局字体颜色*/
+page {
+  background-color: #f5f5f5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.6;
+}
+
+/*主色：绿色*/
+.primary { color: #52c41a; }
+.primary-bg { background-color: #52c41a; color: #fff; }
+
+/*状态颜色*/
+.status-orange { color: #faad14; }
+.status-blue { color: #1890ff; }
+.status-green { color: #52c41a; }
+.status-red { color: #f5222d; }
+
+/*司机类型标签*/
+.tag-truck { background-color: #52c41a; color: #fff; padding: 4rpx 16rpx; border-radius: 20rpx; font-size: 22rpx; }
+.tag-private { background-color: #1890ff; color: #fff; padding: 4rpx 16rpx; border-radius: 20rpx; font-size: 22rpx; }
+
+/*按钮样式*/
+.btn-primary {
+  background-color: #52c41a;
+  color: #fff;
+  border-radius: 8rpx;
+  padding: 24rpx 0;
+  font-size: 32rpx;
+  text-align: center;
+  border: none;
+}
+.btn-primary:active { background-color: #389e0d; }
+.btn-default {
+  background-color: #fff;
+  color: #52c41a;
+  border: 2rpx solid #52c41a;
+  border-radius: 8rpx;
+  padding: 24rpx 0;
+  font-size: 32rpx;
+  text-align: center;
+}
+.btn-default:active { background-color: #f0f5e6; }
+.btn-disabled {
+  background-color: #d9d9d9;
+  color: #fff;
+  border-radius: 8rpx;
+  padding: 24rpx 0;
+  font-size: 32rpx;
+  text-align: center;
+  border: none;
+}
+
+/*卡片样式*/
+.card {
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 30rpx;
+  margin: 24rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+/*输入框样式*/
+.input-item {
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+  display: flex;
+  align-items: center;
+}
+.input-label {
+  width: 160rpx;
+  font-size: 28rpx;
+  color: #666;
+  flex-shrink: 0;
+}
+.input-field {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+}
+
+/*单元格列表*/
+.cell-item {
+  padding: 24rpx 30rpx;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+.cell-item:active { background-color: #f5f5f5; }
+.cell-label { font-size: 28rpx; color: #333; }
+.cell-value { font-size: 28rpx; color: #999; }
+
+/*分割线*/
+.divider {
+  height: 1rpx;
+  background: #f0f0f0;
+  margin: 0 30rpx;
+}
+
+/*状态标签*/
+.badge {
+  padding: 4rpx 12rpx;
+  border-radius: 4rpx;
+  font-size: 22rpx;
+}
+.badge-orange { background: #fffbe6; color: #faad14; }
+.badge-blue { background: #e6f7ff; color: #1890ff; }
+.badge-green { background: #f6ffed; color: #52c41a; }
+.badge-red { background: #fff1f0; color: #f5222d; }
+
+/*间距工具*/
+.mt-20 { margin-top: 20rpx; }
+.mt-30 { margin-top: 30rpx; }
+.mt-40 { margin-top: 40rpx; }
+.mb-20 { margin-bottom: 20rpx; }
+.mb-30 { margin-bottom: 30rpx; }
+.px-30 { padding-left: 30rpx; padding-right: 30rpx; }
+.py-20 { padding-top: 20rpx; padding-bottom: 20rpx; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-sm { font-size: 24rpx; }
+.text-gray { color: #999; }
+
+/*flex*/
+.flex { display: flex; }
+.flex-col { display: flex; flex-direction: column; }
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+.flex-1 { flex: 1; }
+.gap-20 { gap: 20rpx; }
+.gap-30 { gap: 30rpx; }

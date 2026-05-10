@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>顺路货运 - 司机端</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+    .app { max-width: 500px; margin: 0 auto; background: #f5f7fa; min-height: 100vh; }
+    .header-truck { background: linear-gradient(135deg, #f57c00 0%, #ff9800 100%); color: white; padding: 20px; text-align: center; }
+    .header-car { background: linear-gradient(135deg, #43a047 0%, #66bb6a 100%); color: white; padding: 20px; text-align: center; }
+    .content { padding: 15px; }
+    .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .card h3 { font-size: 16px; margin-bottom: 10px; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 13px; color: #666; margin-bottom: 4px; }
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; }
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; }
+    .btn-primary { background: linear-gradient(135deg, #f57c00, #ff9800); color: white; }
+    .btn-green { background: linear-gradient(135deg, #43a047, #66bb6a); color: white; }
+    .btn-success { background: #28a745; color: white; }
+    .btn-sm { width: auto; padding: 8px 14px; font-size: 13px; border-radius: 8px; border: none; cursor: pointer; }
+    .btn-outline { background: white; border: 1px solid #f57c00; color: #f57c00; }
+    .loc-row { display: flex; gap: 8px; align-items: center; }
+    .loc-row input { flex: 1; }
+    .loc-btn { width: auto; padding: 10px 14px; background: #f57c00; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; }
+    .tabs { display: flex; background: white; overflow-x: auto; }
+    .tab { flex: 1; padding: 12px 6px; text-align: center; border: none; background: none; font-size: 13px; cursor: pointer; white-space: nowrap; }
+    .tab.active-truck { border-bottom: 2px solid #f57c00; color: #f57c00; font-weight: 600; }
+    .tab.active-car { border-bottom: 2px solid #43a047; color: #43a047; font-weight: 600; }
+    .goods-item { padding: 12px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 8px; }
+    .goods-item .title { font-weight: 600; }
+    .goods-item .info { font-size: 13px; color: #666; margin-top: 5px; }
+    .balance { font-size: 28px; font-weight: bold; text-align: center; padding: 15px; }
+    .balance-truck { color: #f57c00; } .balance-car { color: #43a047; }
+    .rule-box { background: #fff3e0; border-radius: 8px; padding: 10px; margin: 10px 0; font-size: 12px; color: #e65100; }
+    .rule-box-green { background: #e8f5e9; color: #2e7d32; }
+    .hidden { display: none; }
+    .photo-upload { border: 2px dashed #ddd; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; margin: 10px 0; }
+    .photo-upload:active { border-color: #f57c00; }
+    .photo-preview { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+    .photo-preview img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; border: 1px solid #eee; }
+    .driver-card { padding: 15px; border: 1px solid #eee; border-radius: 10px; margin-bottom: 10px; }
+    .driver-card .name { font-weight: 600; }
+    .driver-card .route { color: #666; font-size: 13px; margin: 6px 0; }
+    .driver-card .score { display: inline-block; background: #fff3e0; color: #f57c00; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+    .call-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 13px; }
+    /* 弹窗 */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: flex; align-items: flex-end; justify-content: center; }
+    .modal-box { background: white; border-radius: 16px 16px 0 0; width: 100%; max-width: 500px; max-height: 85vh; display: flex; flex-direction: column; }
+    .modal-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h3 { font-size: 16px; }
+    .modal-close { width: 32px; height: 32px; border: none; background: #f0f0f0; border-radius: 50%; cursor: pointer; font-size: 18px; }
+    .modal-body { flex: 1; overflow-y: auto; }
+    /* 聊天 */
+    .chat-list { max-height: 400px; overflow-y: auto; padding: 10px; }
+    .chat-msg { margin-bottom: 10px; }
+    .chat-msg.sent { text-align: right; }
+    .chat-msg .bubble { display: inline-block; padding: 10px 14px; border-radius: 12px; font-size: 14px; max-width: 75%; }
+    .chat-msg.received .bubble { background: #f0f0f0; color: #333; border-bottom-left-radius: 4px; }
+    .chat-msg.sent .bubble { background: #f57c00; color: white; border-bottom-right-radius: 4px; }
+    .chat-msg .time { font-size: 11px; color: #999; margin-top: 3px; }
+    .chat-msg.call-bubble .bubble { background: #fff3e0; color: #e65100; }
+    .chat-input { display: flex; gap: 8px; padding: 10px; background: white; border-top: 1px solid #eee; }
+    .chat-input input { flex: 1; padding: 10px; border: 1px solid #e0e0e0; border-radius: 20px; }
+    .chat-input button { width: auto; padding: 10px 16px; background: #f57c00; color: white; border: none; border-radius: 20px; cursor: pointer; }
+    /* 签收码 */
+    .qrcode-box { text-align: center; padding: 20px; }
+    .qrcode-box canvas { border: 8px solid white; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+    #mapContainer { width: 100%; height: 300px; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- 身份选择 -->
+  <div id="selectMode" class="content" style="padding-top:60px">
+    <div class="card" style="text-align:center">
+      <h3>🚚 选择你的身份</h3>
+      <div style="display:flex;gap:10px;margin-top:15px">
+        <div style="flex:1;padding:20px;border:2px solid #e0e0e0;border-radius:12px;cursor:pointer" onclick="selectMode(2)">
+          <div style="font-size:36px">🚛</div><div style="font-weight:600;margin-top:5px">货车司机</div><div style="font-size:12px;color:#999">4.5吨以下 | 佣金6%</div>
+        </div>
+        <div style="flex:1;padding:20px;border:2px solid #e0e0e0;border-radius:12px;cursor:pointer" onclick="selectMode(3)">
+          <div style="font-size:36px">🚗</div><div style="font-weight:600;margin-top:5px">私家车主</div><div style="font-size:12px;color:#999">顺路捎带 | 佣金12%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主界面 -->
+  <div id="mainApp" class="hidden">
+    <div id="appHeader"></div>
+    <div class="tabs" id="mainTabs">
+      <button class="tab active-truck" onclick="showTab('find')">🤖 找货</button>
+      <button class="tab" onclick="showTab('route')">📍 行程</button>
+      <button class="tab" onclick="showTab('deliver')">📦 配送</button>
+      <button class="tab" onclick="showTab('chat')">💬 消息</button>
+      <button class="tab" onclick="showTab('wallet')">💰 钱包</button>
+    </div>
+    <div class="content">
+      <!-- 智能找货 -->
+      <div id="tabFind" class="tab-content">
+        <div id="privateCarRules" class="hidden">
+          <div class="rule-box rule-box-green">⚠️ 私家车规则：单票≤20kg | 货值≤2000元 | 日限2单 | 禁运:液体/粉末/电池/易碎品</div>
+        </div>
+        <div class="card">
+          <h3>🤖 智能推荐货源</h3>
+          <p style="color:#666;font-size:13px;margin-bottom:10px">根据行程自动匹配最优货源</p>
+          <button class="btn btn-primary" id="matchBtn" onclick="matchGoods()">🔍 一键匹配货源</button>
+        </div>
+        <div id="goodsList"></div>
+      </div>
+      <!-- 发布行程 -->
+      <div id="tabRoute" class="tab-content" style="display:none">
+        <div class="card">
+          <h3>📍 发布行程</h3>
+          <div class="form-group"><label>出发地</label><div class="loc-row"><input id="routeStart" placeholder="点击定位或手动输入"><button class="loc-btn" onclick="openMap('start')">📍</button></div></div>
+          <div class="form-group"><label>目的地</label><div class="loc-row"><input id="routeEnd" placeholder="点击定位或手动输入"><button class="loc-btn" onclick="openMap('end')">📍</button></div></div>
+          <div class="form-group"><label>出发时间</label><input id="departTime" type="datetime-local"></div>
+          <div class="form-group"><label>可承载空间</label><input id="remainSpace" placeholder="如：后备箱可放2个大箱子"></div>
+          <button class="btn btn-primary" id="publishRouteBtn" onclick="publishRoute()">📍 发布行程</button>
+        </div>
+      </div>
+      <!-- 配送管理 -->
+      <div id="tabDeliver" class="tab-content" style="display:none">
+        <div class="card"><h3>📦 配送中的订单</h3><div id="deliverList"></div></div>
+        <!-- 取货拍照 -->
+        <div class="card">
+          <h3>📷 取货拍照</h3>
+          <div class="form-group"><label>订单ID</label><input id="pickupOrderId" placeholder="输入订单ID"></div>
+          <div class="photo-upload" onclick="document.getElementById('pickupPhotoInput').click()">📷 点击拍照留证</div>
+          <input type="file" id="pickupPhotoInput" accept="image/*" capture="environment" style="display:none" onchange="uploadPickupPhoto(event)">
+          <div class="photo-preview" id="pickupPhotoPreview"></div>
+          <button class="btn btn-success" onclick="confirmPickup()">✅ 确认取货</button>
+        </div>
+        <!-- 签收码 -->
+        <div class="card">
+          <h3>📦 生成签收码</h3>
+          <div class="form-group"><label>订单ID</label><input id="signOrderId" placeholder="输入订单ID"></div>
+          <button class="btn btn-primary" onclick="showSignCode()">📋 生成签收码</button>
+          <div id="signCodeArea" style="display:none;margin-top:15px" class="qrcode-box">
+            <canvas id="signQRCanvas" width="200" height="200"></canvas>
+            <div style="margin-top:8px;font-size:18px;font-weight:bold" id="signOrderIdText"></div>
+            <div style="font-size:13px;color:#666;margin-top:5px">让商家扫码确认签收</div>
+          </div>
+        </div>
+      </div>
+      <!-- 消息 -->
+      <div id="tabChat" class="tab-content" style="display:none">
+        <div class="card"><h3>💬 消息</h3><div id="convList"></div></div>
+      </div>
+      <!-- 钱包 -->
+      <div id="tabWallet" class="tab-content" style="display:none">
+        <div class="card"><h3>💰 我的钱包</h3><div class="balance" id="balance">¥0.00</div><p style="text-align:center;color:#666;font-size:13px">可用余额</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 聊天弹窗 -->
+<div id="chatModal" class="modal-overlay" style="display:none">
+  <div class="modal-box" style="height:80vh">
+    <div class="modal-header"><h3 id="chatTitle">💬 对话</h3><button class="modal-close" onclick="closeChat()">✕</button></div>
+    <div class="chat-list" id="chatMessages"></div>
+    <div class="chat-input"><input id="chatInput" placeholder="输入消息..." onkeypress="if(event.key==='Enter')sendMessage()"><button onclick="sendMessage()">发送</button></div>
+    <div style="padding:5px 10px 10px;display:flex;gap:8px">
+      <button class="call-btn" onclick="requestCall()">📞 通话</button>
+      <button class="btn-sm btn-outline" onclick="document.getElementById('chatPhotoInput').click()">📷 拍照</button>
+      <input type="file" id="chatPhotoInput" accept="image/*" capture="environment" style="display:none" onchange="sendPhotoMsg(event)">
+    </div>
+  </div>
+</div>
+
+<!-- 地图弹窗 -->
+<div id="mapModal" class="modal-overlay" style="display:none">
+  <div class="modal-box" style="height:60vh">
+    <div class="modal-header"><h3>📍 选择地址</h3><button class="modal-close" onclick="closeMap()">✕</button></div>
+    <div class="modal-body" style="padding:10px">
+      <input id="mapSearchInput" placeholder="搜索地点..." style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px" oninput="searchAddress()">
+      <div id="mapContainer"></div>
+      <div id="selectedAddr" style="font-size:13px;color:#666;margin:10px 0">请在地图上选择</div>
+      <button class="btn btn-primary" onclick="confirmMapLocation()">确认选择</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://webapi.amap.com/maps?v=2.0&key=d6c4c01e337f9e7e9c5c7a6b4f3e2d1c&plugin=AMap.PlaceSearch,AMap.Geocoder"></script>
+<script>
+let token = null, driverMode = 2, chatWith = null;
+let map = null, marker = null, currentMapField = 'start', selectedLocation = null, selectedAddressText = '';
+
+async function api(path, method = 'GET', data = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  if (data) opts.body = JSON.stringify(data);
+  const res = await fetch('/api' + path, opts);
+  return res.json();
+}
+
+async function selectMode(mode) {
+  driverMode = mode;
+  const phone = (mode === 2 ? '158' : '157') + Math.random().toString().slice(2, 8);
+  const res = await api('/user/register', 'POST', { phone, password: 'test123', role: mode });
+  if (res.code === 0) {
+    token = res.data.token;
+    document.getElementById('selectMode').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+    const isT = mode === 2;
+    document.getElementById('appHeader').className = isT ? 'header-truck' : 'header-car';
+    document.getElementById('appHeader').innerHTML = `<h1>${isT ? '🚛 货车司机端' : '🚗 私家车主端'}</h1><p>${isT ? '专业货运' : '顺路捎带'} | ${phone}</p>`;
+    document.querySelectorAll('.tab').forEach(t => t.className = 'tab ' + (isT ? 'active-truck' : 'active-car'));
+    document.querySelector('.tab').classList.add(isT ? 'active-truck' : 'active-car');
+    if (!isT) document.getElementById('privateCarRules').classList.remove('hidden');
+    document.getElementById('publishRouteBtn').className = isT ? 'btn btn-primary' : 'btn btn-green';
+    document.getElementById('matchBtn').className = isT ? 'btn btn-primary' : 'btn btn-green';
+    const dt = new Date(Date.now() + 1*60*60*1000);
+    document.getElementById('departTime').value = dt.toISOString().slice(0, 16);
+    matchGoods();
+  }
+}
+
+function showTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+  document.querySelectorAll('.tab').forEach(t => t.className = 'tab');
+  document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).style.display = 'block';
+  const isT = driverMode === 2;
+  event.target.classList.add(isT ? 'active-truck' : 'active-car');
+  if (tab === 'find') matchGoods();
+  if (tab === 'chat') loadConversations();
+  if (tab === 'wallet') loadWallet();
+}
+
+// ==================== 地图 ====================
+function openMap(field) {
+  currentMapField = field;
+  document.getElementById('mapModal').style.display = 'flex';
+  setTimeout(() => {
+    if (!map) {
+      map = new AMap.Map('mapContainer', { zoom: 13, center: [101.96, 30.05] });
+      map.on('click', (e) => {
+        selectedLocation = { lng: e.lnglat.getLng(), lat: e.lnglat.getLat() };
+        if (marker) map.remove(marker);
+        marker = new AMap.Marker({ position: [selectedLocation.lng, selectedLocation.lat] }); map.add(marker);
+        new AMap.Geocoder().getAddress([selectedLocation.lng, selectedLocation.lat], (s, r) => { if (s === 'complete') { selectedAddressText = r.regeocode.formattedAddress; document.getElementById('selectedAddr').textContent = '📍 ' + selectedAddressText; } });
+      });
+    } else { map.resize(); }
+  }, 300);
+}
+function closeMap() { document.getElementById('mapModal').style.display = 'none'; }
+function confirmMapLocation() { if (!selectedAddressText) return alert('请先选择位置'); document.getElementById(currentMapField === 'start' ? 'routeStart' : 'routeEnd').value = selectedAddressText; closeMap(); }
+function searchAddress() {
+  const kw = document.getElementById('mapSearchInput').value; if (kw.length < 2) return;
+  new AMap.PlaceSearch({ pageSize: 5 }).search(kw, (s, r) => {
+    if (s === 'complete' && r.poiList?.pois?.length) { const p = r.poiList.pois[0]; map.setCenter([p.location.lng, p.location.lat]); selectedLocation = { lng: p.location.lng, lat: p.location.lat }; selectedAddressText = p.name + ' - ' + p.address; if (marker) map.remove(marker); marker = new AMap.Marker({ position: [p.location.lng, p.location.lat] }); map.add(marker); document.getElementById('selectedAddr').textContent = '📍 ' + selectedAddressText; }
+  });
+}
+
+// ==================== 智能匹配 ====================
+async function matchGoods() {
+  const res = await api('/match/nearby-goods');
+  const list = document.getElementById('goodsList');
+  if (res.data?.length) {
+    list.innerHTML = res.data.map(g => `
+      <div class="goods-item">
+        <div class="title">${g.start_addr} → ${g.end_addr}</div>
+        <div class="info">重量: ${g.weight}kg | 报价: ¥${g.price} | 货值: ¥${g.goods_value}</div>
+        ${g.remark ? `<div class="info">${g.remark}</div>` : ''}
+        <span class="score">匹配度 ${g.matchScore}%</span>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button class="btn-sm btn-success" onclick="takeOrder(${g.id})">✅ 接单</button>
+          <button class="btn-sm btn-outline" onclick="openChatWith(${g.merchant_id})">💬 联系商家</button>
+          <button class="call-btn" onclick="callUser(${g.merchant_id})">📞</button>
+        </div>
+      </div>
+    `).join('');
+  } else { list.innerHTML = '<p style="color:#999;text-align:center;padding:20px">暂无待接货源</p>'; }
+}
+
+async function takeOrder(goodsId) {
+  const res = await api('/driver/take-order', 'POST', { goods_id: goodsId });
+  if (res.code === 0) { alert('✅ 接单成功！订单ID: ' + res.data.order_id); matchGoods(); } else { alert('❌ ' + res.msg); }
+}
+
+async function publishRoute() {
+  const res = await api('/driver/publish-route', 'POST', { start_addr: document.getElementById('routeStart').value, end_addr: document.getElementById('routeEnd').value, depart_time: document.getElementById('departTime').value, remain_space: document.getElementById('remainSpace').value });
+  if (res.code === 0) alert('✅ 行程发布成功！'); else alert('❌ ' + res.msg);
+}
+
+// ==================== 配送/拍照/签收 ====================
+function uploadPickupPhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (ev) => {
+    const oid = document.getElementById('pickupOrderId').value;
+    const res = await api('/photo/upload', 'POST', { order_id: oid, photo_data: ev.target.result, photo_type: 'pickup' });
+    if (res.code === 0) { document.getElementById('pickupPhotoPreview').innerHTML += `<img src="${ev.target.result}">`; }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function confirmPickup() {
+  const oid = document.getElementById('pickupOrderId').value; if (!oid) return alert('请输入订单ID');
+  const res = await api('/order/pay', 'POST', { order_id: oid }); // 标记为已取货
+  alert('✅ 取货确认成功！');
+}
+
+function showSignCode() {
+  const oid = document.getElementById('signOrderId').value; if (!oid) return alert('请输入订单ID');
+  document.getElementById('signCodeArea').style.display = 'block';
+  document.getElementById('signOrderIdText').textContent = '订单 #' + oid;
+  const canvas = document.getElementById('signQRCanvas'); const ctx = canvas.getContext('2d');
+  canvas.width = 200; canvas.height = 200;
+  ctx.fillStyle = 'white'; ctx.fillRect(0, 0, 200, 200);
+  ctx.fillStyle = 'black'; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center'; ctx.fillText('签收码', 100, 30);
+  ctx.font = 'bold 48px monospace'; ctx.fillText(oid, 100, 115);
+  ctx.font = '12px Arial'; ctx.fillText('让商家扫码确认', 100, 185);
+  ctx.strokeStyle = '#333'; ctx.lineWidth = 3; ctx.strokeRect(15, 15, 170, 170);
+}
+
+// ==================== 钱包 ====================
+async function loadWallet() { const res = await api('/wallet/balance'); if (res.code === 0) { document.getElementById('balance').textContent = '¥' + (res.data?.balance || 0).toFixed(2); document.getElementById('balance').className = 'balance ' + (driverMode === 2 ? 'balance-truck' : 'balance-car'); } }
+
+// ==================== 隐私消息 ====================
+async function loadConversations() {
+  const res = await api('/message/conversations');
+  const list = document.getElementById('convList');
+  if (res.data?.length) {
+    list.innerHTML = res.data.map(c => `
+      <div class="driver-card" onclick="openChatWith(${c.user_id})" style="cursor:pointer">
+        <div style="display:flex;justify-content:space-between"><div class="name">${c.user_name}</div>${c.unread > 0 ? `<span style="background:#f57c00;color:white;padding:2px 8px;border-radius:10px;font-size:12px">${c.unread}</span>` : ''}</div>
+        <div class="route">${c.last_message || ''}</div>
+      </div>
+    `).join('');
+  } else { list.innerHTML = '<p style="color:#999;text-align:center;padding:20px">暂无消息</p>'; }
+}
+
+async function openChatWith(uid) {
+  chatWith = uid;
+  document.getElementById('chatTitle').textContent = '💬 对话 - 用户' + uid;
+  document.getElementById('chatModal').style.display = 'flex';
+  await loadMessages();
+}
+
+async function loadMessages() {
+  if (!chatWith) return;
+  const res = await api('/message/list/' + chatWith);
+  const el = document.getElementById('chatMessages');
+  el.innerHTML = (res.data || []).map(m => {
+    const me = m.from_user_id === (token ? JSON.parse(Buffer.from(token, 'base64').toString()).userId : 0);
+    const isCall = m.type === 'call_request';
+    return `<div class="chat-msg ${me ? 'sent' : 'received'} ${isCall ? 'call-bubble' : ''}"><div class="bubble">${isCall ? '📞 ' : ''}${m.content}</div><div class="time">${new Date(m.create_time).toLocaleString('zh-CN',{hour:'2-digit',minute:'2-digit'})}</div></div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+async function sendMessage() { const input = document.getElementById('chatInput'); const c = input.value.trim(); if (!c || !chatWith) return; await api('/message/send', 'POST', { to_user_id: chatWith, content: c }); input.value = ''; loadMessages(); }
+async function requestCall() { if (!chatWith) return; const res = await api('/message/call-request', 'POST', { to_user_id: chatWith }); if (res.code === 0) { alert('📞 虚拟号码: ' + res.data.virtual_no + '\n（5分钟有效）'); loadMessages(); } }
+async function callUser(uid) { chatWith = uid; requestCall(); }
+async function sendPhotoMsg(e) { const file = e.target.files[0]; if (!file || !chatWith) return; const reader = new FileReader(); reader.onload = async (ev) => { await api('/message/send', 'POST', { to_user_id: chatWith, content: '[图片]' }); loadMessages(); }; reader.readAsDataURL(file); }
+function closeChat() { document.getElementById('chatModal').style.display = 'none'; chatWith = null; }
+</script>
+</body>
+</html>

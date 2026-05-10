@@ -1,0 +1,92 @@
+<view class="container">
+  <view wx:if="{{order}}" class="order-detail">
+
+    <!-- 状态卡片 -->
+    <view class="status-card status-{{order.status}}">
+      <view class="status-icon">
+        <text wx:if="{{order.status == 1}}">🔍</text>
+        <text wx:if="{{order.status == 2}}">🚚</text>
+        <text wx:if="{{order.status == 3}}">⏳</text>
+        <text wx:if="{{order.status == 4}}">✅</text>
+        <text wx:if="{{order.status == 5}}">❌</text>
+      </view>
+      <view class="status-text">{{statusText[order.status]}}</view>
+      <view class="status-time" wx:if="{{order.update_time}}">{{order.update_time}}</view>
+    </view>
+
+    <!-- 取货码/送货码区域（待取货/配送中状态显示） -->
+    <view class="qr-section" wx:if="{{order.status == 1 || order.status == 2 || order.status == 3}}">
+      <view class="qr-title">{{order.status == 1 ? '📋 取货码' : order.status == 2 ? '🚚 取货码（已接单）' : '⏳ 取货码'}}</view>
+      <view class="qr-desc">{{order.status == 1 ? '展示给司机扫码确认取货' : '司机扫码确认货物已取'}}</view>
+      <view class="pickup-code-box">
+        <text class="pickup-code">{{order.pickup_code || order.pickup_no || '----'}}</text>
+      </view>
+      <view class="qr-desc" wx:if="{{order.qr_url}}">扫码下方二维码确认取货</view>
+      <view class="qr-box" wx:if="{{order.qr_url}}">
+        <image src="{{order.qr_url}}" class="qr-img" mode="aspectFit" />
+      </view>
+      <view class="qr-desc">将以上{{order.status == 1 ? '取' : '取' }}货码或二维码展示给司机扫描</view>
+    </view>
+
+    <!-- 送达码区域（取货后显示） -->
+    <view class="qr-section qr-delivery" wx:if="{{order.status == 2 || order.status == 3}}">
+      <view class="qr-title">📦 送达码</view>
+      <view class="qr-desc">货物送达后，收方扫码确认收货</view>
+      <view class="pickup-code-box">
+        <text class="pickup-code">{{order.delivery_code || order.delivery_no || '----'}}</text>
+      </view>
+      <view class="qr-desc" wx:if="{{order.delivery_qr_url}}">扫码下方二维码确认送达</view>
+      <view class="qr-box" wx:if="{{order.delivery_qr_url}}">
+        <image src="{{order.delivery_qr_url}}" class="qr-img" mode="aspectFit" />
+      </view>
+    </view>
+
+    <!-- 货物照片（如果有） -->
+    <view class="section" wx:if="{{orderPhotos.length > 0}}">
+      <view class="section-title">📷 货物照片</view>
+      <scroll-view scroll-x class="photo-scroll">
+        <block wx:for="{{orderPhotos}}" wx:key="index">
+          <image src="{{item}}" class="order-photo" mode="aspectFill" bindtap="previewOrderPhoto" data-index="{{index}}" />
+        </block>
+      </scroll-view>
+    </view>
+
+    <!-- 路线信息 -->
+    <view class="section">
+      <view class="section-title">📍 路线信息</view>
+      <view class="route-from">
+        <text class="route-dot green"></text>
+        <text class="route-text">{{order.start_addr}}</text>
+      </view>
+      <view class="route-line"></view>
+      <view class="route-to">
+        <text class="route-dot orange"></text>
+        <text class="route-text">{{order.end_addr}}</text>
+      </view>
+    </view>
+
+    <!-- 货物信息 -->
+    <view class="section">
+      <view class="section-title">📦 货物信息</view>
+      <view class="info-row"><text class="label">货物重量</text><text class="value">{{order.weight}}kg</text></view>
+      <view class="info-row" wx:if="{{order.goods_value > 0}}"><text class="label">货物价值</text><text class="value">¥{{order.goods_value}}</text></view>
+      <view class="info-row" wx:if="{{order.remark}}"><text class="label">备注</text><text class="value">{{order.remark}}</text></view>
+    </view>
+
+    <!-- 费用信息 -->
+    <view class="section">
+      <view class="section-title">💰 费用信息</view>
+      <view class="info-row"><text class="label">运费</text><text class="value price">¥{{order.price}}</text></view>
+      <view class="info-row" wx:if="{{order.sign_time}}"><text class="label">签收时间</text><text class="value">{{order.sign_time}}</text></view>
+    </view>
+
+    <!-- 司机信息（已接单时显示） -->
+    <view class="section" wx:if="{{order.driver_name || order.driver_phone}}">
+      <view class="section-title">🚚 司机信息</view>
+      <view class="info-row" wx:if="{{order.driver_name}}"><text class="label">司机姓名</text><text class="value">{{order.driver_name}}</text></view>
+      <view class="info-row" wx:if="{{order.driver_phone}}"><text class="label">联系电话</text><text class="value" bindtap="callDriver">{{order.driver_phone}}</text></view>
+    </view>
+
+  </view>
+  <view wx:else class="empty">订单不存在</view>
+</view>

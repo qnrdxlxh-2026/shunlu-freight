@@ -1,0 +1,16 @@
+<view class="messages-page">
+  <view class="conv-list">
+    <view class="conv-item" wx:for="{{conversations}}" wx:key="user_id"
+      bindtap="goChat" data-item="{{item}}">
+      <view class="avatar">{{item.avatarText}}</view>
+      <view class="conv-info">
+        <view class="conv-name">{{item.phone || '用户'}}</view>
+        <view class="conv-last">{{item.last_message}}</view>
+      </view>
+      <view class="conv-time">{{item.last_time}}</view>
+    </view>
+  </view>
+  <view class="empty" wx:if="{{conversations.length == 0}}">
+    <text>暂无消息</text>
+  </view>
+</view>

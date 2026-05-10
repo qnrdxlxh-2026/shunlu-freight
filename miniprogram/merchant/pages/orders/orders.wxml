@@ -1,0 +1,44 @@
+<view class="orders-page">
+  <!-- Tabs -->
+  <view class="tabs">
+    <view
+      wx:for="{{tabs}}"
+      wx:key="index"
+      class="tab {{tabIndex === index ? 'active' : ''}}"
+      bindtap="onChangeTab"
+      data-index="{{index}}"
+    >{{item}}</view>
+  </view>
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading-wrap">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 订单列表 -->
+  <block wx:else>
+    <view wx:for="{{orders}}" wx:key="id" class="order-item" bindtap="goDetail" data-id="{{item.id}}">
+      <view class="order-header">
+        <text class="order-no">订单 #{{item.id}}</text>
+        <text class="status status-{{item.status}}">{{statusText[item.status]}}</text>
+      </view>
+      <view class="order-route">
+        <text class="from">📍 {{item.start_addr}}</text>
+        <text class="arrow">→</text>
+        <text class="to">🏁 {{item.end_addr}}</text>
+      </view>
+      <view class="order-footer">
+        <text>{{item.weight}}kg</text>
+        <text class="price">¥{{item.price}}</text>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:if="{{!orders.length}}" class="empty-wrap">
+      <text class="empty-icon">📦</text>
+      <text class="empty-text">暂无订单</text>
+      <text class="empty-hint">发布货源后等待司机接单</text>
+      <view class="empty-btn" bindtap="goPublish">去发布货源</view>
+    </view>
+  </block>
+</view>

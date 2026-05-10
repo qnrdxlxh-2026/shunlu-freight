@@ -1,0 +1,53 @@
+<!--pages/orders/orders.wxml-->
+<view class="orders-container">
+  <!-- Tab切换 -->
+  <view class="tabs">
+    <view class="tab-item {{currentTab === 'pending' ? 'active' : ''}}" 
+          bindtap="switchTab" data-tab="pending">待取货</view>
+    <view class="tab-item {{currentTab === 'delivering' ? 'active' : ''}}" 
+          bindtap="switchTab" data-tab="delivering">配送中</view>
+    <view class="tab-item {{currentTab === 'completed' ? 'active' : ''}}" 
+          bindtap="switchTab" data-tab="completed">已完成</view>
+  </view>
+
+  <!-- 订单列表 -->
+  <view class="order-list">
+    <view class="order-card" wx:for="{{orders}}" wx:key="id" bindtap="viewOrder" data-id="{{item.id}}">
+      <view class="order-header">
+        <text class="order-no">{{item.order_no}}</text>
+        <text class="order-status status-{{item.status}}">{{statusText[item.status]}}</text>
+      </view>
+      
+      <view class="order-route">
+        <view class="route-item">
+          <text class="route-label">取货</text>
+          <text class="route-address">{{item.pickup_address}}</text>
+        </view>
+        <text class="route-arrow">↓</text>
+        <view class="route-item">
+          <text class="route-label">送达</text>
+          <text class="route-address">{{item.delivery_address}}</text>
+        </view>
+      </view>
+
+      <view class="order-info">
+        <text class="info-text">📦 {{item.weight}}kg</text>
+        <text class="info-text">💰 ¥{{item.price}}</text>
+      </view>
+
+      <view class="order-footer">
+        <text class="order-time">{{item.create_time}}</text>
+        <view class="order-actions">
+          <button wx:if="{{item.status === 2}}" class="btn-action" 
+                  catchtap="confirmPickup" data-id="{{item.id}}">确认取货</button>
+          <button wx:if="{{item.status === 3}}" class="btn-action btn-primary" 
+                  catchtap="confirmDeliver" data-id="{{item.id}}">确认送达</button>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:if="{{orders.length === 0}}">
+    <text class="empty-text">暂无订单</text>
+  </view>
+</view>

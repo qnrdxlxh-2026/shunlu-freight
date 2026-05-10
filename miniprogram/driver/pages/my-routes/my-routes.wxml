@@ -1,0 +1,21 @@
+<view class="routes-page">
+  <view class="route-list" wx:if="{{!loading}}">
+    <view class="route-item" wx:for="{{routes}}" wx:key="id">
+      <view class="route-header">
+        <text class="route-from">{{item.start_addr}}</text>
+        <text class="route-arrow">→</text>
+        <text class="route-to">{{item.end_addr}}</text>
+      </view>
+      <view class="route-info">
+        <text class="route-time">出发: {{item.departure_time}}</text>
+        <text class="route-seats">可载: {{item.available_weight}}kg</text>
+      </view>
+      <view class="route-status">{{item.status == 1 ? '进行中' : '已结束'}}</view>
+    </view>
+    <view class="empty" wx:if="{{routes.length==0}}">
+      <text>暂无行程记录</text>
+    </view>
+  </view>
+  <button class="fab" bindtap="goPublish">+ 发布行程</button>
+  <view class="loading" wx:if="{{loading}}"><text>加载中...</text></view>
+</view>

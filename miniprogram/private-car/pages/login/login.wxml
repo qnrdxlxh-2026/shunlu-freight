@@ -1,0 +1,37 @@
+<!--pages/login/login.wxml-->
+<view class="login-container">
+  <view class="logo-section">
+    <image class="logo" src="/assets/logo.png" mode="aspectFit"></image>
+    <text class="title">顺路货运 - 私家车主</text>
+    <text class="subtitle">顺路带货，轻松赚钱</text>
+  </view>
+
+  <view class="form-section">
+    <view class="input-group">
+      <image class="input-icon" src="/assets/phone.png"></image>
+      <input class="input" type="number" placeholder="请输入手机号" maxlength="11" 
+             value="{{phone}}" bindinput="onPhoneInput"/>
+    </view>
+    <view class="input-group">
+      <image class="input-icon" src="/assets/password.png"></image>
+      <input class="input" type="password" placeholder="请输入密码" 
+             value="{{password}}" bindinput="onPasswordInput"/>
+    </view>
+  </view>
+
+  <button class="btn-login" bindtap="doLogin">登录</button>
+  
+  <view class="footer-links">
+    <text class="link" bindtap="goRegister">注册账号</text>
+  </view>
+
+  <!-- 私家车主特别提示 -->
+  <view class="tips-card">
+    <view class="tips-title">📢 私家车主须知</view>
+    <view class="tips-item">• 单票限重：≤20kg</view>
+    <view class="tips-item">• 货值限额：≤2000元</view>
+    <view class="tips-item">• 每日限接：2单</view>
+    <view class="tips-item">• 县城内运费：20元/单</view>
+    <view class="tips-item">• 平台抽成：10%</view>
+  </view>
+</view>

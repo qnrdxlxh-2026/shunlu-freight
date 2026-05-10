@@ -1,0 +1,98 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #722ed1 0%, #9b59d0 100%);
+  display: flex;
+  flex-direction: column;
+  padding: 0 60rpx;
+}
+
+.logo-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 120rpx;
+  padding-bottom: 80rpx;
+}
+
+.logo {
+  width: 160rpx;
+  height: 160rpx;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 40rpx;
+}
+
+.app-name {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #fff;
+  margin-top: 24rpx;
+}
+
+.app-subtitle {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 12rpx;
+}
+
+.form-section {
+  flex: 1;
+  background-color: #fff;
+  border-radius: 32rpx 32rpx 0 0;
+  padding: 60rpx 40rpx 0;
+}
+
+.input-wrap {
+  display: flex;
+  align-items: center;
+  background-color: #f7f7f7;
+  border-radius: 44rpx;
+  padding: 0 36rpx;
+  height: 96rpx;
+  margin-bottom: 30rpx;
+}
+
+.input-icon {
+  font-size: 36rpx;
+  margin-right: 20rpx;
+}
+
+.input-wrap input {
+  flex: 1;
+  height: 96rpx;
+  font-size: 30rpx;
+}
+
+.btn-primary {
+  background-color: #722ed1;
+  color: #fff;
+  border-radius: 48rpx;
+  height: 96rpx;
+  line-height: 96rpx;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 600;
+  border: none;
+  margin-top: 20rpx;
+  letter-spacing: 4rpx;
+}
+
+.btn-primary::after { border: none; }
+
+.btn-primary:active { opacity: 0.85; }
+
+.form-footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 40rpx;
+  padding-bottom: 60rpx;
+}
+
+.link-text {
+  color: #722ed1;
+  font-size: 28rpx;
+}
+
+.safe-bottom {
+  padding-bottom: constant(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
+}

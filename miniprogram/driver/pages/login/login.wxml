@@ -1,0 +1,47 @@
+<view class="login-container">
+  <!-- Logo区域 -->
+  <view class="logo-section">
+    <view class="logo-icon">🚛</view>
+    <view class="logo-title">顺路货运</view>
+    <view class="logo-subtitle">司机端</view>
+  </view>
+
+  <!-- 登录表单 -->
+  <view class="form-section">
+    <view class="form-card">
+      <view class="input-item">
+        <text class="input-icon">📱</text>
+        <input
+          type="number"
+          placeholder="请输入手机号"
+          maxlength="11"
+          bindinput="onPhoneInput"
+          value="{{phone}}"
+        />
+      </view>
+      <view class="input-item no-border">
+        <text class="input-icon">🔒</text>
+        <input
+          type="text"
+          password
+          placeholder="请输入密码"
+          bindinput="onPasswordInput"
+          value="{{password}}"
+        />
+      </view>
+    </view>
+
+    <!-- 登录按钮 -->
+    <button
+      class="btn-primary login-btn {{loading ? 'btn-disabled' : ''}}"
+      bindtap="onLogin"
+      disabled="{{loading}}"
+    >{{loading ? '登录中...' : '登录'}}</button>
+
+    <!-- 注册入口 -->
+    <view class="register-entry">
+      <text class="text-gray">还没有账号？</text>
+      <text class="link" bindtap="goRegister">立即注册</text>
+    </view>
+  </view>
+</view>

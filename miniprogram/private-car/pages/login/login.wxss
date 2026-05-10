@@ -1,0 +1,107 @@
+/* pages/login/login.wxss */
+.login-container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #1890ff 0%, #096dd9 100%);
+  padding: 0 40rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo-section {
+  text-align: center;
+  padding: 80rpx 0 60rpx;
+}
+
+.logo {
+  width: 160rpx;
+  height: 160rpx;
+  margin-bottom: 20rpx;
+}
+
+.title {
+  display: block;
+  color: #fff;
+  font-size: 40rpx;
+  font-weight: bold;
+  margin-bottom: 10rpx;
+}
+
+.subtitle {
+  display: block;
+  color: rgba(255,255,255,0.8);
+  font-size: 28rpx;
+}
+
+.form-section {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 40rpx 30rpx;
+  margin-bottom: 40rpx;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.input-group:last-child {
+  border-bottom: none;
+}
+
+.input-icon {
+  width: 44rpx;
+  height: 44rpx;
+  margin-right: 20rpx;
+}
+
+.input {
+  flex: 1;
+  font-size: 32rpx;
+}
+
+.btn-login {
+  background: #fff;
+  color: #1890ff;
+  font-size: 34rpx;
+  font-weight: bold;
+  border-radius: 50rpx;
+  padding: 28rpx 0;
+  margin-bottom: 30rpx;
+}
+
+.btn-login:active {
+  opacity: 0.9;
+}
+
+.footer-links {
+  text-align: center;
+  margin-bottom: 40rpx;
+}
+
+.link {
+  color: #fff;
+  font-size: 28rpx;
+}
+
+.tips-card {
+  background: rgba(255,255,255,0.95);
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-top: auto;
+  margin-bottom: 40rpx;
+}
+
+.tips-title {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.tips-item {
+  font-size: 26rpx;
+  color: #666;
+  line-height: 48rpx;
+}

@@ -1,0 +1,43 @@
+<view class="container">
+  <view class="form-section">
+    <view class="section-header">
+      <text class="title">注册账号</text>
+      <text class="subtitle">创建个人账号，享受顺路货运服务</text>
+    </view>
+
+    <view class="input-group">
+      <text class="input-label">手机号</text>
+      <view class="input-wrap">
+        <text class="input-icon">📱</text>
+        <input type="number" placeholder="请输入手机号" maxlength="11" value="{{phone}}" bindinput="onPhoneInput" />
+      </view>
+    </view>
+
+    <view class="input-group">
+      <text class="input-label">设置密码</text>
+      <view class="input-wrap">
+        <text class="input-icon">🔒</text>
+        <input password type="text" placeholder="请设置登录密码（6位以上）" value="{{password}}" bindinput="onPasswordInput" />
+      </view>
+    </view>
+
+    <view class="input-group">
+      <text class="input-label">确认密码</text>
+      <view class="input-wrap">
+        <text class="input-icon">🔒</text>
+        <input password type="text" placeholder="请再次输入密码" value="{{confirmPassword}}" bindinput="onConfirmInput" />
+      </view>
+    </view>
+
+    <view class="role-tip">
+      <text class="role-icon">👤</text>
+      <text class="role-text">注册为：个人用户</text>
+    </view>
+
+    <button class="btn-primary" bindtap="onRegister" loading="{{loading}}">注 册</button>
+
+    <view class="form-footer">
+      <text class="link-text" bindtap="goLogin">已有账号？立即登录</text>
+    </view>
+  </view>
+</view>

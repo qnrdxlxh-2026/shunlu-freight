@@ -1,0 +1,62 @@
+<view class="detail-page" wx:if="{{order}}">
+  <view class="status-bar {{order.statusClass}}">
+    <text class="status-text">{{order.statusText}}</text>
+  </view>
+
+  <!-- 取货码（司机取货后展示给发货方） -->
+  <view class="code-card pickup-card" wx:if="{{order.status == 2 || order.status == 3}}">
+    <view class="code-label">📋 取货码 · 给司机看</view>
+    <view class="code-number">{{order.pickup_code || '------'}}</view>
+    <view class="code-hint">司机取货时，请出示此码或手机尾号确认</view>
+  </view>
+
+  <!-- 送达码（配送中展示给收货方） -->
+  <view class="code-card delivery-card" wx:if="{{order.status == 3}}">
+    <view class="code-label">📦 送达码 · 给您看</view>
+    <view class="code-number">{{order.delivery_code || '------'}}</view>
+    <view class="code-hint">货物到达后，请出示此码确认签收</view>
+  </view>
+
+  <!-- 路线区域 -->
+  <view class="route-section">
+    <view class="route-item">
+      <view class="dot green"></view>
+      <view class="addr">{{order.start_addr}}</view>
+    </view>
+    <view class="route-line"></view>
+    <view class="route-item">
+      <view class="dot red"></view>
+      <view class="addr">{{order.end_addr}}</view>
+    </view>
+  </view>
+
+  <!-- 信息区域 -->
+  <view class="info-section">
+    <view class="info-item"><text class="label">订单号</text><text class="value">{{order.id}}</text></view>
+    <view class="info-item"><text class="label">货物信息</text><text class="value">{{order.goods_name}} · {{order.weight}}kg</text></view>
+    <view class="info-item"><text class="label">运费</text><text class="value price">¥{{order.amount}}</text></view>
+    <view class="info-item"><text class="label">创建时间</text><text class="value">{{order.createTime}}</text></view>
+    <view class="info-item" wx:if="{{order.pickupTime}}"><text class="label">取货时间</text><text class="value">{{order.pickupTime}}</text></view>
+    <view class="info-item" wx:if="{{order.deliverTime}}"><text class="label">送达时间</text><text class="value">{{order.deliverTime}}</text></view>
+  </view>
+
+  <!-- 司机信息 -->
+  <view class="driver-section" wx:if="{{order.driver_id}}">
+    <view class="driver-card">
+      <view class="driver-label">🚚 司机</view>
+      <view class="driver-info">
+        <text class="driver-phone">{{order.driver_phone || '司机'}}</text>
+        <view class="driver-btns">
+          <view class="btn-call" bindtap="callDriver">📞 拨打电话</view>
+          <view class="btn-chat" bindtap="goChat">💬 在线消息</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作区域 -->
+  <view class="action-section">
+    <button class="pay-btn" wx:if="{{order.status == 1}}" bindtap="payOrder">立即支付 ¥{{order.amount}}</button>
+    <button class="confirm-btn" wx:if="{{order.status == 3}}" bindtap="showConfirmReceipt">确认签收</button>
+  </view>
+</view>

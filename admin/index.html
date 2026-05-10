@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>顺路货运 - 运营后台</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; }
+    .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: white; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; height: 60px; }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-logo { font-size: 24px; }
+    .header-title { font-size: 18px; font-weight: 600; }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .user-info { font-size: 13px; opacity: 0.85; }
+    .btn-logout { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .btn-logout:hover { background: rgba(255,255,255,0.25); }
+    .container { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .stat-card { background: white; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #f0f0f0; }
+    .stat-card .stat-icon { font-size: 22px; margin-bottom: 8px; }
+    .stat-card .stat-value { font-size: 28px; font-weight: 700; color: #1a1a2e; }
+    .stat-card .stat-label { font-size: 12px; color: #888; margin-top: 4px; }
+    .stat-card.blue .stat-value { color: #0f3460; }
+    .stat-card.green .stat-value { color: #27ae60; }
+    .stat-card.orange .stat-value { color: #e67e22; }
+    .stat-card.red .stat-value { color: #e74c3c; }
+    .stat-card.purple .stat-value { color: #8e44ad; }
+    .tabs-bar { background: white; border-radius: 12px; padding: 6px; display: flex; gap: 2px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); flex-wrap: wrap; }
+    .tab-btn { flex: 1; min-width: 90px; padding: 10px 14px; border: none; background: transparent; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; color: #666; transition: all 0.2s; white-space: nowrap; }
+    .tab-btn:hover { background: #f5f5f5; color: #1a1a2e; }
+    .tab-btn.active { background: #1a1a2e; color: white; font-weight: 600; }
+    .card { background: white; border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #f0f0f0; }
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f5f5f5; }
+    .card-title { font-size: 15px; font-weight: 600; color: #1a1a2e; display: flex; align-items: center; gap: 8px; }
+    .card-title .icon { font-size: 18px; }
+    .card-actions { display: flex; gap: 8px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f8f9fa; padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #eee; }
+    td { padding: 10px 12px; font-size: 13px; color: #333; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+    tr:hover td { background: #fafafa; }
+    tr:last-child td { border-bottom: none; }
+    .btn { padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s; }
+    .btn-sm { padding: 4px 10px; font-size: 11px; }
+    .btn-primary { background: #1a1a2e; color: white; }
+    .btn-primary:hover { background: #2d2d4a; }
+    .btn-success { background: #27ae60; color: white; }
+    .btn-success:hover { background: #219a52; }
+    .btn-danger { background: #e74c3c; color: white; }
+    .btn-danger:hover { background: #c0392b; }
+    .btn-warning { background: #f39c12; color: white; }
+    .btn-warning:hover { background: #d68910; }
+    .btn-info { background: #3498db; color: white; }
+    .btn-info:hover { background: #2980b9; }
+    .btn-outline { background: white; color: #666; border: 1px solid #ddd; }
+    .btn-outline:hover { border-color: #1a1a2e; color: #1a1a2e; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+    .badge-green { background: #d4edda; color: #155724; }
+    .badge-red { background: #f8d7da; color: #721c24; }
+    .badge-yellow { background: #fff3cd; color: #856404; }
+    .badge-blue { background: #d1ecf1; color: #0c5460; }
+    .badge-gray { background: #e9ecef; color: #495057; }
+    .badge-purple { background: #e8daef; color: #6c3483; }
+    .badge-pending { background: #fff3cd; color: #856404; }
+    .badge-approved { background: #d4edda; color: #155724; }
+    .badge-rejected { background: #f8d7da; color: #721c24; }
+    .role-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .role-1 { background: #e3f2fd; color: #1565c0; }
+    .role-2 { background: #fff3e0; color: #e65100; }
+    .role-3 { background: #e8f5e9; color: #2e7d32; }
+    .role-4 { background: #fce4ec; color: #ad1457; }
+    .role-5 { background: #ede7f6; color: #512da8; }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+    .modal-overlay.show { display: flex; justify-content: center; align-items: center; }
+    .modal { background: white; border-radius: 14px; width: 480px; max-width: 95vw; max-height: 85vh; overflow: hidden; display: flex; flex-direction: column; }
+    .modal-header { padding: 18px 24px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+    .modal-title { font-size: 16px; font-weight: 600; color: #1a1a2e; }
+    .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #999; padding: 0; line-height: 1; }
+    .modal-close:hover { color: #333; }
+    .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+    .modal-footer { padding: 14px 24px; border-top: 1px solid #eee; display: flex; gap: 10px; justify-content: flex-end; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 500; color: #333; margin-bottom: 6px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; transition: border-color 0.2s; background: white; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #1a1a2e; }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-hint { font-size: 11px; color: #999; margin-top: 4px; }
+    .filter-row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+    .filter-row input { flex: 1; min-width: 180px; padding: 8px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; }
+    .filter-row select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; background: white; min-width: 110px; }
+    .empty-state { text-align: center; padding: 40px 20px; color: #999; }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+    .loading { text-align: center; padding: 40px; color: #999; font-size: 14px; }
+    pre { background: #f5f5f5; padding: 12px; border-radius: 8px; font-size: 12px; overflow-x: auto; line-height: 1.6; max-height: 300px; overflow-y: auto; }
+    .td-secondary { font-size: 11px; color: #999; }
+    .action-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .config-item { background: #f8f9fa; border-radius: 10px; padding: 18px; }
+    .config-item h4 { font-size: 13px; margin-bottom: 10px; color: #333; }
+    .toast-fixed { position: fixed; top: 80px; right: 20px; z-index: 9999; max-width: 300px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 768px) {
+      .header { padding: 0 16px; }
+      .container { padding: 12px; }
+      .tabs-bar { gap: 2px; }
+      .tab-btn { min-width: 75px; font-size: 12px; padding: 8px 10px; }
+      .form-row { grid-template-columns: 1fr; }
+      .config-grid { grid-template-columns: 1fr; }
+    }
+    .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
+    .login-box { background: white; border-radius: 16px; padding: 40px; width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .login-logo { text-align: center; font-size: 40px; margin-bottom: 8px; }
+    .login-title { text-align: center; font-size: 22px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+    .login-sub { text-align: center; color: #888; font-size: 13px; margin-bottom: 28px; }
+    .login-box .form-group input { padding: 12px 14px; font-size: 14px; }
+    .login-box .btn { width: 100%; padding: 12px; font-size: 15px; margin-top: 8px; }
+    .login-tips { text-align: center; margin-top: 16px; font-size: 12px; color: #999; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <!-- 登录页 -->
+  <div id="loginPage" class="login-wrap">
+    <div class="login-box">
+      <div class="login-logo">🚚</div>
+      <div class="login-title">顺路货运</div>
+      <div class="login-sub">运营管理后台</div>
+      <div class="form-group">
+        <label>手机号</label>
+        <input id="loginPhone" placeholder="输入手机号" value="admin">
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <input id="loginPwd" type="password" placeholder="输入密码" value="admin123">
+      </div>
+      <button class="btn btn-primary" onclick="login()">登 录</button>
+      <div class="login-tips">测试账号：admin / admin123</div>
+    </div>
+  </div>
+
+  <!-- 主界面 -->
+  <div id="mainPage" style="display:none">
+    <div class="header">
+      <div class="header-left">
+        <span class="header-logo">🚚</span>
+        <span class="header-title">顺路货运 · 运营后台</span>
+      </div>
+      <div class="header-right">
+        <span class="user-info" id="userDisplay">管理员</span>
+        <button class="btn-logout" onclick="logout()">退出</button>
+      </div>
+    </div>
+    
+    <div class="container">
+      <!-- 快捷统计 -->
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card blue"><div class="stat-icon">👥</div><div class="stat-value" id="statUsers">-</div><div class="stat-label">总用户</div></div>
+        <div class="stat-card green"><div class="stat-icon">🏪</div><div class="stat-value" id="statMerchants">-</div><div class="stat-label">商家</div></div>
+        <div class="stat-card orange"><div class="stat-icon">🚛</div><div class="stat-value" id="statDrivers">-</div><div class="stat-label">司机</div></div>
+        <div class="stat-card purple"><div class="stat-icon">📦</div><div class="stat-value" id="statOrders">-</div><div class="stat-label">总订单</div></div>
+        <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-value" id="statAmount">-</div><div class="stat-label">总交易额</div></div>
+        <div class="stat-card red"><div class="stat-icon">⛔</div><div class="stat-value" id="statBlacklist">-</div><div class="stat-label">黑名单</div></div>
+        <div class="stat-card orange"><div class="stat-icon">📋</div><div class="stat-value" id="statComplaints">-</div><div class="stat-label">待处理投诉</div></div>
+        <div class="stat-card blue"><div class="stat-icon">📞</div><div class="stat-value" id="statCalls">-</div><div class="stat-label">通话记录</div></div>
+      </div>
+      
+      <!-- 标签栏 -->
+      <div class="tabs-bar">
+        <button class="tab-btn active" onclick="switchTab('overview', event)">📊 数据概览</button>
+        <button class="tab-btn" onclick="switchTab('merchant', event)">🏪 商家管理</button>
+        <button class="tab-btn" onclick="switchTab('driver', event)">🚚 货车管理</button>
+        <button class="tab-btn" onclick="switchTab('privatecar', event)">🚗 私家车管理</button>
+        <button class="tab-btn" onclick="switchTab('personal', event)">👤 个人管理</button>
+        <button class="tab-btn" onclick="switchTab('orders', event)">📦 订单管理</button>
+        <button class="tab-btn" onclick="switchTab('finance', event)">💰 财务管理</button>
+        <button class="tab-btn" onclick="switchTab('blacklist', event)">⛔ 黑名单</button>
+        <button class="tab-btn" onclick="switchTab('complaints', event)">📋 投诉管理</button>
+        <button class="tab-btn" onclick="switchTab('messages', event)">💬 通讯记录</button>
+        <button class="tab-btn" onclick="switchTab('config', event)">⚙️ 佣金配置</button>
+        <button class="tab-btn" onclick="switchTab('test', event)">🧪 接口测试</button>
+      </div>
+      
+      <!-- 内容区 -->
+      <div id="tabContent"></div>
+    </div>
+  </div>
+
+  <!-- 通用弹窗 -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="modalTitle">弹窗</span>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer" id="modalFooter"></div>
+    </div>
+  </div>
+
+<script>
+// ===== 全局状态 =====
+let token = '';
+let currentTab = '';
+
+// ===== API =====
+async function api(path, method = 'GET', data = null) {
+  try {
+    const opts = { method, headers: { 'Content-Type': 'application/json' } };
+    if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+    if (data) opts.body = JSON.stringify(data);
+    const res = await fetch('/api' + path, opts);
+    return await res.json();
+  } catch (e) {
+    return { code: -1, msg: '网络错误: ' + e.message };
+  }
+}
+
+// ===== 登录登出 =====
+async function login() {
+  const phone = document.getElementById('loginPhone').value.trim();
+  const pwd = document.getElementById('loginPwd').value;
+  if (!phone || !pwd) return alert('请输入手机号和密码');
+  let res = await api('/user/login', 'POST', { phone, password: pwd });
+  if (res.code !== 0) res = await api('/user/register', 'POST', { phone, password: pwd, role: 4 });
+  if (res.code === 0) {
+    token = res.data.token;
+    localStorage.setItem('admin_token', token);
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('mainPage').style.display = 'block';
+    document.getElementById('userDisplay').textContent = phone + ' (管理员)';
+    await loadStats();
+    switchTab('overview');
+  } else { alert('登录失败: ' + res.msg); }
+}
+
+function logout() {
+  token = '';
+  localStorage.removeItem('admin_token');
+  document.getElementById('mainPage').style.display = 'none';
+  document.getElementById('loginPage').style.display = 'flex';
+}
+
+(function init() {
+  const saved = localStorage.getItem('admin_token');
+  if (saved) {
+    token = saved;
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('mainPage').style.display = 'block';
+    loadStats();
+    switchTab('overview');
+  }
+})();
+
+// ===== 统计概览 =====
+async function loadStats() {
+  const [stats, blacklist, complaints, calls] = await Promise.all([
+    api('/admin/stats').catch(() => ({})),
+    api('/admin/blacklist').catch(() => ({})),
+    api('/admin/complaints').catch(() => ({})),
+    api('/admin/calls').catch(() => ({}))
+  ]);
+  const s = stats.data || {};
+  document.getElementById('statUsers').textContent = s.totalUsers || 0;
+  document.getElementById('statMerchants').textContent = s.merchants || 0;
+  document.getElementById('statDrivers').textContent = s.drivers || 0;
+  document.getElementById('statOrders').textContent = s.totalOrders || 0;
+  document.getElementById('statAmount').textContent = '¥' + (s.totalAmount || 0);
+  const bl = blacklist.data || [];
+  document.getElementById('statBlacklist').textContent = bl.filter(b => b.type === 'blacklist').length;
+  const cp = complaints.data || [];
+  document.getElementById('statComplaints').textContent = cp.filter(c => c.status === 'pending').length;
+  const cl = calls.data || [];
+  document.getElementById('statCalls').textContent = cl.length;
+}
+
+// ===== 切换 Tab =====
+async function switchTab(tab, evt) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  if (evt && evt.target) evt.target.classList.add('active');
+  const content = document.getElementById('tabContent');
+  content.innerHTML = '<div class="loading">加载中...</div>';
+  try {
+    if (tab === 'overview') await renderOverview(content);
+    else if (tab === 'merchant') await renderMerchant(content);
+    else if (tab === 'driver') await renderDriver(content);
+    else if (tab === 'privatecar') await renderPrivateCar(content);
+    else if (tab === 'personal') await renderPersonal(content);
+    else if (tab === 'users') await renderUsers(content);
+    else if (tab === 'orders') await renderOrders(content);
+    else if (tab === 'finance') await renderFinance(content);
+    else if (tab === 'blacklist') await renderBlacklist(content);
+    else if (tab === 'complaints') await renderComplaints(content);
+    else if (tab === 'messages') await renderMessages(content);
+    else if (tab === 'config') await renderConfig(content);
+    else if (tab === 'test') await renderTest(content);
+    else content.innerHTML = '<div class="loading">未知页面</div>';
+  } catch (e) { content.innerHTML = '<div class="loading" style="color:#e74c3c">加载失败: ' + e.message + '</div>'; }
+}
+
+// ===== 弹窗 =====
+function openModal(title, bodyHTML, footerHTML) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = bodyHTML;
+  document.getElementById('modalFooter').innerHTML = footerHTML;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); }
+
+// ===== Toast =====
+function showToast(type, msg) {
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.style.cssText = 'position:fixed;top:80px;right:20px;z-index:9999;max-width:300px;animation:fadeIn 0.3s;background:' + (type === 'success' ? '#d4edda;border:1px solid #c3e6cb' : '#f8d7da;border:1px solid #f5c6cb') + ';color:' + (type === 'success' ? '#155724' : '#721c24') + ';padding:12px 16px;border-radius:8px;font-size:13px';
+  el.innerHTML = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ===== Tab: 数据概览 =====
+async function renderOverview(el) {
+  const [stats, orders] = await Promise.all([api('/admin/stats'), api('/admin/order-list')]);
+  const s = stats.data || {};
+  const ordersList = (orders.data || []).slice(0, 10);
+  const statusMap = ['','待支付','待取货','运输中','已送达','已完成'];
+  const statusCls = ['','badge-yellow','badge-blue','badge-green','badge-gray','badge-gray'];
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header"><div class="card-title"><span class="icon">📊</span>平台运营概览</div></div>
+      <table>
+        <thead><tr><th>指标</th><th>数值</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>总用户数</td><td><b>${s.totalUsers||0}</b></td><td>所有注册用户</td></tr>
+          <tr><td>商家</td><td><b>${s.merchants||0}</b></td><td>货主/托运方</td></tr>
+          <tr><td>货车司机</td><td><b>${s.drivers||0}</b></td><td>货车承运方</td></tr>
+          <tr><td>私家车主</td><td><b>${s.privateCars||0}</b></td><td>小件承运（≤20kg）</td></tr>
+          <tr><td>总订单数</td><td><b>${s.totalOrders||0}</b></td><td>全部交易订单</td></tr>
+          <tr><td>总交易额</td><td><b style="color:#27ae60">¥${s.totalAmount||0}</b></td><td>平台总流水</td></tr>
+          <tr><td>今日订单</td><td><b>${s.todayOrders||0}</b></td><td>今日新增</td></tr>
+          <tr><td>今日交易额</td><td><b>¥${s.todayAmount||0}</b></td><td>今日流水</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">🕐</span>最近订单</div>
+        <button class="btn btn-outline btn-sm" onclick="switchTab('orders')">查看全部 →</button>
+      </div>
+      <table>
+        <thead><tr><th>#</th><th>商家</th><th>司机</th><th>路线</th><th>金额</th><th>状态</th><th>时间</th></tr></thead>
+        <tbody>
+          ${ordersList.length ? ordersList.map(o => `<tr>
+            <td><b>#${o.id}</b></td><td>商家${o.merchant_id||'-'}</td><td>司机${o.driver_id||'-'}</td>
+            <td class="td-secondary">${o.start_addr||''} → ${o.end_addr||''}</td>
+            <td><b>¥${o.price||0}</b></td>
+            <td><span class="badge ${statusCls[o.status]||'badge-gray'}">${statusMap[o.status]||'未知'}</span></td>
+            <td class="td-secondary">${(o.create_time||'').slice(0,16)}</td>
+          </tr>`).join('') : '<tr><td colspan="7" class="empty-state"><div class="icon">📭</div><p>暂无订单</p></td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+// ===== Tab: 用户管理 =====
+async function renderUsers(el) {
+  const res = await api('/admin/user-list');
+  const users = res.data || [];
+  window._allUsers = users;
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">👥</span>用户列表 <small style="font-weight:400;color:#888">共 ${users.length} 人</small></div>
+        <div class="card-actions"><button class="btn btn-outline btn-sm" onclick="switchTab('blacklist')">⛔ 黑名单</button></div>
+      </div>
+      <div class="filter-row">
+        <input id="userSearch" placeholder="搜索手机号/姓名..." oninput="filterUsers()">
+        <select id="userRoleFilter" onchange="filterUsers()"><option value="">全部角色</option><option value="1">商家</option><option value="2">货车司机</option><option value="3">私家车主</option><option value="5">个人用户</option></select>
+        <select id="userStatusFilter" onchange="filterUsers()"><option value="">全部状态</option><option value="1">正常</option><option value="-1">黑名单</option><option value="2">白名单</option></select>
+      </div>
+      <table><thead><tr><th>ID</th><th>手机号</th><th>角色</th><th>姓名</th><th>余额</th><th>状态</th><th>注册时间</th><th>操作</th></tr></thead><tbody id="usersTbody"></tbody></table>
+    </div>`;
+  renderUsersRows(users);
+}
+
+function renderUsersRows(users) {
+  const tbody = document.getElementById('usersTbody');
+  if (!users.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="icon">👤</div><p>暂无用户</p></td></tr>'; return; }
+  const statusMap = { '-1':'黑名单','0':'禁用','1':'正常','2':'白名单' };
+  const statusCls = { '-1':'badge-red','0':'badge-gray','1':'badge-green','2':'badge-blue' };
+  const roleMap = {1:'商家',2:'货车司机',3:'私家车主',4:'管理员',5:'个人用户'};
+  tbody.innerHTML = users.map(u => `<tr>
+    <td><b>#${u.id}</b></td><td>${u.phone||'-'}</td>
+    <td><span class="role-badge role-${u.role}">${roleMap[u.role]||'未知'}</span></td>
+    <td>${u.real_name||'-'}</td><td>¥${u.balance||0}</td>
+    <td><span class="badge ${statusCls[u.status]||'badge-gray'}">${statusMap[u.status]||'未知'}</span></td>
+    <td class="td-secondary">${(u.create_time||'').slice(0,10)}</td>
+    <td><div class="action-group">
+      ${u.status!=-1?`<button class="btn btn-danger btn-sm" onclick="setUserStatus(${u.id},-1)">拉黑</button>`:''}
+      ${u.status!=2?`<button class="btn btn-info btn-sm" onclick="setUserStatus(${u.id},2)">白名单</button>`:''}
+      ${u.status!=1?`<button class="btn btn-success btn-sm" onclick="setUserStatus(${u.id},1)">恢复</button>`:''}
+      <button class="btn btn-outline btn-sm" onclick="viewUserDetail(${u.id})">详情</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function filterUsers() {
+  const q = document.getElementById('userSearch').value.toLowerCase();
+  const role = document.getElementById('userRoleFilter').value;
+  const status = document.getElementById('userStatusFilter').value;
+  const list = window._allUsers.filter(u => {
+    const matchQ = !q || (u.phone&&u.phone.includes(q)) || (u.real_name&&u.real_name.toLowerCase().includes(q)) || String(u.id).includes(q);
+    return matchQ && (!role||String(u.role)===role) && (!status||String(u.status)===status);
+  });
+  renderUsersRows(list);
+}
+
+async function setUserStatus(userId, status) {
+  const reason = status===-1 ? (prompt('请输入拉黑原因（可选）：')||'管理员操作') : status===2 ? (prompt('请输入白名单原因（可选）：')||'管理员操作') : '恢复正常';
+  const res = await api('/admin/users/' + userId + '/status', 'PUT', { status, reason });
+  if (res.code===0) { showToast('success','用户状态已更新'); await switchTab('users'); } else { showToast('error',res.msg||'操作失败'); }
+}
+
+function viewUserDetail(userId) {
+  const u = window._allUsers.find(x => x.id===userId);
+  if (!u) return;
+  const roleMap = {1:'商家',2:'货车司机',3:'私家车主',4:'管理员',5:'个人用户'};
+  const body = `
+    <div class="form-row"><div class="form-group"><label>用户ID</label><input value="#${u.id}" readonly></div><div class="form-group"><label>手机号</label><input value="${u.phone||'-'}" readonly></div></div>
+    <div class="form-row"><div class="form-group"><label>角色</label><input value="${roleMap[u.role]||'未知'}" readonly></div><div class="form-group"><label>姓名</label><input value="${u.real_name||'-'}" readonly></div></div>
+    <div class="form-row"><div class="form-group"><label>状态</label><input value="${['禁用','正常'][u.status]||'未知'}" readonly></div><div class="form-group"><label>余额</label><input value="¥${u.balance||0}" readonly></div></div>
+    <div class="form-group"><label>注册时间</label><input value="${u.create_time||'-'}" readonly></div>
+    ${u.blacklist_reason?`<div class="form-group"><label>封禁原因</label><input value="${u.blacklist_reason}" readonly style="color:#e74c3c"></div>`:''}`;
+  const footer = `<button class="btn btn-outline" onclick="closeModal()">关闭</button>
+    ${u.status!=-1?`<button class="btn btn-danger" onclick="closeModal();setUserStatus(${u.id},-1)">拉黑</button>`:''}
+    ${u.status!=1?`<button class="btn btn-success" onclick="closeModal();setUserStatus(${u.id},1)">恢复正常</button>`:''}`;
+  openModal('👤 用户详情', body, footer);
+}
+
+// ===== Tab: 黑名单 =====
+async function renderBlacklist(el) {
+  const res = await api('/admin/blacklist');
+  const list = res.data || [];
+  window._blacklist = list;
+  const roleMap = {1:'商家',2:'货车司机',3:'私家车主',4:'管理员',5:'个人用户'};
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">⛔</span>黑名单/白名单 <small style="font-weight:400;color:#888">共 ${list.length} 条</small></div>
+        <button class="btn btn-primary" onclick="showAddBlacklist()">+ 添加到名单</button>
+      </div>
+      ${!list.length ? '<div class="empty-state"><div class="icon">✅</div><p>暂无名单用户</p></div>' : `
+      <table>
+        <thead><tr><th>#</th><th>用户</th><th>角色</th><th>类型</th><th>原因</th><th>时间</th><th>操作</th></tr></thead>
+        <tbody>
+          ${list.map(b => `<tr>
+            <td><b>#${b.id}</b></td>
+            <td>${b.phone||'-'} <small style="color:#888">(${b.real_name||'-'})</small></td>
+            <td><span class="role-badge role-${b.role||0}">${roleMap[b.role]||'未知'}</span></td>
+            <td><span class="badge ${b.type==='blacklist'?'badge-red':'badge-blue'}">${b.type==='blacklist'?'⛔ 黑名单':'✅ 白名单'}</span></td>
+            <td class="td-secondary">${b.reason||'-'}</td>
+            <td class="td-secondary">${(b.create_time||'').slice(0,16)}</td>
+            <td><button class="btn btn-success btn-sm" onclick="removeBlacklist(${b.id})">移除</button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`}
+    </div>`;
+}
+
+function showAddBlacklist() {
+  const users = window._allUsers||[];
+  const opts = users.filter(u => u.status!==-1).map(u => `<option value="${u.id}">${u.phone} - ${['','商家','货车司机','私家车主','管理员','个人用户'][u.role]||'未知'} (#${u.id})</option>`).join('');
+  const body = `
+    <div class="form-group"><label>选择用户 *</label><select id="blUserId">${opts||'<option value="">无可选用户</option>'}</select></div>
+    <div class="form-group"><label>名单类型 *</label><select id="blType"><option value="blacklist">⛔ 黑名单（禁止使用）</option><option value="whitelist">✅ 白名单（特殊权限）</option></select></div>
+    <div class="form-group"><label>原因</label><textarea id="blReason" placeholder="输入原因..."></textarea></div>`;
+  const footer = `<button class="btn btn-outline" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="doAddBlacklist()">确认添加</button>`;
+  openModal('⛔ 添加黑名单/白名单', body, footer);
+}
+
+async function doAddBlacklist() {
+  const userId = document.getElementById('blUserId').value;
+  const type = document.getElementById('blType').value;
+  const reason = document.getElementById('blReason').value;
+  if (!userId) return alert('请选择用户');
+  const res = await api('/admin/blacklist','POST',{user_id:userId,type,reason});
+  if (res.code===0) { closeModal(); showToast('success','已添加到'+(type==='blacklist'?'黑名单':'白名单')); await switchTab('blacklist'); await loadStats(); }
+  else { showToast('error',res.msg||'操作失败'); }
+}
+
+async function removeBlacklist(id) {
+  if (!confirm('确认移除？')) return;
+  const res = await api('/admin/blacklist/'+id,'DELETE');
+  if (res.code===0) { showToast('success','已移除'); await switchTab('blacklist'); await loadStats(); }
+  else { showToast('error',res.msg||'移除失败'); }
+}
+
+// ===== Tab: 投诉管理 =====
+async function renderComplaints(el) {
+  const res = await api('/admin/complaints');
+  const list = res.data||[];
+  window._complaints = list;
+  const pending = list.filter(c=>c.status==='pending').length;
+  const typeMap = {lost:'货物丢失',damaged:'货物损坏',delay:'延迟配送',service:'服务态度',other:'其他'};
+  const statusMap = {pending:'待处理',resolved:'已处理',rejected:'已驳回'};
+  const statusCls = {pending:'badge-yellow',resolved:'badge-green',rejected:'badge-red'};
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">📋</span>投诉管理 <small style="font-weight:400;color:#888">共 ${list.length} 条，待处理 ${pending} 条</small></div>
+      </div>
+      <div class="filter-row">
+        <select id="cpFilter" onchange="filterComplaints()"><option value="">全部状态</option><option value="pending">待处理</option><option value="resolved">已处理</option><option value="rejected">已驳回</option></select>
+        <select id="cpTypeFilter" onchange="filterComplaints()"><option value="">全部类型</option><option value="lost">货物丢失</option><option value="damaged">货物损坏</option><option value="delay">延迟配送</option><option value="service">服务态度</option><option value="other">其他</option></select>
+      </div>
+      <table><thead><tr><th>#</th><th>订单</th><th>投诉方</th><th>类型</th><th>描述</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody id="cpTbody"></tbody></table>
+    </div>`;
+  renderCpRows(list);
+}
+
+function renderCpRows(list) {
+  const tbody = document.getElementById('cpTbody');
+  if (!list.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="icon">📭</div><p>暂无投诉</p></td></tr>'; return; }
+  const typeMap = {lost:'货物丢失',damaged:'货物损坏',delay:'延迟配送',service:'服务态度',other:'其他'};
+  const statusMap = {pending:'待处理',resolved:'已处理',rejected:'已驳回'};
+  const statusCls = {pending:'badge-yellow',resolved:'badge-green',rejected:'badge-red'};
+  tbody.innerHTML = list.map(c => `<tr>
+    <td><b>#${c.id}</b></td><td>#${c.order_id||'-'}</td><td>${c.complainant_phone||'-'}</td>
+    <td><span class="badge badge-purple">${typeMap[c.type]||c.type}</span></td>
+    <td class="td-secondary" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.description||''}">${c.description||'-'}</td>
+    <td><span class="badge ${statusCls[c.status]||'badge-gray'}">${statusMap[c.status]||c.status}</span></td>
+    <td class="td-secondary">${(c.create_time||'').slice(0,16)}</td>
+    <td><div class="action-group">
+      ${c.status==='pending'?`<button class="btn btn-success btn-sm" onclick="handleComplaint(${c.id},'resolved')">✓ 处理</button>
+      <button class="btn btn-danger btn-sm" onclick="handleComplaint(${c.id},'rejected')">✗ 驳回</button>`:''}
+      <button class="btn btn-outline btn-sm" onclick="viewComplaintDetail(${c.id})">详情</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function filterComplaints() {
+  const status = document.getElementById('cpFilter').value;
+  const type = document.getElementById('cpTypeFilter').value;
+  renderCpRows(window._complaints.filter(c => (!status||c.status===status) && (!type||c.type===type)));
+}
+
+function viewComplaintDetail(id) {
+  const c = window._complaints.find(x=>x.id===id);
+  if (!c) return;
+  const typeMap = {lost:'货物丢失',damaged:'货物损坏',delay:'延迟配送',service:'服务态度',other:'其他'};
+  const statusMap = {pending:'待处理',resolved:'已处理',rejected:'已驳回'};
+  const body = `
+    <div class="form-row"><div class="form-group"><label>ID</label><input value="#${c.id}" readonly></div><div class="form-group"><label>订单</label><input value="#${c.order_id||'-'}" readonly></div></div>
+    <div class="form-row"><div class="form-group"><label>类型</label><input value="${typeMap[c.type]||c.type}" readonly></div><div class="form-group"><label>状态</label><input value="${statusMap[c.status]||c.status}" readonly></div></div>
+    <div class="form-group"><label>描述</label><textarea readonly>${c.description||'-'}</textarea></div>
+    ${c.evidence?`<div class="form-group"><label>凭证</label><input value="${c.evidence}" readonly></div>`:''}
+    ${c.handle_remark?`<div class="form-group"><label>处理备注</label><textarea readonly>${c.handle_remark}</textarea></div>`:''}
+    ${c.handle_time?`<div class="form-group"><label>处理时间</label><input value="${c.handle_time}" readonly></div>`:''}`;
+  const footer = `<button class="btn btn-outline" onclick="closeModal()">关闭</button>
+    ${c.status==='pending'?`<button class="btn btn-danger" onclick="closeModal();handleComplaint(${c.id},'rejected')">驳回</button>
+    <button class="btn btn-success" onclick="closeModal();handleComplaint(${c.id},'resolved')">标记已处理</button>`:''}`;
+  openModal('📋 投诉详情', body, footer);
+}
+
+async function handleComplaint(id, status) {
+  const remark = prompt('请输入处理备注：') || '';
+  const penalty = prompt('如有罚款请输入金额（元），否则留空：') || '';
+  const data = { status, handle_remark: remark };
+  if (penalty) data.penalty_amount = penalty;
+  const res = await api('/admin/complaints/'+id,'PUT', data);
+  if (res.code===0) { showToast('success','投诉已处理'); await switchTab('complaints'); await loadStats(); }
+  else { showToast('error',res.msg||'处理失败'); }
+}
+
+// ===== Tab: 通讯记录 =====
+async function renderMessages(el) {
+  const [msgsRes, callsRes] = await Promise.all([api('/admin/messages'), api('/admin/calls')]);
+  const messages = msgsRes.data||[];
+  const calls = callsRes.data||[];
+  window._messages = messages;
+  window._calls = calls;
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header"><div class="card-title"><span class="icon">📞</span>通话记录 <small style="font-weight:400;color:#888">共 ${calls.length} 条</small></div></div>
+      ${!calls.length ? '<div class="empty-state"><div class="icon">📵</div><p>暂无通话记录</p></div>' : `
+      <table>
+        <thead><tr><th>#</th><th>发起方</th><th>接收方</th><th>虚拟号</th><th>订单</th><th>时间</th><th>操作</th></tr></thead>
+        <tbody>
+          ${calls.map(m => `<tr>
+            <td><b>#${m.id}</b></td>
+            <td>${m.from_phone||'-'} <small style="color:#888">(${m.from_name||'-'})</small></td>
+            <td>${m.to_phone||'-'} <small style="color:#888">(${m.to_name||'-'})</small></td>
+            <td><span style="font-family:monospace;color:#e67e22">${m.virtual_no||'-'}</span></td>
+            <td>${m.order_no||'-'}</td>
+            <td class="td-secondary">${(m.create_time||'').slice(0,16)}</td>
+            <td><button class="btn btn-outline btn-sm" onclick="viewCallDetail(${m.id})">详情</button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`}
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title"><span class="icon">💬</span>消息记录 <small style="font-weight:400;color:#888">共 ${messages.length} 条</small></div></div>
+      ${!messages.length ? '<div class="empty-state"><div class="icon">💬</div><p>暂无消息记录</p></div>' : `
+      <table>
+        <thead><tr><th>#</th><th>发送方</th><th>接收方</th><th>类型</th><th>内容</th><th>时间</th></tr></thead>
+        <tbody>
+          ${messages.map(m => `<tr>
+            <td><b>#${m.id}</b></td>
+            <td>${m.from_phone||'-'} <small style="color:#888">(${m.from_name||'-'})</small></td>
+            <td>${m.to_phone||'-'} <small style="color:#888">(${m.to_name||'-'})</small></td>
+            <td><span class="badge ${m.type==='call_request'?'badge-blue':'badge-gray'}">${m.type==='call_request'?'📞通话':'💬消息'}</span></td>
+            <td class="td-secondary" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${m.content||''}">${m.content||'-'}</td>
+            <td class="td-secondary">${(m.create_time||'').slice(0,16)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`}
+    </div>`;
+}
+
+function viewCallDetail(id) {
+  const m = window._calls.find(x=>x.id===id);
+  if (!m) return;
+  const body = `
+    <div class="form-row"><div class="form-group"><label>发起人</label><input value="${m.from_phone||'-'}" readonly></div><div class="form-group"><label>接收人</label><input value="${m.to_phone||'-'}" readonly></div></div>
+    <div class="form-row"><div class="form-group"><label>虚拟号</label><input value="${m.virtual_no||'-'}" readonly style="color:#e67e22;font-family:monospace"></div><div class="form-group"><label>订单</label><input value="${m.order_no||'-'}" readonly></div></div>
+    <div class="form-group"><label>时间</label><input value="${m.create_time||''}" readonly></div>`;
+  openModal('📞 通话详情', body, `<button class="btn btn-outline" onclick="closeModal()">关闭</button>`);
+}
+
+// ===== Tab: 佣金配置 =====
+async function renderConfig(el) {
+  const res = await api('/admin/commission-config');
+  const cfg = res.data?.[0]||{commission_rate:6,private_rate:12};
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header"><div class="card-title"><span class="icon">⚙️</span>佣金配置</div></div>
+      <div class="config-grid">
+        <div class="config-item"><h4>🚛 货车司机佣金</h4>
+          <div class="form-group"><label>佣金率 (%)</label><input id="cfgTruck" type="number" step="0.1" value="${cfg.commission_rate}" placeholder="如: 6"><div class="form-hint">货车每单佣金比例，默认6%</div></div>
+        </div>
+        <div class="config-item"><h4>🚗 私家车主佣金</h4>
+          <div class="form-group"><label>佣金率 (%)</label><input id="cfgPrivate" type="number" step="0.1" value="${cfg.private_rate}" placeholder="如: 12"><div class="form-hint">私家车每单佣金比例，默认12%</div></div>
+        </div>
+      </div>
+      <div style="margin-top:16px"><button class="btn btn-primary" onclick="saveConfig()">💾 保存配置</button></div>
+      <pre id="cfgResult" style="margin-top:14px"></pre>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title"><span class="icon">📖</span>计价规则</div></div>
+      <table>
+        <thead><tr><th>角色</th><th>场景</th><th>规则</th></tr></thead>
+        <tbody>
+          <tr><td><span class="role-badge role-2">货车司机</span></td><td>县城内</td><td>免运费</td></tr>
+          <tr><td><span class="role-badge role-2">货车司机</span></td><td>满500元</td><td>免运费</td></tr>
+          <tr><td><span class="role-badge role-2">货车司机</span></td><td>乡镇</td><td>加收¥5</td></tr>
+          <tr><td><span class="role-badge role-2">货车司机</span></td><td>偏远地区</td><td>加收¥10</td></tr>
+          <tr><td><span class="role-badge role-2">货车司机</span></td><td>加急</td><td>加收¥15</td></tr>
+          <tr><td><span class="role-badge role-3">私家车</span></td><td>重量限制</td><td>仅承运≤20kg小件</td></tr>
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function saveConfig() {
+  const truck = document.getElementById('cfgTruck').value;
+  const priv = document.getElementById('cfgPrivate').value;
+  const res = await api('/admin/commission-config','POST',{truck_rate:truck,private_rate:priv});
+  document.getElementById('cfgResult').textContent = JSON.stringify(res,null,2);
+  showToast(res.code===0?'success':'error', res.code===0?'配置已保存':'保存失败: '+res.msg);
+}
+
+// ===== Tab: 接口测试 =====
+async function renderTest(el) {
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header"><div class="card-title"><span class="icon">🧪</span>接口测试</div></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
+        ${[{id:1,t:'1️⃣ 注册商家',d:'创建测试商家',fn:'tReg(1)'},{id:2,t:'2️⃣ 注册货车司机',d:'创建测试司机',fn:'tReg(2)'},{id:3,t:'3️⃣ 注册私家车主',d:'创建测试私家车',fn:'tReg(3)'},{id:4,t:'4️⃣ 发布货源',d:'商家发布测试货源',fn:'tPub()'},{id:5,t:'5️⃣ 司机接单',d:'司机接取待发货源',fn:'tTake()'},{id:6,t:'6️⃣ 完整流程',d:'一键测试注册→发布→接单',fn:'tFull()'}].map(x => `
+          <div class="config-item">
+            <h4>${x.t}</h4><p class="form-hint" style="margin-bottom:10px">${x.d}</p>
+            <button class="btn btn-primary" onclick="${x.fn}">运行</button>
+            <pre id="tr${x.id}" style="margin-top:10px;font-size:11px"></pre>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+let _tTokens = {};
+async function tReg(role) {
+  const phone = '1'+Math.floor(Math.random()*900000000+100000000);
+  const r = await api('/user/register','POST',{phone,password:'test123',role});
+  if (r.code===0) { _tTokens[role]=r.data.token; document.getElementById('tr1').textContent = JSON.stringify(r.data,null,2); }
+  else { document.getElementById('tr'+role).textContent='❌ '+r.msg; }
+}
+async function tPub() {
+  if (!_tTokens[1]) return alert('请先注册商家');
+  const r = await fetch('/api/merchant/publish-goods',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+_tTokens[1]},body:JSON.stringify({start_addr:'甘孜州康定市',end_addr:'成都市武侯区',weight:15,price:200,goods_value:800,remark:'测试货源'})});
+  document.getElementById('tr4').textContent = JSON.stringify(await r.json(),null,2);
+}
+async function tTake() {
+  if (!_tTokens[2]) return alert('请先注册司机');
+  const m = await fetch('/api/driver/match-goods',{headers:{'Authorization':'Bearer '+_tTokens[2]}});
+  const match = await m.json();
+  if (!match.data?.length) { document.getElementById('tr5').textContent='❌ 无待接单货源'; return; }
+  const r = await fetch('/api/driver/take-order',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+_tTokens[2]},body:JSON.stringify({goods_id:match.data[0].id})});
+  document.getElementById('tr5').textContent = JSON.stringify(await r.json(),null,2);
+}
+async function tFull() {
+  const log = (id,msg) => { document.getElementById(id).textContent=msg; };
+  const p1='1'+Math.floor(Math.random()*900000000+100000000);
+  const m = await api('/user/register','POST',{phone:p1,password:'test123',role:1});
+  _tTokens[1]=m.data?.token;
+  log('tr6','✅ 商家 #'+(m.data?.user_id||m.msg));
+  const p2='1'+Math.floor(Math.random()*900000000+100000000);
+  const d = await api('/user/register','POST',{phone:p2,password:'test123',role:2});
+  _tTokens[2]=d.data?.token;
+  document.getElementById('tr6').textContent+='\n✅ 司机 #'+(d.data?.user_id||d.msg);
+  const g = await fetch('/api/merchant/publish-goods',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+_tTokens[1]},body:JSON.stringify({start_addr:'甘孜州康定市',end_addr:'成都市武侯区',weight:20,price:300,goods_value:1000,remark:'完整测试'})});
+  const gj = await g.json();
+  document.getElementById('tr6').textContent+='\n✅ 货源 #'+(gj.data?.goods_id||gj.msg);
+  const o = await fetch('/api/driver/take-order',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+_tTokens[2]},body:JSON.stringify({goods_id:gj.data?.goods_id})});
+  const oj = await o.json();
+  document.getElementById('tr6').textContent+='\n✅ 订单 #'+(oj.data?.order_id||oj.msg);
+  const s = await api('/admin/stats');
+  document.getElementById('tr6').textContent+='\n\n📊 用户='+(s.data?.totalUsers||0)+' 订单='+(s.data?.totalOrders||0)+' 交易额=¥'+(s.data?.totalAmount||0);
+  await loadStats();
+}
+
+// ===== Tab: 商家管理 (role=1) =====
+async function renderMerchant(el) {
+  const res = await api('/admin/user-list');
+  const users = (res.data || []).filter(u => u.role === 1);
+  window._merchants = users;
+  const statusMap = { '-1':'黑名单','0':'禁用','1':'待审核','2':'已认证','3':'白名单' };
+  const statusCls = { '-1':'badge-red','0':'badge-gray','1':'badge-yellow','2':'badge-green','3':'badge-blue' };
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">🏪</span>商家管理 <small style="font-weight:400;color:#888">共 ${users.length} 人</small></div>
+      </div>
+      <div class="filter-row">
+        <input id="merchantSearch" placeholder="搜索手机号/姓名..." oninput="filterMerchants()">
+        <select id="merchantStatusFilter" onchange="filterMerchants()"><option value="">全部状态</option><option value="1">待审核</option><option value="2">已认证</option><option value="-1">黑名单</option></select>
+      </div>
+      <table><thead><tr><th>ID</th><th>手机号</th><th>姓名</th><th>店铺名</th><th>余额</th><th>状态</th><th>注册时间</th><th>操作</th></tr></thead><tbody id="merchantsTbody"></tbody></table>
+    </div>`;
+  renderMerchantsRows(users);
+}
+
+function renderMerchantsRows(users) {
+  const tbody = document.getElementById('merchantsTbody');
+  if (!users.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="icon">🏪</div><p>暂无商家</p></td></tr>'; return; }
+  const statusMap = { '-1':'黑名单','0':'禁用','1':'待审核','2':'已认证','3':'白名单' };
+  const statusCls = { '-1':'badge-red','0':'badge-gray','1':'badge-yellow','2':'badge-green','3':'badge-blue' };
+  tbody.innerHTML = users.map(u => `<tr>
+    <td><b>#${u.id}</b></td><td>${u.phone||'-'}</td>
+    <td>${u.real_name||'-'}</td><td>${u.shop_name||'-'}</td><td>¥${u.balance||0}</td>
+    <td><span class="badge ${statusCls[u.status]||'badge-gray'}">${statusMap[u.status]||'未知'}</span></td>
+    <td class="td-secondary">${(u.create_time||'').slice(0,10)}</td>
+    <td><div class="action-group">
+      ${u.status===1?`<button class="btn btn-success btn-sm" onclick="auditUser(${u.id},2,'merchant')">✓ 认证</button><button class="btn btn-danger btn-sm" onclick="auditUser(${u.id},-1,'merchant')">✗ 拒绝</button>`:''}
+      ${u.status===2?`<button class="btn btn-warning btn-sm" onclick="auditUser(${u.id},-1,'merchant')">拉黑</button>`:''}
+      <button class="btn btn-outline btn-sm" onclick="viewMerchantDetail(${u.id})">详情</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function filterMerchants() {
+  const q = document.getElementById('merchantSearch').value.toLowerCase();
+  const status = document.getElementById('merchantStatusFilter').value;
+  const list = window._merchants.filter(u => {
+    const matchQ = !q || (u.phone&&u.phone.includes(q)) || (u.real_name&&u.real_name.toLowerCase().includes(q));
+    return matchQ && (!status||String(u.status)===status);
+  });
+  renderMerchantsRows(list);
+}
+
+function viewMerchantDetail(id) {
+  const u = window._merchants.find(x => x.id===id);
+  if (!u) return;
+  const body = `
+    <div class="form-row"><div class="form-group"><label>用户ID</label><input value="#${u.id}" readonly></div><div class="form-group"><label>手机号</label><input value="${u.phone||'-'}" readonly></div></div>
+    <div class="form-row"><div class="form-group"><label>姓名</label><input value="${u.real_name||'-'}" readonly></div><div class="form-group"><label>店铺名</label><input value="${u.shop_name||'-'}" readonly></div></div>
+    <div class="form-row"><div class="form-group"><label>余额</label><input value="¥${u.balance||0}" readonly></div><div class="form-group"><label>状态</label><input value="${{'-1':'黑名单','0':'禁用','1':'待审核','2':'已认证'}[u.status]||'未知'}" readonly></div></div>
+    <div class="form-group"><label>注册时间</label><input value="${u.create_time||'-'}" readonly></div>`;
+  const footer = `<button class="btn btn-outline" onclick="closeModal()">关闭</button>`;
+  openModal('🏪 商家详情', body, footer);
+}
+
+// ===== Tab: 货车管理 (role=2) =====
+async function renderDriver(el) {
+  const res = await api('/admin/user-list');
+  const users = (res.data || []).filter(u => u.role === 2);
+  window._drivers = users;
+  const statusMap = { '-1':'黑名单','0':'禁用','1':'待审核','2':'已认证','3':'白名单' };
+  const statusCls = { '-1':'badge-red','0':'badge-gray','1':'badge-yellow','2':'badge-green','3':'badge-blue' };
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">🚚</span>货车司机管理 <small style="font-weight:400;color:#888">共 ${users.length} 人</small></div>
+      </div>
+      <div class="filter-row">
+        <input id="driverSearch" placeholder="搜索手机号/姓名/车牌..." oninput="filterDrivers()">
+        <select id="driverStatusFilter" onchange="filterDrivers()"><option value="">全部状态</option><option value="1">待审核</option><option value="2">已认证</option><option value="-1">黑名单</option></select>
+      </div>
+      <table><thead><tr><th>ID</th><th>手机号</th><th>姓名</th><th>车牌号</th><th>车辆类型</th><th>余额</th><th>状态</th><th>操作</th></tr></thead><tbody id="driversTbody"></tbody></table>
+    </div>`;
+  renderDriversRows(users);
+}
+
+function renderDriversRows(users) {
+  const tbody = document.getElementById('driversTbody');
+  if (!users.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="icon">🚚</div><p>暂无货车司机</p></td></tr>'; return; }
+  const statusMap = { '-1':'黑名单','0':'禁用','1':'待审核','2':'已认证','3':'白名单' };
+  const statusCls = { '-1':'badge-red','0':'badge-gray','1':'badge-yellow','2':'badge-green','3':'badge-blue' };
+  tbody.innerHTML = users.map(u => `<tr>
+    <td><b>#${u.id}</b></td><td>${u.phone||'-'}</td>
+    <td>${u.real_name||'-'}</td><td>${u.plate_number||'-'}</td><td>${u.vehicle_type||'-'}</td>
+    <td>¥${u.balance||0}</td>
+    <td><span class="badge ${statusCls[u.status]||'badge-gray'}">${statusMap[u.status]||'未知'}</span></td>
+    <td><div class="action-group">
+      ${u.status===1?`<button class="btn btn-success btn-sm" onclick="auditUser(${u.id},2,'driver')">✓ 认证</button><button class="btn btn-danger btn-sm" onclick="auditUser(${u.id},-1,'driver')">✗ 拒绝</button>`:''}
+      ${u.status===2?`<button class="btn btn-warning btn-sm" onclick="auditUser(${u.id},-1,'driver')">拉黑</button>`:''}
+      <button class="btn btn-outline btn-sm" onclick="viewDriverDetail(${u.id})">详情</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function filterDrivers() {
+  const q = document.getElementById('driverSearch').value.toLowerCase();
+  const status = document.getElementById('driverStatusFilter').value;
+  const list = window._drivers.filter(u => {
+    const matchQ = !q || (u.phone&&u.phone.includes(q)) || (u.real_name&&u.real_name.toLowerCase().includes(q)) || (u.plate_number&&u.plate_number.toLowerCase().includes(q));
+    return matchQ && (!status||String(u.status)===status);
+  });
+  renderDriversRows(list);
+}
+
+function viewDriverDetail(id) {
+  const u = window._drivers.find(x => x.id===id);
+  if (!u) return;
+  const body = `
+    <div class="form-row"><div class="form-group"><label>用户ID</label><input value="#${u.id}" readonly></div><div class="form-group"><label>手机号</label><input value="${u.phone||'-'}" readonly></div></div>
+    <div class="form-row"><div class="form-group"><label>姓名</label><input value="${u.real_name||'-'}" readonly></div><div class="form-group"><label>车牌号</label><input value="${u.plate_number||'-'}" readonly></div></div>
+    <div class="form-row"><div class="form-group"><label>车辆类型</label><input value="${u.vehicle_type||'-'}" readonly></div><div class="form-group"><label>载重</label><input value="${u.load_weight||'-'}吨" readonly></div></div>
+    <div class="form-row"><div class="form-group"><label>余额</label><input value="¥${u.balance||0}" readonly></div><div class="form-group"><label>状态</label><input value="${{'-1':'黑名单','0':'禁用','1':'待审核','2':'已认证'}[u.status]||'未知'}" readonly></div></div>`;
+  const footer = `<button class="btn btn-outline" onclick="closeModal()">关闭</button>`;
+  openModal('🚚 货车司机详情', body, footer);
+}
+
+// ===== Tab: 私家车管理 (role=3) =====
+async function renderPrivateCar(el) {
+  const res = await api('/admin/user-list');
+  const users = (res.data || []).filter(u => u.role === 3);
+  window._privateCars = users;
+  const statusMap = { '-1':'黑名单','0':'禁用','1':'待审核','2':'已认证','3':'白名单' };
+  const statusCls = { '-1':'badge-red','0':'badge-gray','1':'badge-yellow','2':'badge-green','3':'badge-blue' };
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">🚗</span>私家车管理 <small style="font-weight:400;color:#888">共 ${users.length} 人</small></div>
+      </div>
+      <div class="filter-row">
+        <input id="privateCarSearch" placeholder="搜索手机号/姓名/车牌..." oninput="filterPrivateCars()">
+        <select id="privateCarStatusFilter" onchange="filterPrivateCars()"><option value="">全部状态</option><option value="1">待审核</option><option value="2">已认证</option><option value="-1">黑名单</option></select>
+      </div>
+      <table><thead><tr><th>ID</th><th>手机号</th><th>姓名</th><th>车牌号</th><th>今日接单</th><th>余额</th><th>状态</th><th>操作</th></tr></thead><tbody id="privateCarsTbody"></tbody></table>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title"><span class="icon">📋</span>私家车约束规则</div></div>
+      <table><thead><tr><th>限制项</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>每日接单限制</td><td>最多 <b>2</b> 单/天</td></tr>
+          <tr><td>重量限制</td><td>仅承运 <b>≤20kg</b> 小件</td></tr>
+          <tr><td>货值限制</td><td>单件货值 <b>≤2000元</b></td></tr>
+          <tr><td>佣金率</td><td>按运费的 <b>10%</b> 抽成</td></tr>
+        </tbody>
+      </table>
+    </div>`;
+  renderPrivateCarsRows(users);
+}
+
+function renderPrivateCarsRows(users) {
+  const tbody = document.getElementById('privateCarsTbody');
+  if (!users.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="icon">🚗</div><p>暂无私家车主</p></td></tr>'; return; }
+  const statusMap = { '-1':'黑名单','0':'禁用','1':'待审核','2':'已认证','3':'白名单' };
+  const statusCls = { '-1':'badge-red','0':'badge-gray','1':'badge-yellow','2':'badge-green','3':'badge-blue' };
+  tbody.innerHTML = users.map(u => `<tr>
+    <td><b>#${u.id}</b></td><td>${u.phone||'-'}</td>
+    <td>${u.real_name||'-'}</td><td>${u.plate_number||'-'}</td>
+    <td><span class="badge ${u.today_orders>=2?'badge-red':'badge-green'}">${u.today_orders||0}/2 单</span></td>
+    <td>¥${u.balance||0}</td>
+    <td><span class="badge ${statusCls[u.status]||'badge-gray'}">${statusMap[u.status]||'未知'}</span></td>
+    <td><div class="action-group">
+      ${u.status===1?`<button class="btn btn-success btn-sm" onclick="auditUser(${u.id},2,'privatecar')">✓ 认证</button><button class="btn btn-danger btn-sm" onclick="auditUser(${u.id},-1,'privatecar')">✗ 拒绝</button>`:''}
+      ${u.status===2?`<button class="btn btn-warning btn-sm" onclick="auditUser(${u.id},-1,'privatecar')">拉黑</button>`:''}
+      <button class="btn btn-outline btn-sm" onclick="viewPrivateCarDetail(${u.id})">详情</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function filterPrivateCars() {
+  const q = document.getElementById('privateCarSearch').value.toLowerCase();
+  const status = document.getElementById('privateCarStatusFilter').value;
+  const list = window._privateCars.filter(u => {
+    const matchQ = !q || (u.phone&&u.phone.includes(q)) || (u.real_name&&u.real_name.toLowerCase().includes(q)) || (u.plate_number&&u.plate_number.toLowerCase().includes(q));
+    return matchQ && (!status||String(u.status)===status);
+  });
+  renderPrivateCarsRows(list);
+}
+
+function viewPrivateCarDetail(id) {
+  const u = window._privateCars.find(x => x.id===id);
+  if (!u) return;
+  const body = `
+    <div class="form-row"><div class="form-group"><label>用户ID</label><input value="#${u.id}" readonly></div><div class="form-group"><label>手机号</label><input value="${u.phone||'-'}" readonly></div></div>
+    <div class="form-row"><div class="form-group"><label>姓名</label><input value="${u.real_name||'-'}" readonly></div><div class="form-group"><label>车牌号</label><input value="${u.plate_number||'-'}" readonly></div></div>
+    <div class="form-row"><div class="form-group"><label>今日接单</label><input value="${u.today_orders||0}/2 单" readonly></div><div class="form-group"><label>余额</label><input value="¥${u.balance||0}" readonly></div></div>
+    <div class="form-row"><div class="form-group"><label>状态</label><input value="${{'-1':'黑名单','0':'禁用','1':'待审核','2':'已认证'}[u.status]||'未知'}" readonly></div><div class="form-group"><label>注册时间</label><input value="${u.create_time||'-'}" readonly></div></div>`;
+  const footer = `<button class="btn btn-outline" onclick="closeModal()">关闭</button>`;
+  openModal('🚗 私家车主详情', body, footer);
+}
+
+// ===== Tab: 个人管理 (role=5) =====
+async function renderPersonal(el) {
+  const res = await api('/admin/user-list');
+  const users = (res.data || []).filter(u => u.role === 5);
+  window._personals = users;
+  const statusMap = { '-1':'黑名单','0':'禁用','1':'待审核','2':'已认证','3':'白名单' };
+  const statusCls = { '-1':'badge-red','0':'badge-gray','1':'badge-yellow','2':'badge-green','3':'badge-blue' };
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">👤</span>个人用户管理 <small style="font-weight:400;color:#888">共 ${users.length} 人</small></div>
+      </div>
+      <div class="filter-row">
+        <input id="personalSearch" placeholder="搜索手机号/姓名..." oninput="filterPersonals()">
+        <select id="personalStatusFilter" onchange="filterPersonals()"><option value="">全部状态</option><option value="1">待审核</option><option value="2">已认证</option><option value="-1">黑名单</option></select>
+      </div>
+      <table><thead><tr><th>ID</th><th>手机号</th><th>姓名</th><th>余额</th><th>状态</th><th>注册时间</th><th>操作</th></tr></thead><tbody id="personalsTbody"></tbody></table>
+    </div>`;
+  renderPersonalsRows(users);
+}
+
+function renderPersonalsRows(users) {
+  const tbody = document.getElementById('personalsTbody');
+  if (!users.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="icon">👤</div><p>暂无个人用户</p></td></tr>'; return; }
+  const statusMap = { '-1':'黑名单','0':'禁用','1':'待审核','2':'已认证','3':'白名单' };
+  const statusCls = { '-1':'badge-red','0':'badge-gray','1':'badge-yellow','2':'badge-green','3':'badge-blue' };
+  tbody.innerHTML = users.map(u => `<tr>
+    <td><b>#${u.id}</b></td><td>${u.phone||'-'}</td>
+    <td>${u.real_name||'-'}</td><td>¥${u.balance||0}</td>
+    <td><span class="badge ${statusCls[u.status]||'badge-gray'}">${statusMap[u.status]||'未知'}</span></td>
+    <td class="td-secondary">${(u.create_time||'').slice(0,10)}</td>
+    <td><div class="action-group">
+      ${u.status===1?`<button class="btn btn-success btn-sm" onclick="auditUser(${u.id},2,'personal')">✓ 认证</button><button class="btn btn-danger btn-sm" onclick="auditUser(${u.id},-1,'personal')">✗ 拒绝</button>`:''}
+      ${u.status===2?`<button class="btn btn-warning btn-sm" onclick="auditUser(${u.id},-1,'personal')">拉黑</button>`:''}
+      <button class="btn btn-outline btn-sm" onclick="viewPersonalDetail(${u.id})">详情</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function filterPersonals() {
+  const q = document.getElementById('personalSearch').value.toLowerCase();
+  const status = document.getElementById('personalStatusFilter').value;
+  const list = window._personals.filter(u => {
+    const matchQ = !q || (u.phone&&u.phone.includes(q)) || (u.real_name&&u.real_name.toLowerCase().includes(q));
+    return matchQ && (!status||String(u.status)===status);
+  });
+  renderPersonalsRows(list);
+}
+
+function viewPersonalDetail(id) {
+  const u = window._personals.find(x => x.id===id);
+  if (!u) return;
+  const body = `
+    <div class="form-row"><div class="form-group"><label>用户ID</label><input value="#${u.id}" readonly></div><div class="form-group"><label>手机号</label><input value="${u.phone||'-'}" readonly></div></div>
+    <div class="form-row"><div class="form-group"><label>姓名</label><input value="${u.real_name||'-'}" readonly></div><div class="form-group"><label>余额</label><input value="¥${u.balance||0}" readonly></div></div>
+    <div class="form-row"><div class="form-group"><label>状态</label><input value="${{'-1':'黑名单','0':'禁用','1':'待审核','2':'已认证'}[u.status]||'未知'}" readonly></div><div class="form-group"><label>注册时间</label><input value="${u.create_time||'-'}" readonly></div></div>`;
+  const footer = `<button class="btn btn-outline" onclick="closeModal()">关闭</button>`;
+  openModal('👤 个人用户详情', body, footer);
+}
+
+// ===== 通用审核函数 =====
+async function auditUser(userId, status, tabName) {
+  const action = status === 2 ? '认证通过' : status === -1 ? '拉黑' : '修改状态';
+  if (!confirm(`确定${action}该用户？`)) return;
+  const reason = status === -1 ? (prompt('请输入拉黑原因（可选）：') || '管理员操作') : '';
+  const res = await api('/admin/users/' + userId + '/status', 'PUT', { status, reason });
+  if (res.code === 0) {
+    showToast('success', '用户状态已更新');
+    switchTab(tabName);
+  } else {
+    showToast('error', res.msg || '操作失败');
+  }
+}
+
+// ===== Tab: 订单管理 =====
+async function renderOrders(el) {
+  const res = await api('/admin/order-list');
+  const list = res.data||[];
+  window._orders = list;
+  const statusMap=['','待支付','待取货','运输中','已送达','已完成'];
+  const statusCls=['','badge-yellow','badge-blue','badge-green','badge-gray','badge-gray'];
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">📦</span>订单列表 <small style="font-weight:400;color:#888">共 ${list.length} 条</small></div>
+        <div class="filter-row" style="margin:0">
+          <select id="orderStatusFilter" onchange="filterOrders()"><option value="">全部状态</option><option value="1">待支付</option><option value="2">待取货</option><option value="3">运输中</option><option value="4">已送达</option><option value="5">已完成</option></select>
+        </div>
+      </div>
+      <table><thead><tr><th>#</th><th>商家</th><th>司机</th><th>路线</th><th>金额</th><th>佣金</th><th>司机收入</th><th>状态</th><th>时间</th></tr></thead><tbody id="ordersTbody"></tbody></table>
+    </div>`;
+  renderOrdersRows(list);
+}
+
+function renderOrdersRows(list) {
+  const tbody = document.getElementById('ordersTbody');
+  if (!list.length) { tbody.innerHTML='<tr><td colspan="9" class="empty-state"><div class="icon">📭</div><p>暂无订单</p></td></tr>'; return; }
+  const statusMap=['','待支付','待取货','运输中','已送达','已完成'];
+  const statusCls=['','badge-yellow','badge-blue','badge-green','badge-gray','badge-gray'];
+  tbody.innerHTML = list.map(o => `<tr>
+    <td><b>#${o.id}</b></td><td>商家${o.merchant_id||'-'}</td><td>司机${o.driver_id||'-'}</td>
+    <td class="td-secondary">${o.start_addr||''} → ${o.end_addr||''}</td>
+    <td><b>¥${o.price||0}</b></td><td class="td-secondary">¥${o.commission_fee||0} (${o.commission_rate||0}%)</td><td class="td-secondary">¥${o.driver_amount||0}</td>
+    <td><span class="badge ${statusCls[o.status]||'badge-gray'}">${statusMap[o.status]||'未知'}</span></td>
+    <td class="td-secondary">${(o.create_time||'').slice(0,16)}</td>
+  </tr>`).join('');
+}
+
+function filterOrders() {
+  const status = document.getElementById('orderStatusFilter').value;
+  renderOrdersRows(window._orders.filter(o => !status||String(o.status)===status));
+}
+
+// ===== Tab: 财务管理 =====
+async function renderFinance(el) {
+  const res = await api('/admin/settlements?status=all');
+  const list = res.data || [];
+  window._settlements = list;
+  
+  // 统计数据
+  const pending = list.filter(s => s.status === 'pending');
+  const approved = list.filter(s => s.status === 'approved');
+  const rejected = list.filter(s => s.status === 'rejected');
+  const pendingAmount = pending.reduce((sum, s) => sum + (s.amount || 0), 0);
+  const approvedAmount = approved.reduce((sum, s) => sum + (s.amount || 0), 0);
+  const totalCommission = list.reduce((sum, s) => sum + (s.commission_fee || 0), 0);
+  
+  const statusMap = { pending: '待审核', approved: '已批准', rejected: '已驳回' };
+  const statusCls = { pending: 'badge-pending', approved: 'badge-approved', rejected: 'badge-rejected' };
+  
+  el.innerHTML = `
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-value">¥${pendingAmount.toFixed(2)}</div><div class="stat-label">待审核金额</div></div>
+      <div class="stat-card"><div class="stat-value">¥${approvedAmount.toFixed(2)}</div><div class="stat-label">已发放金额</div></div>
+      <div class="stat-card"><div class="stat-value">¥${totalCommission.toFixed(2)}</div><div class="stat-label">平台佣金收入</div></div>
+      <div class="stat-card"><div class="stat-value">${list.length}</div><div class="stat-label">结算单总数</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">💰</span>结算单列表</div>
+        <div class="filter-row" style="margin:0">
+          <select id="settlementStatusFilter" onchange="filterSettlements()">
+            <option value="">全部状态</option>
+            <option value="pending">待审核</option>
+            <option value="approved">已批准</option>
+            <option value="rejected">已驳回</option>
+          </select>
+        </div>
+      </div>
+      <table><thead><tr><th>#</th><th>订单号</th><th>司机</th><th>运费</th><th>佣金</th><th>实发金额</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="settlementsTbody"></tbody></table>
+    </div>`;
+  renderSettlementsRows(list);
+}
+
+function renderSettlementsRows(list) {
+  const tbody = document.getElementById('settlementsTbody');
+  if (!list.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><div class="icon">💸</div><p>暂无结算单</p></td></tr>'; return; }
+  const statusMap = { pending: '待审核', approved: '已批准', rejected: '已驳回' };
+  const statusCls = { pending: 'badge-pending', approved: 'badge-approved', rejected: 'badge-rejected' };
+  tbody.innerHTML = list.map(s => `<tr>
+    <td><b>#${s.id}</b></td>
+    <td>订单#${s.order_id || '-'}</td>
+    <td>司机${s.driver_id || '-'}</td>
+    <td><b>¥${s.freight || 0}</b></td>
+    <td class="td-secondary">¥${s.commission_fee || 0}</td>
+    <td><b>¥${s.amount || 0}</b></td>
+    <td><span class="badge ${statusCls[s.status] || 'badge-gray'}">${statusMap[s.status] || s.status}</span></td>
+    <td class="td-secondary">${(s.create_time || '').slice(0, 16)}</td>
+    <td>${s.status === 'pending' ? `<button class="btn-sm btn-success" onclick="approveSettlement(${s.id})">✓ 批准</button> <button class="btn-sm btn-danger" onclick="rejectSettlement(${s.id})">✗ 驳回</button>` : `<span class="td-secondary">${s.status === 'rejected' ? '原因: ' + (s.reject_reason || '-') : '已完成'}</span>`}</td>
+  </tr>`).join('');
+}
+
+function filterSettlements() {
+  const status = document.getElementById('settlementStatusFilter').value;
+  renderSettlementsRows(window._settlements.filter(s => !status || s.status === status));
+}
+
+async function approveSettlement(id) {
+  if (!confirm('确定批准该结算单？')) return;
+  try {
+    await api(`/admin/settlements/${id}/approve`, { method: 'POST' });
+    alert('批准成功');
+    switchTab('finance');
+  } catch (e) { alert('批准失败: ' + e.message); }
+}
+
+async function rejectSettlement(id) {
+  const reason = prompt('请输入驳回原因:');
+  if (!reason) return;
+  try {
+    await api(`/admin/settlements/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) });
+    alert('驳回成功');
+    switchTab('finance');
+  } catch (e) { alert('驳回失败: ' + e.message); }
+}
+</script>
+</body>
+</html>

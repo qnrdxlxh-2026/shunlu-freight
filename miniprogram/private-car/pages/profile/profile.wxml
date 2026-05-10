@@ -1,0 +1,60 @@
+<!--pages/profile/profile.wxml-->
+<view class="profile-container">
+  <!-- 用户信息 -->
+  <view class="user-card">
+    <image class="avatar" src="{{avatarUrl}}" bindtap="chooseAvatar"></image>
+    <view class="user-info">
+      <text class="name">{{userInfo.real_name || '未设置'}}</text>
+      <text class="phone">{{userInfo.phone}}</text>
+      <text class="car-info">🚗 {{userInfo.plate_number || '未绑定车牌'}}</text>
+      <text class="avatar-tip" style="font-size: 12px; color: #1890ff;">点击头像更换</text>
+    </view>
+  </view>
+
+  <!-- 今日限制 -->
+  <view class="limit-card">
+    <view class="limit-header">
+      <text class="limit-title">今日接单限制</text>
+      <text class="limit-tip">私家车每日限接2单</text>
+    </view>
+    <view class="limit-progress">
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{todayOrders / 2 * 100}}%"></view>
+      </view>
+      <text class="progress-text">{{todayOrders}}/2 单</text>
+    </view>
+  </view>
+
+  <!-- 功能菜单 -->
+  <view class="menu-list">
+    <view class="menu-item" bindtap="goOrders">
+      <text class="menu-icon">📋</text>
+      <text class="menu-text">我的订单</text>
+      <text class="menu-arrow">></text>
+    </view>
+    <view class="menu-item" bindtap="goWallet">
+      <text class="menu-icon">💰</text>
+      <text class="menu-text">我的收入</text>
+      <text class="menu-arrow">></text>
+    </view>
+    <view class="menu-item" bindtap="showRules">
+      <text class="menu-icon">📖</text>
+      <text class="menu-text">接单规则</text>
+      <text class="menu-arrow">></text>
+    </view>
+  </view>
+
+  <!-- 私家车主规则说明 -->
+  <view class="rules-card">
+    <view class="rules-title">私家车主接单规则</view>
+    <view class="rules-item">• 单票限重：≤20kg</view>
+    <view class="rules-item">• 货值限额：≤2000元</view>
+    <view class="rules-item">• 每日限接：2单</view>
+    <view class="rules-item">• 县城内运费：20元/单</view>
+    <view class="rules-item">• 跨城运费：起步10元+里程加价</view>
+    <view class="rules-item">• 平台抽成：10%</view>
+  </view>
+
+  <!-- 退出登录 -->
+  <button class="btn-logout" bindtap="logout">退出登录</button>
+</view>

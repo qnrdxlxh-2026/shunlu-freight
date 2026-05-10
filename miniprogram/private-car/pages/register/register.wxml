@@ -1,0 +1,61 @@
+<!--pages/register/register.wxml-->
+<view class="register-container">
+  <view class="header">
+    <text class="title">注册成为私家车主</text>
+    <text class="subtitle">顺路带货，轻松赚外快</text>
+  </view>
+
+  <view class="form-card">
+    <view class="input-item">
+      <text class="label">手机号</text>
+      <input class="input" type="number" placeholder="请输入手机号" maxlength="11"
+             value="{{phone}}" bindinput="onPhoneInput"/>
+    </view>
+    
+    <view class="input-item">
+      <text class="label">密码</text>
+      <input class="input" type="password" placeholder="请设置密码（6-20位）"
+             value="{{password}}" bindinput="onPasswordInput"/>
+    </view>
+    
+    <view class="input-item">
+      <text class="label">确认密码</text>
+      <input class="input" type="password" placeholder="请再次输入密码"
+             value="{{confirmPassword}}" bindinput="onConfirmPasswordInput"/>
+    </view>
+    
+    <view class="input-item">
+      <text class="label">真实姓名</text>
+      <input class="input" placeholder="请输入真实姓名"
+             value="{{realName}}" bindinput="onRealNameInput"/>
+    </view>
+    
+    <view class="input-item">
+      <text class="label">车牌号</text>
+      <input class="input" placeholder="请输入车牌号（如：川A12345）"
+             value="{{plateNumber}}" bindinput="onPlateNumberInput"/>
+    </view>
+    
+    <view class="input-item">
+      <text class="label">车型</text>
+      <picker mode="selector" range="{{carTypes}}" range-key="label" 
+              value="{{carTypeIndex}}" bindchange="onCarTypeChange">
+        <view class="picker">
+          {{carTypeIndex >= 0 ? carTypes[carTypeIndex].label : '请选择车型'}}
+          <text class="arrow">></text>
+        </view>
+      </picker>
+    </view>
+  </view>
+
+  <button class="btn-register" bindtap="doRegister">注册</button>
+  
+  <view class="agreement">
+    <checkbox checked="{{agreed}}" bindtap="toggleAgree" color="#1890ff"/>
+    <text>我已阅读并同意《顺路货运服务协议》</text>
+  </view>
+
+  <view class="footer-link" bindtap="goLogin">
+    已有账号？<text class="primary">立即登录</text>
+  </view>
+</view>

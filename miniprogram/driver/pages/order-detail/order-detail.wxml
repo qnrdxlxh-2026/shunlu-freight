@@ -1,0 +1,73 @@
+<view class="detail-page" wx:if="{{order}}">
+  <view class="status-bar {{order.statusClass}}">
+    <text class="status-text">{{order.statusText}}</text>
+  </view>
+
+  <!-- 取货码卡片（待取货状态） -->
+  <view class="code-card pickup-card" wx:if="{{order.status == 2}}">
+    <view class="code-label">📋 取货码 · 给发货方看</view>
+    <view class="code-number">{{order.pickup_code || '------'}}</view>
+    <view class="code-hint">让发货方扫码或报此码确认取货</view>
+  </view>
+
+  <!-- 送达码卡片（配送中状态） -->
+  <view class="code-card delivery-card" wx:if="{{order.status == 3}}">
+    <view class="code-label">📦 送达码 · 给收货方看</view>
+    <view class="code-number">{{order.delivery_code || '------'}}</view>
+    <view class="code-hint">让收货方扫码或报此码确认签收</view>
+  </view>
+
+  <!-- 路线区域 -->
+  <view class="route-section">
+    <view class="route-item"><view class="dot green"></view><view class="addr">{{order.start_addr}}</view></view>
+    <view class="route-line"></view>
+    <view class="route-item"><view class="dot red"></view><view class="addr">{{order.end_addr}}</view></view>
+  </view>
+
+  <!-- 信息区域 -->
+  <view class="info-section">
+    <view class="info-item"><text class="label">订单号</text><text class="value">{{order.id}}</text></view>
+    <view class="info-item"><text class="label">货物</text><text class="value">{{order.goods_name}} · {{order.weight}}kg</text></view>
+    <view class="info-item"><text class="label">运费收入</text><text class="value price">¥{{order.amount}}</text></view>
+    <view class="info-item"><text class="label">创建时间</text><text class="value">{{order.createTime}}</text></view>
+    <view class="info-item" wx:if="{{order.pickup_time}}"><text class="label">取货时间</text><text class="value">{{order.pickupTime}}</text></view>
+    <view class="info-item" wx:if="{{order.sign_time}}"><text class="label">送达时间</text><text class="value">{{order.signTime}}</text></view>
+  </view>
+
+  <!-- 发货方信息 -->
+  <view class="contact-section" wx:if="{{order.sender_phone}}">
+    <view class="contact-card">
+      <view class="contact-label">📦 发货方</view>
+      <view class="contact-info">
+        <text class="contact-phone">{{order.sender_phone}}</text>
+        <view class="contact-btns">
+          <view class="btn-virtual" bindtap="virtualCall">📞 虚拟电话</view>
+          <view class="btn-direct" bindtap="callSender">☎️ 直接拨打</view>
+        </view>
+      </view>
+      <view class="contact-hint">虚拟电话全程录音，保护隐私</view>
+    </view>
+  </view>
+
+  <!-- 收货方信息 -->
+  <view class="contact-section" wx:if="{{order.receiver_phone}}">
+    <view class="contact-card">
+      <view class="contact-label">🏠 收货方</view>
+      <view class="contact-info">
+        <text class="contact-phone">{{order.receiver_phone}}</text>
+        <view class="contact-btns">
+          <view class="btn-direct" bindtap="callReceiver">☎️ 直接拨打</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作区域 -->
+  <view class="action-section">
+    <!-- 已接单 → 确认取货 -->
+    <button class="pickup-btn" wx:if="{{order.status == 2}}" bindtap="confirmPickup">确认取货</button>
+
+    <!-- 配送中 → 确认送达（支持扫码或填码） -->
+    <button class="deliver-btn" wx:if="{{order.status == 3}}" bindtap="showDeliveryVerify">确认送达</button>
+  </view>
+</view>

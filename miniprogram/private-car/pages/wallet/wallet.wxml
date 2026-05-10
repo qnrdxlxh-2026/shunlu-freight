@@ -1,0 +1,68 @@
+<!--pages/wallet/wallet.wxml-->
+<view class="wallet-container">
+  <!-- 余额卡片 -->
+  <view class="balance-card">
+    <text class="balance-label">账户余额(元)</text>
+    <text class="balance-amount">{{wallet.balance}}</text>
+    <view class="balance-info">
+      <view class="info-item">
+        <text class="info-value">¥{{wallet.frozen_amount}}</text>
+        <text class="info-label">冻结金额</text>
+      </view>
+      <view class="info-item">
+        <text class="info-value">¥{{wallet.withdrawable}}</text>
+        <text class="info-label">可提现</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-btns">
+    <button class="btn-withdraw" bindtap="showWithdrawModal">提现</button>
+  </view>
+
+  <!-- 收支明细 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">收支明细</text>
+    </view>
+    
+    <view class="transaction-list">
+      <view class="transaction-item" wx:for="{{transactions}}" wx:key="id">
+        <view class="trans-info">
+          <text class="trans-type">{{item.type_text}}</text>
+          <text class="trans-time">{{item.create_time}}</text>
+        </view>
+        <text class="trans-amount {{item.amount > 0 ? 'income' : 'expense'}}">
+          {{item.amount > 0 ? '+' : ''}}{{item.amount}}
+        </text>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:if="{{transactions.length === 0}}">
+      <text class="empty-text">暂无收支记录</text>
+    </view>
+  </view>
+</view>
+
+<!-- 提现弹窗 -->
+<view class="modal-mask" wx:if="{{showWithdraw}}" bindtap="hideWithdrawModal">
+  <view class="modal-content" catchtap>
+    <view class="modal-header">
+      <text class="modal-title">申请提现</text>
+      <text class="modal-close" bindtap="hideWithdrawModal">×</text>
+    </view>
+    <view class="modal-body">
+      <view class="withdraw-info">
+        <text class="info-label">可提现金额</text>
+        <text class="info-value">¥{{wallet.withdrawable}}</text>
+      </view>
+      <view class="input-group">
+        <text class="input-label">提现金额</text>
+        <input class="input" type="digit" placeholder="请输入提现金额"
+               value="{{withdrawAmount}}" bindinput="onWithdrawInput"/>
+      </view>
+    </view>
+    <button class="btn-confirm" bindtap="doWithdraw">确认提现</button>
+  </view>
+</view>

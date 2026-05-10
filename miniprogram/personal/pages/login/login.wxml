@@ -1,0 +1,26 @@
+<view class="container">
+  <!-- Logo 区域 -->
+  <view class="logo-section">
+    <image class="logo" src="/assets/logo.png" mode="aspectFit"></image>
+    <text class="app-name">顺路货运</text>
+    <text class="app-subtitle">顺路捎带，省钱便捷</text>
+  </view>
+
+  <!-- 登录表单 -->
+  <view class="form-section">
+    <view class="input-wrap">
+      <text class="input-icon">📱</text>
+      <input type="number" placeholder="请输入手机号" maxlength="11" value="{{phone}}" bindinput="onPhoneInput" />
+    </view>
+    <view class="input-wrap">
+      <text class="input-icon">🔒</text>
+      <input password type="text" placeholder="请输入密码" value="{{password}}" bindinput="onPasswordInput" />
+    </view>
+
+    <button class="btn-primary" bindtap="onLogin" loading="{{loading}}">登 录</button>
+
+    <view class="form-footer">
+      <text class="link-text" bindtap="goRegister">还没有账号？立即注册</text>
+    </view>
+  </view>
+</view>

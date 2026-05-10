@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>顺路货运 - 商家端</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+    .app { max-width: 500px; margin: 0 auto; background: #f5f7fa; min-height: 100vh; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center; }
+    .header h1 { font-size: 20px; }
+    .content { padding: 15px; }
+    .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .card h3 { font-size: 16px; margin-bottom: 10px; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 13px; color: #666; margin-bottom: 4px; }
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; }
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; }
+    .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+    .btn-success { background: #28a745; color: white; }
+    .btn-sm { width: auto; padding: 8px 14px; font-size: 13px; border-radius: 8px; border: none; cursor: pointer; }
+    .btn-outline { background: white; border: 1px solid #667eea; color: #667eea; }
+    .loc-row { display: flex; gap: 8px; align-items: center; }
+    .loc-row input { flex: 1; }
+    .loc-btn { width: auto; padding: 10px 14px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; }
+    .tabs { display: flex; background: white; overflow-x: auto; }
+    .tab { flex: 1; padding: 12px 8px; text-align: center; border: none; background: none; font-size: 13px; cursor: pointer; white-space: nowrap; }
+    .tab.active { border-bottom: 2px solid #667eea; color: #667eea; font-weight: 600; }
+    .goods-item, .order-item { padding: 12px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 8px; }
+    .goods-item .title, .order-item .title { font-weight: 600; }
+    .goods-item .info, .order-item .info { font-size: 13px; color: #666; margin-top: 5px; }
+    .status-1 { color: #ffc107; } .status-2 { color: #17a2b8; } .status-3 { color: #28a745; } .status-4 { color: #6c757d; }
+    .balance { font-size: 28px; font-weight: bold; color: #667eea; text-align: center; padding: 15px; }
+    .photo-upload { border: 2px dashed #ddd; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; margin: 10px 0; }
+    .photo-upload:active { border-color: #667eea; }
+    .photo-preview { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+    .photo-preview img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; border: 1px solid #eee; }
+    .driver-card { padding: 15px; border: 1px solid #eee; border-radius: 10px; margin-bottom: 10px; }
+    .driver-card .name { font-weight: 600; }
+    .driver-card .route { color: #666; font-size: 13px; margin: 6px 0; }
+    .driver-card .score { display: inline-block; background: #fff3e0; color: #f57c00; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+    .driver-card .score-green { background: #e8f5e9; color: #43a047; }
+    .call-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 13px; }
+    /* 弹窗 */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: flex; align-items: flex-end; justify-content: center; }
+    .modal-box { background: white; border-radius: 16px 16px 0 0; width: 100%; max-width: 500px; max-height: 85vh; display: flex; flex-direction: column; }
+    .modal-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h3 { font-size: 16px; }
+    .modal-close { width: 32px; height: 32px; border: none; background: #f0f0f0; border-radius: 50%; cursor: pointer; font-size: 18px; }
+    .modal-body { flex: 1; overflow-y: auto; }
+    /* 聊天 */
+    .chat-list { max-height: 400px; overflow-y: auto; padding: 10px; }
+    .chat-msg { margin-bottom: 10px; }
+    .chat-msg.sent { text-align: right; }
+    .chat-msg .bubble { display: inline-block; padding: 10px 14px; border-radius: 12px; font-size: 14px; max-width: 75%; }
+    .chat-msg.received .bubble { background: #f0f0f0; color: #333; border-bottom-left-radius: 4px; }
+    .chat-msg.sent .bubble { background: #667eea; color: white; border-bottom-right-radius: 4px; }
+    .chat-msg .time { font-size: 11px; color: #999; margin-top: 3px; }
+    .chat-msg.call-bubble .bubble { background: #fff3e0; color: #e65100; }
+    .chat-input { display: flex; gap: 8px; padding: 10px; background: white; border-top: 1px solid #eee; }
+    .chat-input input { flex: 1; padding: 10px; border: 1px solid #e0e0e0; border-radius: 20px; }
+    .chat-input button { width: auto; padding: 10px 16px; background: #667eea; color: white; border: none; border-radius: 20px; cursor: pointer; }
+    #mapContainer { width: 100%; height: 300px; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header"><h1>🏪 商家端</h1><p id="userName">未登录</p></div>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('publish')">📦 发货</button>
+    <button class="tab" onclick="showTab('match')">🤖 找司机</button>
+    <button class="tab" onclick="showTab('orders')">📋 订单</button>
+    <button class="tab" onclick="showTab('chat')">💬 消息</button>
+    <button class="tab" onclick="showTab('wallet')">💰 钱包</button>
+  </div>
+  <div class="content">
+    <!-- 发布货源 -->
+    <div id="tabPublish" class="tab-content">
+      <div class="card">
+        <h3>📦 发布货源</h3>
+        <div class="form-group"><label>发货地址</label><div class="loc-row"><input id="startAddr" placeholder="点击定位或手动输入"><button class="loc-btn" onclick="openMap('start')">📍</button></div></div>
+        <div class="form-group"><label>收货地址</label><div class="loc-row"><input id="endAddr" placeholder="点击定位或手动输入"><button class="loc-btn" onclick="openMap('end')">📍</button></div></div>
+        <div class="form-group"><label>期望取货时间</label><input id="pickupTime" type="datetime-local"></div>
+        <div class="form-group"><label>货物重量(kg)</label><input id="weight" type="number" placeholder="如：15" oninput="estimatePrice()"></div>
+        <div class="form-group"><label>报价(元)</label><input id="price" type="number" placeholder="如：200"></div>
+        <div class="form-group"><label>货物价值(元)</label><input id="goodsValue" type="number" placeholder="如：800"></div>
+        <!-- 价格估算 -->
+        <div id="priceEstimate" style="display:none;background:#f0f7ff;border-radius:8px;padding:12px;margin:10px 0">
+          <div style="font-size:13px;color:#666;margin-bottom:8px">📊 智能估价</div>
+          <div style="display:flex;gap:15px;font-size:14px">
+            <div>🚛 货车: <b id="truckPrice">-</b></div>
+            <div>🚗 私家车: <b id="carPrice">-</b></div>
+          </div>
+          <div style="font-size:12px;color:#999;margin-top:6px" id="priceDetail"></div>
+        </div>
+        <div class="form-group"><label>货物类型</label><select id="goodsType"><option>日用品</option><option>食品</option><option>服装</option><option>电子配件</option><option>建材</option><option>其他</option></select></div>
+        <div class="form-group">
+          <label>📸 货物拍照</label>
+          <div class="photo-upload" onclick="document.getElementById('photoInput').click()">📷 点击拍照/选择图片</div>
+          <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(event)">
+          <div class="photo-preview" id="photoPreview"></div>
+        </div>
+        <div class="form-group"><label>备注</label><textarea id="remark" rows="2" placeholder="特殊要求等"></textarea></div>
+        <button class="btn btn-primary" onclick="publishGoods()">🚚 发布货源</button>
+      </div>
+    </div>
+    <!-- 智能匹配司机 -->
+    <div id="tabMatch" class="tab-content" style="display:none">
+      <div class="card">
+        <h3>🤖 智能推荐司机</h3>
+        <p style="color:#666;font-size:13px;margin-bottom:15px">根据货源自动匹配最近的顺路司机</p>
+        <button class="btn btn-primary" onclick="matchDrivers()">🔍 一键匹配司机</button>
+      </div>
+      <div id="driverList"></div>
+    </div>
+    <!-- 订单 -->
+    <div id="tabOrders" class="tab-content" style="display:none">
+      <div class="card"><h3>📋 我的订单</h3><div id="orderList"></div></div>
+    </div>
+    <!-- 消息 -->
+    <div id="tabChat" class="tab-content" style="display:none">
+      <div class="card"><h3>💬 消息</h3><div id="convList"></div></div>
+    </div>
+    <!-- 钱包 -->
+    <div id="tabWallet" class="tab-content" style="display:none">
+      <div class="card"><h3>💰 我的钱包</h3><div class="balance" id="balance">¥0.00</div>
+        <div class="form-group"><label>充值金额</label><input id="rechargeAmount" type="number" placeholder="输入充值金额"></div>
+        <button class="btn btn-success" onclick="recharge()">充值</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 聊天弹窗 -->
+<div id="chatModal" class="modal-overlay" style="display:none">
+  <div class="modal-box" style="height:80vh">
+    <div class="modal-header"><h3 id="chatTitle">💬 对话</h3><button class="modal-close" onclick="closeChat()">✕</button></div>
+    <div class="chat-list" id="chatMessages"></div>
+    <div class="chat-input"><input id="chatInput" placeholder="输入消息..." onkeypress="if(event.key==='Enter')sendMessage()"><button onclick="sendMessage()">发送</button></div>
+    <div style="padding:5px 10px 10px;display:flex;gap:8px">
+      <button class="call-btn" onclick="requestCall()">📞 通话</button>
+      <button class="btn-sm btn-outline" onclick="document.getElementById('chatPhotoInput').click()">📷 拍照</button>
+      <input type="file" id="chatPhotoInput" accept="image/*" capture="environment" style="display:none" onchange="sendPhotoMsg(event)">
+    </div>
+  </div>
+</div>
+
+<!-- 地图弹窗 -->
+<div id="mapModal" class="modal-overlay" style="display:none">
+  <div class="modal-box" style="height:60vh">
+    <div class="modal-header"><h3>📍 选择地址</h3><button class="modal-close" onclick="closeMap()">✕</button></div>
+    <div class="modal-body" style="padding:10px">
+      <input id="mapSearchInput" placeholder="搜索地点..." style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px" oninput="searchAddress()">
+      <div id="mapContainer"></div>
+      <div id="selectedAddr" style="font-size:13px;color:#666;margin:10px 0">请在地图上选择</div>
+      <button class="btn btn-primary" onclick="confirmMapLocation()">确认选择</button>
+    </div>
+  </div>
+</div>
+
+<!-- 扫码签收弹窗 -->
+<div id="scanModal" class="modal-overlay" style="display:none">
+  <div class="modal-box" style="height:auto;border-radius:16px 16px 0 0;padding:20px">
+    <div class="modal-header" style="padding:0 0 15px"><h3>📷 扫码签收</h3><button class="modal-close" onclick="closeScan()">✕</button></div>
+    <div class="form-group"><input id="signCode" placeholder="输入签收码"></div>
+    <button class="btn btn-success" onclick="confirmSign()">✅ 确认签收</button>
+  </div>
+</div>
+
+<script src="https://webapi.amap.com/maps?v=2.0&key=d6c4c01e337f9e7e9c5c7a6b4f3e2d1c&plugin=AMap.PlaceSearch,AMap.Geocoder"></script>
+<script>
+let token = localStorage.getItem('merchantToken');
+let userId = null;
+let currentMapField = 'start';
+let map = null, marker = null, selectedLocation = null, selectedAddressText = '';
+let chatWith = null;
+let photoDataList = [];
+
+async function api(path, method = 'GET', data = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  if (data) opts.body = JSON.stringify(data);
+  const res = await fetch('/api' + path, opts);
+  return res.json();
+}
+
+function showTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).style.display = 'block';
+  event.target.classList.add('active');
+  if (tab === 'match') matchDrivers();
+  if (tab === 'orders') loadOrders();
+  if (tab === 'chat') loadConversations();
+  if (tab === 'wallet') loadWallet();
+}
+
+async function init() {
+  if (!token) {
+    const phone = '139' + Math.random().toString().slice(2, 8);
+    const res = await api('/user/register', 'POST', { phone, password: 'test123', role: 1 });
+    if (res.code === 0) { token = res.data.token; userId = res.data.user_id; localStorage.setItem('merchantToken', token); document.getElementById('userName').textContent = '🏪 ' + phone; }
+  } else { document.getElementById('userName').textContent = '已登录'; }
+  const dt = new Date(Date.now() + 2*60*60*1000);
+  document.getElementById('pickupTime').value = dt.toISOString().slice(0, 16);
+}
+
+// ==================== 地图 ====================
+function openMap(field) {
+  currentMapField = field;
+  document.getElementById('mapModal').style.display = 'flex';
+  setTimeout(() => {
+    if (!map) {
+      map = new AMap.Map('mapContainer', { zoom: 13, center: [101.96, 30.05] });
+      map.on('click', (e) => {
+        selectedLocation = { lng: e.lnglat.getLng(), lat: e.lnglat.getLat() };
+        if (marker) map.remove(marker);
+        marker = new AMap.Marker({ position: [selectedLocation.lng, selectedLocation.lat] }); map.add(marker);
+        new AMap.Geocoder().getAddress([selectedLocation.lng, selectedLocation.lat], (s, r) => { if (s === 'complete') { selectedAddressText = r.regeocode.formattedAddress; document.getElementById('selectedAddr').textContent = '📍 ' + selectedAddressText; } });
+      });
+    } else { map.resize(); }
+  }, 300);
+}
+function closeMap() { document.getElementById('mapModal').style.display = 'none'; }
+function confirmMapLocation() { if (!selectedAddressText) return alert('请先选择位置'); document.getElementById(currentMapField === 'start' ? 'startAddr' : 'endAddr').value = selectedAddressText; closeMap(); }
+function searchAddress() {
+  const kw = document.getElementById('mapSearchInput').value; if (kw.length < 2) return;
+  new AMap.PlaceSearch({ pageSize: 5 }).search(kw, (s, r) => {
+    if (s === 'complete' && r.poiList?.pois?.length) { const p = r.poiList.pois[0]; map.setCenter([p.location.lng, p.location.lat]); selectedLocation = { lng: p.location.lng, lat: p.location.lat }; selectedAddressText = p.name + ' - ' + p.address; if (marker) map.remove(marker); marker = new AMap.Marker({ position: [p.location.lng, p.location.lat] }); map.add(marker); document.getElementById('selectedAddr').textContent = '📍 ' + selectedAddressText; }
+  });
+}
+
+// ==================== 价格估算 ====================
+async function estimatePrice() {
+  const start = document.getElementById('startAddr').value;
+  const end = document.getElementById('endAddr').value;
+  const weight = document.getElementById('weight').value;
+  if (!start || !end || !weight) return;
+  
+  // 估算距离
+  const distRes = await api('/price/estimate-distance', 'POST', { start_addr: start, end_addr: end });
+  const distance = distRes.data?.distance || 50;
+  
+  // 计算货车价格
+  const truckRes = await api('/price/calculate', 'POST', { distance, weight, driver_type: 2, pickup_zone: start, delivery_zone: end });
+  // 计算私家车价格
+  const carRes = await api('/price/calculate', 'POST', { distance, weight, driver_type: 3, pickup_zone: start, delivery_zone: end });
+  
+  if (truckRes.code === 0 && carRes.code === 0) {
+    document.getElementById('priceEstimate').style.display = 'block';
+    document.getElementById('truckPrice').textContent = '¥' + truckRes.data.freight;
+    document.getElementById('carPrice').textContent = '¥' + carRes.data.freight;
+    document.getElementById('priceDetail').textContent = `距离约${distance}km | 货车抽成¥${truckRes.data.commission} | 私家车抽成¥${carRes.data.commission}`;
+    // 自动填入建议价格
+    if (!document.getElementById('price').value) {
+      document.getElementById('price').value = truckRes.data.freight;
+    }
+  }
+}
+
+// ==================== 拍照 ====================
+function handlePhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => { photoDataList.push(ev.target.result); document.getElementById('photoPreview').innerHTML += `<img src="${ev.target.result}">`; };
+  reader.readAsDataURL(file);
+}
+
+// ==================== 智能匹配 ====================
+async function matchDrivers() {
+  const res = await api('/match/nearby-drivers');
+  const list = document.getElementById('driverList');
+  if (res.data?.length) {
+    list.innerHTML = res.data.map(d => `
+      <div class="driver-card">
+        <div class="name">${d.driver_type === 2 ? '🚛' : '🚗'} ${d.driver_name}</div>
+        <div class="route">${d.start_addr} → ${d.end_addr}</div>
+        <div class="route">出发: ${d.depart_time || '灵活'} | 空间: ${d.remain_space || '充足'}</div>
+        <span class="score ${d.driver_type === 3 ? 'score-green' : ''}">匹配度 ${d.matchScore}%</span>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="btn-sm btn-primary" style="background:#667eea;color:white" onclick="openChatWith(${d.driver_id})">💬 联系</button>
+          <button class="call-btn" onclick="callDriver(${d.driver_id})">📞 通话</button>
+        </div>
+      </div>
+    `).join('');
+  } else { list.innerHTML = '<div class="card"><p style="text-align:center;color:#999">暂无顺路司机</p></div>'; }
+}
+
+// ==================== 发布货源 ====================
+async function publishGoods() {
+  const remark = `${document.getElementById('goodsType').value} | ${document.getElementById('remark').value} | 取货: ${document.getElementById('pickupTime').value}`;
+  const res = await api('/merchant/publish-goods', 'POST', {
+    start_addr: document.getElementById('startAddr').value, end_addr: document.getElementById('endAddr').value,
+    weight: document.getElementById('weight').value, price: document.getElementById('price').value,
+    goods_value: document.getElementById('goodsValue').value, remark
+  });
+  if (res.code === 0) {
+    for (const p of photoDataList) await api('/photo/upload', 'POST', { order_id: res.data.goods_id, photo_data: p, photo_type: 'goods' });
+    alert('✅ 发布成功！'); photoDataList = []; document.getElementById('photoPreview').innerHTML = '';
+    ['startAddr','endAddr','weight','price','goodsValue','remark'].forEach(id => document.getElementById(id).value = '');
+  } else { alert('❌ ' + res.msg); }
+}
+
+// ==================== 订单 ====================
+async function loadOrders() {
+  const res = await api('/merchant/goods-list');
+  const list = document.getElementById('orderList');
+  if (res.data?.length) {
+    list.innerHTML = res.data.map(g => `
+      <div class="order-item">
+        <div class="title">${g.start_addr} → ${g.end_addr}</div>
+        <div class="info">重量: ${g.weight}kg | 报价: ¥${g.price}<br>${g.remark || ''}<br><span class="status-${g.status}">${['','⏳待接单','🚚已接单','✅已完成','❌已取消'][g.status]}</span></div>
+        ${g.status === 2 ? `<button class="btn-sm btn-success" style="margin-top:8px" onclick="openScanSign()">📷 扫码签收</button>` : ''}
+      </div>
+    `).join('');
+  } else { list.innerHTML = '<p style="color:#999;text-align:center;padding:20px">暂无订单</p>'; }
+}
+function openScanSign() { document.getElementById('scanModal').style.display = 'flex'; }
+function closeScan() { document.getElementById('scanModal').style.display = 'none'; }
+async function confirmSign() {
+  const code = document.getElementById('signCode').value.trim(); if (!code) return alert('请输入签收码');
+  const res = await api('/order/sign', 'POST', { order_id: code, sign_code: code });
+  if (res.code === 0) { alert('✅ 签收成功！'); closeScan(); loadOrders(); } else { alert('❌ ' + res.msg); }
+}
+
+// ==================== 钱包 ====================
+async function loadWallet() { const res = await api('/wallet/balance'); if (res.code === 0) document.getElementById('balance').textContent = '¥' + (res.data?.balance || 0).toFixed(2); }
+async function recharge() { const a = document.getElementById('rechargeAmount').value; if (!a) return; const res = await api('/wallet/recharge', 'POST', { amount: a }); if (res.code === 0) { alert('充值成功'); loadWallet(); } }
+
+// ==================== 隐私消息 ====================
+async function loadConversations() {
+  const res = await api('/message/conversations');
+  const list = document.getElementById('convList');
+  if (res.data?.length) {
+    list.innerHTML = res.data.map(c => `
+      <div class="driver-card" onclick="openChatWith(${c.user_id})" style="cursor:pointer">
+        <div style="display:flex;justify-content:space-between"><div class="name">${c.user_name}</div>${c.unread > 0 ? `<span style="background:#667eea;color:white;padding:2px 8px;border-radius:10px;font-size:12px">${c.unread}</span>` : ''}</div>
+        <div class="route">${c.last_message || ''}</div>
+      </div>
+    `).join('');
+  } else { list.innerHTML = '<p style="color:#999;text-align:center;padding:20px">暂无消息</p>'; }
+}
+
+async function openChatWith(uid) {
+  chatWith = uid;
+  document.getElementById('chatTitle').textContent = '💬 对话 - 用户' + uid;
+  document.getElementById('chatModal').style.display = 'flex';
+  await loadMessages();
+}
+
+async function loadMessages() {
+  if (!chatWith) return;
+  const res = await api('/message/list/' + chatWith);
+  const el = document.getElementById('chatMessages');
+  el.innerHTML = (res.data || []).map(m => {
+    const isMine = m.from_user_id === userId; const isCall = m.type === 'call_request';
+    return `<div class="chat-msg ${isMine ? 'sent' : 'received'} ${isCall ? 'call-bubble' : ''}"><div class="bubble">${isCall ? '📞 ' : ''}${m.content}</div><div class="time">${new Date(m.create_time).toLocaleString('zh-CN',{hour:'2-digit',minute:'2-digit'})}</div></div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chatInput'); const c = input.value.trim(); if (!c || !chatWith) return;
+  await api('/message/send', 'POST', { to_user_id: chatWith, content: c }); input.value = ''; loadMessages();
+}
+
+async function requestCall() {
+  if (!chatWith) return;
+  const res = await api('/message/call-request', 'POST', { to_user_id: chatWith });
+  if (res.code === 0) { alert('📞 虚拟号码: ' + res.data.virtual_no + '\n（5分钟有效，对方看不到你的真实号码）'); loadMessages(); }
+}
+
+async function callDriver(uid) { chatWith = uid; requestCall(); }
+
+async function sendPhotoMsg(e) {
+  const file = e.target.files[0]; if (!file || !chatWith) return;
+  const reader = new FileReader();
+  reader.onload = async (ev) => { await api('/message/send', 'POST', { to_user_id: chatWith, content: '[图片]' }); loadMessages(); };
+  reader.readAsDataURL(file);
+}
+
+function closeChat() { document.getElementById('chatModal').style.display = 'none'; chatWith = null; }
+
+init();
+</script>
+</body>
+</html>

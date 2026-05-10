@@ -1,0 +1,779 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "phone": "157820731",
+      "password": "92b4477eab43adc555c9aea7b959684845d750e5946705a9c00b4137b2a5f15d",
+      "role": 3,
+      "real_name": null,
+      "id_card": null,
+      "status": 1,
+      "create_time": "2026-05-05T14:12:04.510Z"
+    },
+    {
+      "id": 2,
+      "phone": "admin",
+      "password": "46b2c61cb9b16e0ac28df45410c1effaff058e7d1e9d5a25cbb0000aef55eec6",
+      "role": 4,
+      "real_name": null,
+      "id_card": null,
+      "status": 1,
+      "create_time": "2026-05-05T14:19:22.599Z"
+    },
+    {
+      "id": 3,
+      "phone": "13800001111",
+      "password": "92b4477eab43adc555c9aea7b959684845d750e5946705a9c00b4137b2a5f15d",
+      "role": 1,
+      "real_name": null,
+      "id_card": null,
+      "status": 1,
+      "create_time": "2026-05-08T02:50:41.002Z"
+    },
+    {
+      "id": 4,
+      "phone": "13800002222",
+      "password": "92b4477eab43adc555c9aea7b959684845d750e5946705a9c00b4137b2a5f15d",
+      "role": 2,
+      "real_name": null,
+      "id_card": null,
+      "status": 1,
+      "create_time": "2026-05-08T02:50:41.040Z"
+    },
+    {
+      "id": 5,
+      "phone": "13800003333",
+      "password": "92b4477eab43adc555c9aea7b959684845d750e5946705a9c00b4137b2a5f15d",
+      "role": 3,
+      "real_name": null,
+      "id_card": null,
+      "status": 1,
+      "create_time": "2026-05-08T02:50:41.066Z"
+    },
+    {
+      "id": 6,
+      "phone": "13899990001",
+      "password": "92b4477eab43adc555c9aea7b959684845d750e5946705a9c00b4137b2a5f15d",
+      "role": 1,
+      "real_name": null,
+      "id_card": null,
+      "status": 1,
+      "create_time": "2026-05-08T06:59:57.067Z"
+    },
+    {
+      "id": 7,
+      "phone": "13988880001",
+      "password": "92b4477eab43adc555c9aea7b959684845d750e5946705a9c00b4137b2a5f15d",
+      "role": 2,
+      "real_name": null,
+      "id_card": null,
+      "status": 1,
+      "create_time": "2026-05-08T07:08:24.954Z"
+    },
+    {
+      "id": 8,
+      "phone": "13800138001",
+      "password": "46b2c61cb9b16e0ac28df45410c1effaff058e7d1e9d5a25cbb0000aef55eec6",
+      "role": 4,
+      "real_name": null,
+      "id_card": null,
+      "status": 1,
+      "create_time": "2026-05-09T08:47:22.497Z"
+    },
+    {
+      "id": 9,
+      "phone": "138229943",
+      "password": "5c60675b019bac5f4b34addaafbc2002ec822d5bf31cf258064cd5d74fa7235a",
+      "role": 1,
+      "real_name": null,
+      "id_card": null,
+      "status": 1,
+      "create_time": "2026-05-09T08:47:45.759Z"
+    },
+    {
+      "id": 10,
+      "phone": "138585224",
+      "password": "5c60675b019bac5f4b34addaafbc2002ec822d5bf31cf258064cd5d74fa7235a",
+      "role": 2,
+      "real_name": null,
+      "id_card": null,
+      "status": 1,
+      "create_time": "2026-05-09T08:47:47.647Z"
+    },
+    {
+      "id": 11,
+      "phone": "139414599",
+      "password": "5c60675b019bac5f4b34addaafbc2002ec822d5bf31cf258064cd5d74fa7235a",
+      "role": 1,
+      "real_name": null,
+      "id_card": null,
+      "status": 1,
+      "create_time": "2026-05-09T08:47:54.560Z"
+    },
+    {
+      "id": 12,
+      "phone": "138787464",
+      "password": "5c60675b019bac5f4b34addaafbc2002ec822d5bf31cf258064cd5d74fa7235a",
+      "role": 2,
+      "real_name": null,
+      "id_card": null,
+      "status": 1,
+      "create_time": "2026-05-09T08:47:54.567Z"
+    },
+    {
+      "id": 13,
+      "phone": "137809871",
+      "password": "5c60675b019bac5f4b34addaafbc2002ec822d5bf31cf258064cd5d74fa7235a",
+      "role": 3,
+      "real_name": null,
+      "id_card": null,
+      "status": 1,
+      "create_time": "2026-05-09T08:47:57.046Z"
+    },
+    {
+      "id": 14,
+      "phone": "136028437",
+      "password": "5c60675b019bac5f4b34addaafbc2002ec822d5bf31cf258064cd5d74fa7235a",
+      "role": 1,
+      "real_name": null,
+      "id_card": null,
+      "status": 1,
+      "create_time": "2026-05-09T08:47:57.050Z"
+    },
+    {
+      "id": 15,
+      "phone": "13900000001",
+      "password": "92b4477eab43adc555c9aea7b959684845d750e5946705a9c00b4137b2a5f15d",
+      "role": 5,
+      "real_name": "测试个人用户",
+      "nickname": "测试用户",
+      "balance": 0,
+      "frozen_balance": 0,
+      "create_time": "2026-05-10T07:20:00.000Z"
+    },
+    {
+      "id": 16,
+      "phone": "13900000003",
+      "password": "92b4477eab43adc555c9aea7b959684845d750e5946705a9c00b4137b2a5f15d",
+      "real_name": "测试私家车",
+      "role": 3,
+      "car_type": "sedan",
+      "plate_number": "川A88888",
+      "created_at": 1778404575204
+    }
+  ],
+  "merchant_auths": [],
+  "driver_auths": [],
+  "goods": [
+    {
+      "id": 1,
+      "merchant_id": 6,
+      "start_addr": "康定市XX路",
+      "end_addr": "成都市XX区",
+      "weight": 500,
+      "price": 360,
+      "goods_value": 2000,
+      "remark": "精密仪器，小心轻放",
+      "sender_name": "李发货",
+      "sender_phone": "13800001111",
+      "receiver_name": "王收货",
+      "receiver_phone": "13900002222",
+      "photo_urls": [],
+      "status": 2,
+      "create_time": "2026-05-08T07:08:16.075Z"
+    },
+    {
+      "id": 2,
+      "merchant_id": 9,
+      "start_addr": "甘孜州康定市",
+      "end_addr": "成都市武侯区",
+      "weight": 15,
+      "price": 200,
+      "goods_value": 800,
+      "remark": "测试货源-日用品",
+      "sender_name": "",
+      "sender_phone": "",
+      "receiver_name": "",
+      "receiver_phone": "",
+      "photo_urls": [],
+      "status": 1,
+      "create_time": "2026-05-09T08:47:49.912Z"
+    },
+    {
+      "id": 3,
+      "merchant_id": 11,
+      "start_addr": "甘孜州康定市",
+      "end_addr": "成都市武侯区",
+      "weight": 25,
+      "price": 350,
+      "goods_value": 1200,
+      "remark": "完整流程测试货源",
+      "sender_name": "",
+      "sender_phone": "",
+      "receiver_name": "",
+      "receiver_phone": "",
+      "photo_urls": [],
+      "status": 2,
+      "create_time": "2026-05-09T08:47:54.572Z"
+    },
+    {
+      "id": 4,
+      "merchant_id": 14,
+      "start_addr": "甘孜州",
+      "end_addr": "成都市",
+      "weight": 30,
+      "price": 200,
+      "goods_value": 1500,
+      "sender_name": "",
+      "sender_phone": "",
+      "receiver_name": "",
+      "receiver_phone": "",
+      "photo_urls": [],
+      "status": 1,
+      "create_time": "2026-05-09T08:47:57.054Z"
+    },
+    {
+      "id": 5,
+      "merchant_id": 3,
+      "start_addr": "康定市测试路1号",
+      "end_addr": "成都市武侯区测试路2号",
+      "weight": 15,
+      "price": 150,
+      "goods_value": 500,
+      "remark": "全链路测试货源",
+      "sender_name": "张三",
+      "sender_phone": "13800001111",
+      "receiver_name": "李四",
+      "receiver_phone": "13900002222",
+      "photo_urls": [],
+      "status": 2,
+      "create_time": "2026-05-10T10:59:04.945Z"
+    },
+    {
+      "id": 6,
+      "merchant_id": 3,
+      "start_addr": "康定市新货源",
+      "end_addr": "成都市新货源",
+      "weight": 10,
+      "price": 200,
+      "goods_value": 800,
+      "remark": "完整流程测试",
+      "sender_name": "",
+      "sender_phone": "",
+      "receiver_name": "",
+      "receiver_phone": "",
+      "photo_urls": [],
+      "status": 2,
+      "create_time": "2026-05-10T11:01:07.242Z"
+    },
+    {
+      "id": 7,
+      "merchant_id": 3,
+      "start_addr": "康定测试",
+      "end_addr": "成都测试",
+      "weight": 8,
+      "price": 180,
+      "goods_value": 600,
+      "sender_name": "",
+      "sender_phone": "",
+      "receiver_name": "",
+      "receiver_phone": "",
+      "photo_urls": [],
+      "status": 2,
+      "create_time": "2026-05-10T11:01:59.931Z"
+    },
+    {
+      "id": 8,
+      "merchant_id": 3,
+      "start_addr": "康定市",
+      "end_addr": "甘孜县",
+      "weight": 50,
+      "price": 280,
+      "goods_value": 3000,
+      "remark": "测试货物",
+      "sender_name": "张三",
+      "sender_phone": "13800001111",
+      "receiver_name": "李四",
+      "receiver_phone": "13900000001",
+      "photo_urls": [],
+      "status": 2,
+      "create_time": "2026-05-10T12:18:38.190Z"
+    },
+    {
+      "id": 9,
+      "personal_id": 15,
+      "merchant_id": null,
+      "start_addr": "康定",
+      "end_addr": "成都",
+      "weight": 5,
+      "price": 80,
+      "goods_value": 0,
+      "remark": "急件文件",
+      "sender_name": "王五",
+      "sender_phone": "13900000001",
+      "receiver_name": "赵六",
+      "receiver_phone": "13800009999",
+      "status": 2,
+      "create_time": "2026-05-10T12:21:32.473Z"
+    }
+  ],
+  "routes": [
+    {
+      "id": 1,
+      "driver_id": 4,
+      "driver_type": 2,
+      "start_addr": "四川省成都市武侯区地铁3号线,地铁5号线,地铁10号线",
+      "end_addr": "四川省甘孜藏族自治州康定市茶马路1号3层",
+      "departure_time": "16:10",
+      "depart_time": "16:10",
+      "remain_space": 0,
+      "space": 0,
+      "remark": "",
+      "license_plate": "",
+      "vehicle_photos": [],
+      "start_lat": 30.640274,
+      "start_lng": 104.042325,
+      "end_lat": 29.998605,
+      "end_lng": 101.95689,
+      "status": 1,
+      "create_time": "2026-05-10T08:11:24.321Z"
+    }
+  ],
+  "orders": [
+    {
+      "id": 1,
+      "goods_id": 1,
+      "merchant_id": 6,
+      "driver_id": 10,
+      "price": 360,
+      "commission_rate": 6,
+      "commission_fee": 21.6,
+      "driver_amount": 338.4,
+      "status": 1,
+      "create_time": "2026-05-09T08:47:52.453Z"
+    },
+    {
+      "id": 2,
+      "goods_id": 3,
+      "merchant_id": 11,
+      "driver_id": 12,
+      "price": 350,
+      "commission_rate": 6,
+      "commission_fee": 21,
+      "driver_amount": 329,
+      "status": 1,
+      "create_time": "2026-05-09T08:47:54.575Z"
+    },
+    {
+      "id": 3,
+      "goods_id": 5,
+      "merchant_id": 3,
+      "driver_id": 4,
+      "price": 150,
+      "commission_rate": 6,
+      "commission_fee": 9,
+      "driver_amount": 141,
+      "status": 1,
+      "create_time": "2026-05-10T10:59:55.550Z"
+    },
+    {
+      "id": 4,
+      "goods_id": 6,
+      "merchant_id": 3,
+      "driver_id": 4,
+      "price": 200,
+      "commission_rate": 6,
+      "commission_fee": 12,
+      "driver_amount": 188,
+      "status": 3,
+      "create_time": "2026-05-10T11:01:07.657Z",
+      "pickup_code": "JK08VI",
+      "delivery_code": "33AM1E",
+      "update_time": "2026-05-10T11:01:07.803Z",
+      "pickup_time": "2026-05-10T11:01:07.965Z"
+    },
+    {
+      "id": 5,
+      "goods_id": 7,
+      "merchant_id": 3,
+      "driver_id": 4,
+      "price": 180,
+      "commission_rate": 6,
+      "commission_fee": 10.8,
+      "driver_amount": 169.2,
+      "status": 4,
+      "create_time": "2026-05-10T11:02:00.179Z",
+      "pickup_code": "73FOXQ",
+      "delivery_code": "AECN2S",
+      "update_time": "2026-05-10T11:02:00.401Z",
+      "pickup_time": "2026-05-10T11:02:00.438Z",
+      "deliver_time": "2026-05-10T11:02:00.646Z"
+    },
+    {
+      "id": 6,
+      "goods_id": 8,
+      "merchant_id": 3,
+      "driver_id": 4,
+      "price": 280,
+      "commission_rate": 6,
+      "commission_fee": 16.8,
+      "driver_amount": 263.2,
+      "status": 5,
+      "create_time": "2026-05-10T12:18:54.215Z",
+      "pickup_code": "4E9SFT",
+      "delivery_code": "J2YSWX",
+      "update_time": "2026-05-10T12:20:10.748Z",
+      "pickup_time": "2026-05-10T12:20:10.858Z",
+      "deliver_time": "2026-05-10T12:20:10.966Z",
+      "sign_time": "2026-05-10T12:20:11.075Z"
+    },
+    {
+      "id": 7,
+      "goods_id": 9,
+      "merchant_id": null,
+      "driver_id": 4,
+      "price": 80,
+      "commission_rate": 6,
+      "commission_fee": 4.8,
+      "driver_amount": 75.2,
+      "status": 5,
+      "create_time": "2026-05-10T12:21:32.727Z",
+      "pickup_code": "MY7HZU",
+      "delivery_code": "UBRRZI",
+      "update_time": "2026-05-10T12:26:20.638Z",
+      "pickup_time": "2026-05-10T12:27:37.200Z",
+      "deliver_time": "2026-05-10T12:27:43.919Z",
+      "sign_time": "2026-05-10T12:27:44.083Z"
+    }
+  ],
+  "wallets": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "balance": 0,
+      "frozen_amount": 0
+    },
+    {
+      "id": 2,
+      "user_id": 2,
+      "balance": 0,
+      "frozen_amount": 0
+    },
+    {
+      "id": 3,
+      "user_id": 3,
+      "balance": 140,
+      "frozen_amount": 39.6
+    },
+    {
+      "id": 4,
+      "user_id": 4,
+      "balance": 507.59999999999997,
+      "frozen_amount": 0
+    },
+    {
+      "id": 5,
+      "user_id": 5,
+      "balance": 0,
+      "frozen_amount": 0
+    },
+    {
+      "id": 6,
+      "user_id": 6,
+      "balance": 0,
+      "frozen_amount": 0
+    },
+    {
+      "id": 7,
+      "user_id": 7,
+      "balance": 0,
+      "frozen_amount": 0
+    },
+    {
+      "id": 8,
+      "user_id": 8,
+      "balance": 0,
+      "frozen_amount": 0
+    },
+    {
+      "id": 9,
+      "user_id": 9,
+      "balance": 0,
+      "frozen_amount": 0
+    },
+    {
+      "id": 10,
+      "user_id": 10,
+      "balance": 0,
+      "frozen_amount": 0
+    },
+    {
+      "id": 11,
+      "user_id": 11,
+      "balance": 0,
+      "frozen_amount": 0
+    },
+    {
+      "id": 12,
+      "user_id": 12,
+      "balance": 0,
+      "frozen_amount": 0
+    },
+    {
+      "id": 13,
+      "user_id": 13,
+      "balance": 0,
+      "frozen_amount": 0
+    },
+    {
+      "id": 14,
+      "user_id": 14,
+      "balance": 0,
+      "frozen_amount": 0
+    },
+    {
+      "id": 15,
+      "user_id": 15,
+      "balance": 120,
+      "frozen_amount": 0,
+      "create_time": "2026-05-10T12:00:00.000Z"
+    },
+    {
+      "id": 15,
+      "user_id": 16,
+      "balance": 0,
+      "frozen_amount": 0,
+      "create_time": "2026-05-10T12:00:00.000Z"
+    }
+  ],
+  "region_configs": [
+    {
+      "id": 1,
+      "province": "四川",
+      "city": "甘孜",
+      "area": null,
+      "commission_rate": 6,
+      "private_rate": 12,
+      "status": 1
+    },
+    {
+      "id": 2,
+      "province": "四川",
+      "city": "阿坝",
+      "area": null,
+      "commission_rate": 6,
+      "private_rate": 12,
+      "status": 1
+    }
+  ],
+  "photos": [],
+  "messages": [],
+  "transactions": [
+    {
+      "id": 1,
+      "user_id": 3,
+      "type": "recharge",
+      "amount": 500,
+      "balance_after": 500,
+      "remark": "充值",
+      "create_time": "2026-05-10T11:01:07.500Z"
+    },
+    {
+      "id": 2,
+      "user_id": 3,
+      "type": "pay",
+      "amount": -200,
+      "balance_after": 300,
+      "order_id": 4,
+      "remark": "运费支付",
+      "create_time": "2026-05-10T11:01:07.803Z"
+    },
+    {
+      "id": 3,
+      "user_id": 4,
+      "type": "freeze",
+      "amount": 0,
+      "balance_after": 0,
+      "order_id": 4,
+      "remark": "运费冻结¥12",
+      "create_time": "2026-05-10T11:01:07.803Z"
+    },
+    {
+      "id": 4,
+      "user_id": 3,
+      "type": "pay",
+      "amount": -180,
+      "balance_after": 120,
+      "order_id": 5,
+      "remark": "运费支付",
+      "create_time": "2026-05-10T11:02:00.401Z"
+    },
+    {
+      "id": 5,
+      "user_id": 4,
+      "type": "freeze",
+      "amount": 0,
+      "balance_after": 0,
+      "order_id": 5,
+      "remark": "运费冻结¥10.8",
+      "create_time": "2026-05-10T11:02:00.401Z"
+    },
+    {
+      "id": 6,
+      "user_id": 4,
+      "type": "settlement",
+      "amount": 169.2,
+      "balance_after": 169.2,
+      "settlement_id": 1,
+      "order_id": 5,
+      "remark": "结算单收入 #1",
+      "create_time": "2026-05-10T11:05:00.088Z"
+    },
+    {
+      "id": 7,
+      "user_id": 3,
+      "type": "recharge",
+      "amount": 300,
+      "balance_after": 420,
+      "remark": "充值",
+      "create_time": "2026-05-10T12:20:10.620Z"
+    },
+    {
+      "id": 8,
+      "user_id": 3,
+      "type": "pay",
+      "amount": -280,
+      "balance_after": 140,
+      "order_id": 6,
+      "remark": "运费支付",
+      "create_time": "2026-05-10T12:20:10.748Z"
+    },
+    {
+      "id": 9,
+      "user_id": 4,
+      "type": "freeze",
+      "amount": 0,
+      "balance_after": 0,
+      "order_id": 6,
+      "remark": "运费冻结¥16.8",
+      "create_time": "2026-05-10T12:20:10.748Z"
+    },
+    {
+      "id": 10,
+      "user_id": 4,
+      "type": "settlement",
+      "amount": 263.2,
+      "balance_after": 432.4,
+      "settlement_id": 2,
+      "order_id": 6,
+      "remark": "结算单收入 #2",
+      "create_time": "2026-05-10T12:20:52.039Z"
+    },
+    {
+      "id": 11,
+      "user_id": 15,
+      "type": "recharge",
+      "amount": 200,
+      "balance_after": 200,
+      "remark": "充值",
+      "create_time": "2026-05-10T12:23:07.886Z"
+    },
+    {
+      "id": 12,
+      "user_id": 15,
+      "type": "pay",
+      "amount": -80,
+      "balance_after": 120,
+      "order_id": 7,
+      "remark": "运费支付",
+      "create_time": "2026-05-10T12:26:20.638Z"
+    },
+    {
+      "id": 13,
+      "user_id": 4,
+      "type": "freeze",
+      "amount": 0,
+      "balance_after": 0,
+      "order_id": 7,
+      "remark": "运费冻结¥4.8",
+      "create_time": "2026-05-10T12:26:20.638Z"
+    },
+    {
+      "id": 14,
+      "user_id": 4,
+      "type": "settlement",
+      "amount": 75.2,
+      "balance_after": 507.59999999999997,
+      "settlement_id": 3,
+      "order_id": 7,
+      "remark": "结算单收入 #3",
+      "create_time": "2026-05-10T12:30:01.634Z"
+    },
+    {
+      "id": 15,
+      "user_id": 15,
+      "type": "unfreeze",
+      "amount": 0,
+      "balance_after": 0,
+      "settlement_id": 3,
+      "order_id": 7,
+      "remark": "结算完成，解冻¥4.8",
+      "create_time": "2026-05-10T12:30:01.634Z"
+    }
+  ],
+  "nextIds": {
+    "user": 16,
+    "merchant_auth": 1,
+    "driver_auth": 1,
+    "goods": 10,
+    "route": 2,
+    "order": 8,
+    "wallet": 16,
+    "photo": 1,
+    "message": 1,
+    "transaction": 16,
+    "settlement": 4
+  },
+  "complaints": [],
+  "settlements": [
+    {
+      "id": 1,
+      "order_id": 5,
+      "driver_id": 4,
+      "merchant_id": 3,
+      "amount": 169.2,
+      "commission_fee": 0,
+      "freight": 180,
+      "status": "approved",
+      "create_time": "2026-05-10T11:02:00.647Z",
+      "reject_reason": null,
+      "approve_time": "2026-05-10T11:05:00.088Z"
+    },
+    {
+      "id": 2,
+      "order_id": 6,
+      "driver_id": 4,
+      "merchant_id": 3,
+      "amount": 263.2,
+      "commission_fee": 0,
+      "freight": 280,
+      "status": "approved",
+      "create_time": "2026-05-10T12:20:10.968Z",
+      "reject_reason": null,
+      "approve_time": "2026-05-10T12:20:52.039Z"
+    },
+    {
+      "id": 3,
+      "order_id": 7,
+      "driver_id": 4,
+      "merchant_id": null,
+      "amount": 75.2,
+      "commission_fee": 4.8,
+      "freight": 80,
+      "status": "approved",
+      "create_time": "2026-05-10T12:27:43.920Z",
+      "reject_reason": null,
+      "approve_time": "2026-05-10T12:30:01.633Z"
+    }
+  ]
+}

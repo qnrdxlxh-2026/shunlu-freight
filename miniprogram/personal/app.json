@@ -1,0 +1,59 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/register/register",
+    "pages/home/home",
+    "pages/send-package/send-package",
+    "pages/find-drivers/find-drivers",
+    "pages/my-packages/my-packages",
+    "pages/orders/orders",
+    "pages/order-detail/order-detail",
+    "pages/wallet/wallet",
+    "pages/messages/messages",
+    "pages/chat/chat",
+    "pages/profile/profile"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#722ed1",
+    "navigationBarTitleText": "顺路货运-个人",
+    "navigationBarTextStyle": "white"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#722ed1",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "首页",
+        "iconPath": "assets/home.png",
+        "selectedIconPath": "assets/home-active.png"
+      },
+      {
+        "pagePath": "pages/orders/orders",
+        "text": "订单",
+        "iconPath": "assets/orders.png",
+        "selectedIconPath": "assets/orders-active.png"
+      },
+      {
+        "pagePath": "pages/wallet/wallet",
+        "text": "钱包",
+        "iconPath": "assets/wallet.png",
+        "selectedIconPath": "assets/wallet-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "assets/profile.png",
+        "selectedIconPath": "assets/profile-active.png"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json",
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于选择取件地址和送达地址"
+    }
+  },
+  "requiredPrivateInfos": ["chooseLocation"]
+}

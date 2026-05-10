@@ -1,0 +1,27 @@
+<view class="packages-page">
+  <view class="package-list" wx:if="{{!loading}}">
+    <view class="package-item" wx:for="{{packages}}" wx:key="id"
+      bindtap="goDetail" data-id="{{item.id}}">
+      <view class="package-header">
+        <text class="package-no">{{item.goods_name || '包裹'}}</text>
+        <text class="status {{item.statusClass}}">{{item.statusText}}</text>
+      </view>
+      <view class="package-route">
+        <text class="from">{{item.start_addr}}</text>
+        <text class="arrow">→</text>
+        <text class="to">{{item.end_addr}}</text>
+      </view>
+      <view class="package-footer">
+        <text class="time">{{item.createTime}}</text>
+        <text class="weight">{{item.weight}}kg</text>
+      </view>
+    </view>
+    <view class="empty" wx:if="{{packages.length == 0}}">
+      <text>暂无包裹记录</text>
+    </view>
+  </view>
+
+  <view class="loading" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+</view>

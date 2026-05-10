@@ -1,0 +1,104 @@
+<view class="profile-page">
+  <!-- 用户卡片 -->
+  <view class="user-card">
+    <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+      <image class="avatar" src="{{avatarUrl}}" mode="aspectFill"></image>
+      <view class="avatar-edit-badge">✏️</view>
+    </button>
+    <view class="user-detail">
+      <view class="user-name-row">
+        <input class="name-edit-input" value="{{userInfo.phone}}" disabled />
+        <text class="edit-icon" bindtap="editName">✏️</text>
+      </view>
+      <view class="user-sub">已认证 · 顺路货运司机端</view>
+    </view>
+  </view>
+
+  <!-- 统计 -->
+  <view class="stats-row">
+    <view class="stat-item">
+      <input class="stat-num-input" value="{{orderCount || 0}}" disabled />
+      <text class="stat-label">接单数</text>
+    </view>
+    <view class="stat-div"></view>
+    <view class="stat-item">
+      <text class="stat-num">¥{{totalIncome || '0.00'}}</text>
+      <text class="stat-label">累计收入</text>
+    </view>
+    <view class="stat-div"></view>
+    <view class="stat-item">
+      <text class="stat-num">¥{{balance || '0.00'}}</text>
+      <text class="stat-label">可提现</text>
+    </view>
+  </view>
+
+  <!-- 核心功能 -->
+  <view class="menu-section">
+    <view class="menu-title-row">
+      <text class="menu-title-label">{{sectionTitles.driverService || '🚚 司机服务'}}</text>
+      <text class="edit-icon sm" bindtap="editMenuTitle" data-type="driver-service">✏️</text>
+    </view>
+    <view class="menu-item" bindtap="goFindGoods">
+      <view class="menu-icon-wrap blue">🔍</view>
+      <view class="menu-text-wrap">
+        <input class="menu-text-input" value="{{menuNames.findGoods || '找货源'}}" bindblur="saveMenuName" data-key="findGoods" />
+      </view>
+      <text class="menu-hint">附近货源</text>
+      <text class="arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goMyRoutes">
+      <view class="menu-icon-wrap teal">📍</view>
+      <view class="menu-text-wrap">
+        <input class="menu-text-input" value="{{menuNames.myRoutes || '我的常跑路线'}}" bindblur="saveMenuName" data-key="myRoutes" />
+      </view>
+      <text class="arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goOrders">
+      <view class="menu-icon-wrap green">📜</view>
+      <view class="menu-text-wrap">
+        <input class="menu-text-input" value="{{menuNames.allOrders || '全部订单'}}" bindblur="saveMenuName" data-key="allOrders" />
+      </view>
+      <text class="menu-hint">订单记录</text>
+      <text class="arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goWallet">
+      <view class="menu-icon-wrap gold">💰</view>
+      <view class="menu-text-wrap">
+        <input class="menu-text-input" value="{{menuNames.myWallet || '我的钱包'}}" bindblur="saveMenuName" data-key="myWallet" />
+      </view>
+      <text class="menu-hint">资金流水</text>
+      <text class="arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 账户 -->
+  <view class="menu-section">
+    <view class="menu-title-row">
+      <text class="menu-title-label">{{sectionTitles.account || '🔐 账户与工具'}}</text>
+      <text class="edit-icon sm" bindtap="editMenuTitle" data-type="account">✏️</text>
+    </view>
+    <view class="menu-item" bindtap="goMessages">
+      <view class="menu-icon-wrap pink">💬</view>
+      <view class="menu-text-wrap">
+        <input class="menu-text-input" value="{{menuNames.messages || '消息中心'}}" bindblur="saveMenuName" data-key="messages" />
+      </view>
+      <text class="arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goEditProfile">
+      <view class="menu-icon-wrap gray">✏️</view>
+      <view class="menu-text-wrap">
+        <input class="menu-text-input" value="{{menuNames.editProfile || '编辑资料'}}" bindblur="saveMenuName" data-key="editProfile" />
+      </view>
+      <text class="arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goAbout">
+      <view class="menu-icon-wrap purple">ℹ️</view>
+      <view class="menu-text-wrap">
+        <input class="menu-text-input" value="{{menuNames.about || '关于顺路货运'}}" bindblur="saveMenuName" data-key="about" />
+      </view>
+      <text class="arrow">›</text>
+    </view>
+  </view>
+
+  <button class="logout-btn" bindtap="logout">退出登录</button>
+</view>

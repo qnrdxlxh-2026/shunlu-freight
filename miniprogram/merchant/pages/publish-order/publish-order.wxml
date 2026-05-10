@@ -1,0 +1,147 @@
+<view class="container">
+  <view class="form">
+    <view class="form-title">📦 发布货源</view>
+
+    <!-- 取货信息 -->
+    <view class="form-section">
+      <view class="section-label">🚚 取货信息</view>
+      <view class="form-item tap-item" bindtap="chooseLocation" data-type="pickup">
+        <text class="label">取货地址</text>
+        <view class="addr-row">
+          <text class="addr-text {{pickup_addr ? 'has-value' : 'placeholder'}}">
+            {{pickup_addr || '点击地图定位选址'}}
+          </text>
+          <text class="addr-arrow">›</text>
+        </view>
+      </view>
+      <view class="form-item">
+        <text class="label">详细地址</text>
+        <input placeholder="补充楼栋/单元/门牌号（选填）" bindinput="onPickupDetailInput" value="{{pickup_detail}}" />
+      </view>
+      <view class="form-item">
+        <text class="label">发货人</text>
+        <input placeholder="发货人姓名（选填）" bindinput="onSenderNameInput" value="{{sender_name}}" />
+      </view>
+      <view class="form-item">
+        <text class="label">发货电话</text>
+        <input type="number" placeholder="发货人电话（选填）" bindinput="onSenderPhoneInput" value="{{sender_phone}}" />
+      </view>
+    </view>
+
+    <!-- 送货信息 -->
+    <view class="form-section">
+      <view class="section-label">📍 送货信息</view>
+      <view class="form-item tap-item" bindtap="chooseLocation" data-type="delivery">
+        <text class="label">送达地址</text>
+        <view class="addr-row">
+          <text class="addr-text {{delivery_addr ? 'has-value' : 'placeholder'}}">
+            {{delivery_addr || '点击地图定位选址'}}
+          </text>
+          <text class="addr-arrow">›</text>
+        </view>
+      </view>
+      <view class="form-item">
+        <text class="label">详细地址</text>
+        <input placeholder="补充楼栋/单元/门牌号（选填）" bindinput="onDeliveryDetailInput" value="{{delivery_detail}}" />
+      </view>
+      <view class="form-item">
+        <text class="label">收货人</text>
+        <input placeholder="收货人姓名（选填）" bindinput="onReceiverNameInput" value="{{receiver_name}}" />
+      </view>
+      <view class="form-item">
+        <text class="label">收货电话</text>
+        <input type="number" placeholder="收货人电话（选填）" bindinput="onReceiverPhoneInput" value="{{receiver_phone}}" />
+      </view>
+    </view>
+
+    <!-- 货物与运费 -->
+    <view class="form-section">
+      <view class="section-label">📦 货物信息</view>
+      <view class="form-item">
+        <text class="label">货物重量(kg)</text>
+        <input type="digit" placeholder="请输入重量" bindinput="onWeightInput" value="{{weight}}" />
+      </view>
+      <view class="form-item">
+        <text class="label">预计距离(km)</text>
+        <input type="digit" placeholder="选择地址后自动计算" bindinput="onDistanceInput" value="{{distance}}" disabled="{{!pickup_addr || !delivery_addr}}" />
+      </view>
+      <view class="form-item">
+        <text class="label">期望运费(元)</text>
+        <input type="digit" placeholder="请输入期望运费" bindinput="onPriceInput" value="{{price}}" />
+        <view class="freight-actions" wx:if="{{suggestedPrice > 0}}">
+          <text class="tip-text">建议 ¥{{suggestedPrice}}</text>
+          <text class="tip-use" bindtap="useSuggestedPrice">使用</text>
+        </view>
+      </view>
+      <!-- 运费说明按钮 -->
+      <view class="freight-rule-row" bindtap="showFreightInfo">
+        <text class="freight-rule-link">📐 查看运费计算规则</text>
+      </view>
+      <view class="form-item">
+        <text class="label">货物价值(元)</text>
+        <input type="digit" placeholder="选填，便于保险参考" bindinput="onValueInput" value="{{goods_value}}" />
+      </view>
+      <view class="form-item" style="align-items:flex-start;">
+        <text class="label" style="padding-top:8rpx;">备注说明</text>
+        <textarea placeholder="选填备注说明（货物特性、特殊要求等）" bindinput="onRemarkInput" value="{{remark}}" style="flex:1;min-height:80rpx;" />
+      </view>
+    </view>
+
+    <!-- 货物照片 -->
+    <view class="form-section">
+      <view class="section-label">📷 货物照片（供识别参考）</view>
+      <view class="photo-grid">
+        <block wx:for="{{photos}}" wx:key="index">
+          <view class="photo-item" catchtap="previewPhoto" data-index="{{index}}">
+            <image src="{{item}}" mode="aspectFill" class="photo-img" />
+            <view class="photo-del" catchtap="delPhoto" data-index="{{index}}">✕</view>
+          </view>
+        </block>
+        <view class="photo-add" bindtap="takePhoto" wx:if="{{photos.length < 6}}">
+          <text class="photo-icon">📷</text>
+          <text class="photo-text">{{photos.length === 0 ? '拍照上传' : '继续添加'}}</text>
+        </view>
+      </view>
+      <view class="photo-tip">照片仅供识别货物，不影响取货码</view>
+    </view>
+
+    <button class="btn-publish" bindtap="onPublish" disabled="{{loading}}">
+      <text wx:if="{{!loading}}">🚚 发布货源</text>
+      <text wx:if="{{loading}}">发布中...</text>
+    </button>
+  </view>
+</view>
+
+<!-- 运费说明弹窗 -->
+<view class="modal-mask {{showFreight ? 'show' : ''}}" bindtap="hideFreightInfo"></view>
+<view class="freight-modal {{showFreight ? 'show' : ''}}">
+  <view class="modal-header">
+    <text class="modal-title">💰 运费计算规则</text>
+    <text class="modal-close" bindtap="hideFreightInfo">✕</text>
+  </view>
+  <view class="modal-body">
+    <view class="rule-block">
+      <view class="rule-title">🛻 货车运费（1吨标准）</view>
+      <view class="rule-row"><text>• 0–100km：</text><text>¥1.2 / km</text></view>
+      <view class="rule-row"><text>• 100–200km：</text><text>¥1.0 / km</text></view>
+      <view class="rule-row"><text>• 200–400km：</text><text>¥0.5 / km</text></view>
+      <view class="rule-row"><text>• 400km以上：</text><text>¥0.3 / km</text></view>
+    </view>
+    <view class="rule-block">
+      <view class="rule-title">🎁 免运费条件</view>
+      <view class="rule-row"><text>• 同一县城内</text><text class="green">免运费</text></view>
+      <view class="rule-row"><text>• 订单满 ¥500</text><text class="green">免运费</text></view>
+    </view>
+    <view class="rule-block">
+      <view class="rule-title">📋 本次估算</view>
+      <view class="rule-row rule-detail">{{freightDetails || '请先填写距离和重量'}}</view>
+    </view>
+    <view class="rule-block" wx:if="{{suggestedPrice > 0}}">
+      <view class="rule-total">
+        <text>建议运费</text>
+        <text class="total-price">¥{{suggestedPrice}}</text>
+      </view>
+      <button class="btn-use-price" bindtap="useSuggestedPrice">立即使用此价格</button>
+    </view>
+  </view>
+</view>

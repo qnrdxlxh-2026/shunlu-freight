@@ -1,0 +1,105 @@
+<view class="home-container">
+  <!-- 用户信息卡片 -->
+  <view class="user-card">
+    <view class="user-info">
+      <view class="avatar">{{userInfo.avatarTail || '****'}}</view>
+      <view class="user-detail">
+        <view class="user-phone">{{userInfo ? userInfo.phone : ''}}</view>
+        <view class="user-tags">
+          <text class="tag tag-private">🚗 私家车主</text>
+        </view>
+      </view>
+    </view>
+    <view class="welcome-text">您好，欢迎回来！</view>
+  </view>
+
+  <!-- 今日统计 -->
+  <view class="stats-section">
+    <view class="stats-title">今日概览</view>
+    <view class="stats-grid">
+      <view class="stat-item" bindtap="goOrders" data-status="2">
+        <view class="stat-num status-orange">{{stats.waitPickup || 0}}</view>
+        <view class="stat-label">待取货</view>
+      </view>
+      <view class="stat-item" bindtap="goOrders" data-status="3">
+        <view class="stat-num status-blue">{{stats.delivering || 0}}</view>
+        <view class="stat-label">配送中</view>
+      </view>
+      <view class="stat-item" bindtap="goOrders" data-status="4">
+        <view class="stat-num status-green">{{stats.completed || 0}}</view>
+        <view class="stat-label">已完成</view>
+      </view>
+      <view class="stat-item" bindtap="goWallet">
+        <view class="stat-num primary">¥{{stats.monthIncome || '0.00'}}</view>
+        <view class="stat-label">本月收入</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 快捷入口 -->
+  <view class="quick-entry">
+    <view class="quick-title">快捷服务</view>
+    <view class="quick-grid">
+      <view class="quick-item" bindtap="goPublishRoute">
+        <view class="quick-icon bg-green">📍</view>
+        <view class="quick-name">发布行程</view>
+        <view class="quick-desc">发布您的顺路行程</view>
+      </view>
+      <view class="quick-item" bindtap="goFindGoods">
+        <view class="quick-icon bg-blue">📦</view>
+        <view class="quick-name">找货源</view>
+        <view class="quick-desc">智能匹配附近货源</view>
+      </view>
+      <view class="quick-item" bindtap="goMyRoutes">
+        <view class="quick-icon bg-orange">🚗</view>
+        <view class="quick-name">我的行程</view>
+        <view class="quick-desc">管理已发布行程</view>
+      </view>
+      <view class="quick-item" bindtap="goWallet">
+        <view class="quick-icon bg-purple">💰</view>
+        <view class="quick-name">我的收入</view>
+        <view class="quick-desc">查看收入明细</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 最新订单 -->
+  <view class="orders-section">
+    <view class="section-header">
+      <view class="section-title">最新订单</view>
+      <view class="section-more" bindtap="goOrders">查看全部 ›</view>
+    </view>
+    <view class="order-list" wx:if="{{recentOrders.length > 0}}">
+      <view
+        class="order-item"
+        wx:for="{{recentOrders}}"
+        wx:key="id"
+        bindtap="goOrderDetail"
+        data-id="{{item.id}}"
+      >
+        <view class="order-top">
+          <view class="order-no">订单号：{{item.orderNo || item.id}}</view>
+          <text class="badge {{item.statusClass}}">{{item.statusText}}</text>
+        </view>
+        <view class="order-route">
+          <view class="route-point">
+            <text class="dot green"></text>
+            <text>{{item.fromAddress || '起点'}}</text>
+          </view>
+          <view class="route-arrow">→</view>
+          <view class="route-point">
+            <text class="dot red"></text>
+            <text>{{item.toAddress || '终点'}}</text>
+          </view>
+        </view>
+        <view class="order-bottom">
+          <view class="order-time">{{item.departureTime}}</view>
+          <view class="order-price">¥{{item.amount}}</view>
+        </view>
+      </view>
+    </view>
+    <view class="empty-state" wx:else>
+      <text>暂无订单，去找找货源吧</text>
+    </view>
+  </view>
+</view>

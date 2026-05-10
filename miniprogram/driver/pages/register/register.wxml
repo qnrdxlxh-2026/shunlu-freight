@@ -1,0 +1,86 @@
+<view class="register-container">
+  <view class="form-section">
+    <!-- 手机号 -->
+    <view class="input-group">
+      <view class="input-row">
+        <text class="input-icon">📱</text>
+        <input
+          type="number"
+          placeholder="请输入手机号"
+          maxlength="11"
+          bindinput="onPhoneInput"
+          value="{{phone}}"
+        />
+      </view>
+
+      <!-- 司机类型选择 -->
+      <view class="type-section">
+        <view class="type-title">选择司机类型</view>
+        <view class="type-grid">
+          <view
+            class="type-card {{driverType === 2 ? 'active' : ''}}"
+            bindtap="onSelectType"
+            data-type="2"
+          >
+            <view class="type-icon">🚛</view>
+            <view class="type-name">货车司机</view>
+            <view class="type-desc">适合4.2米及以上货车</view>
+            <view class="type-check" wx:if="{{driverType === 2}}">✓</view>
+          </view>
+          <view
+            class="type-card {{driverType === 3 ? 'active' : ''}}"
+            bindtap="onSelectType"
+            data-type="3"
+          >
+            <view class="type-icon">🚗</view>
+            <view class="type-name">私家车主</view>
+            <view class="type-desc">适合轿车/SUV/面包车</view>
+            <view class="type-check" wx:if="{{driverType === 3}}">✓</view>
+          </view>
+        </view>
+        <!-- 私家车限制提示 -->
+        <view class="limit-tip" wx:if="{{driverType === 3}}">
+          <text class="tip-icon">⚠️</text>
+          私家车每日最多接2单，单票限重20kg，货值限2000元
+        </view>
+      </view>
+
+      <!-- 密码 -->
+      <view class="input-row">
+        <text class="input-icon">🔒</text>
+        <input
+          type="text"
+          password
+          placeholder="请输入密码（6位以上）"
+          bindinput="onPasswordInput"
+          value="{{password}}"
+        />
+      </view>
+
+      <!-- 确认密码 -->
+      <view class="input-row no-border">
+        <text class="input-icon">🔐</text>
+        <input
+          type="text"
+          password
+          placeholder="请再次输入密码"
+          bindinput="onConfirmPasswordInput"
+          value="{{confirmPassword}}"
+        />
+      </view>
+    </view>
+
+    <!-- 注册按钮 -->
+    <button
+      class="btn-primary register-btn {{loading ? 'btn-disabled' : ''}}"
+      bindtap="onRegister"
+      disabled="{{loading}}"
+    >{{loading ? '注册中...' : '立即注册'}}</button>
+
+    <!-- 登录入口 -->
+    <view class="login-entry">
+      <text class="text-gray">已有账号？</text>
+      <text class="link" bindtap="goLogin">立即登录</text>
+    </view>
+  </view>
+</view>

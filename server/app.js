@@ -37,7 +37,8 @@ function initDB() {
       blacklist: [],      // 黑名单记录
       complaints: [],      // 投诉记录
       call_logs: [],       // 通话记录
-      nextIds: { user: 1, merchant_auth: 1, driver_auth: 1, goods: 1, route: 1, order: 1, wallet: 1, photo: 1, message: 1, transaction: 1, blacklist: 1, complaint: 1, call_log: 1 }
+      settlements: [],     // 结算单
+      nextIds: { user: 1, merchant_auth: 1, driver_auth: 1, goods: 1, route: 1, order: 1, wallet: 1, photo: 1, message: 1, transaction: 1, blacklist: 1, complaint: 1, call_log: 1, settlement: 1 }
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(emptyDB, null, 2));
   }
@@ -164,6 +165,36 @@ function getCountyKeywords() {
 }
 
 // ==================== API路由 ====================
+
+// ==================== 结算单辅助函数 ====================
+
+/**
+ * 订单完成后创建结算单（不再直接打款，改为待审核）
+ * @param {object} order 订单对象
+ * @param {object} db 数据库对象
+ * @returns {number|null} 新结算单ID或null
+ */
+function createSettlement(order, db) {
+  if (!order) return null;
+  // 防止重复创建：检查该订单是否已有结算单
+  const existing = db.settlements.find(s => s.order_id === order.id);
+  if (existing) return existing.id;
+  const id = db.nextIds.settlement++;
+  db.settlements.push({
+    id,
+    order_id: order.id,
+    driver_id: order.driver_id || null,
+    merchant_id: order.merchant_id || null,
+    amount: order.driver_amount || 0,       // 司机应得（运费-平台抽成）
+    commission_fee: order.commission_fee || 0, // 平台抽成
+    freight: order.price || 0,               // 总运费
+    status: 'pending',
+    create_time: new Date().toISOString(),
+    reject_reason: null,
+    approve_time: null
+  });
+  return id;
+}
 
 async function handleApi(req, res, pathname, method) {
   const db = initDB();
@@ -355,7 +386,10 @@ async function handleApi(req, res, pathname, method) {
     if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
     const { order_id } = await parseBody(req);
     const order = db.orders.find(o => o.id === parseInt(order_id));
-    if (!order || order.merchant_id !== user.userId) return sendJson(res, { code: 400, msg: '订单不存在' }, 400);
+    if (!order) return sendJson(res, { code: 400, msg: '订单不存在' }, 400);
+    const goods = db.goods.find(g => g.id === order.goods_id);
+    const isOwner = order.merchant_id === user.userId || (goods && goods.personal_id === user.userId);
+    if (!isOwner) return sendJson(res, { code: 400, msg: '订单不存在' }, 400);
     
     const wallet = db.wallets.find(w => w.user_id === user.userId);
     if (wallet.balance < order.price) return sendJson(res, { code: 400, msg: '余额不足' }, 400);
@@ -377,15 +411,16 @@ async function handleApi(req, res, pathname, method) {
       remark: '运费支付',
       create_time: new Date().toISOString()
     });
-    // 冻结金额记录
-    if (wallet) {
+    // 冻结金额记录（佣金从付款方钱包冻结，最终结算给司机）
+    const driverWallet = db.wallets.find(w => w.user_id === order.driver_id);
+    if (driverWallet) {
       wallet.frozen_amount = (wallet.frozen_amount || 0) + order.commission_fee;
       db.transactions.push({
         id: db.nextIds.transaction++,
-        user_id: order.driver_id,
+        user_id: user.userId,  // 冻结发生在付款方账户
         type: 'freeze',
         amount: 0,
-        balance_after: 0,
+        balance_after: wallet.frozen_amount,
         order_id: order.id,
         remark: '运费冻结¥' + order.commission_fee,
         create_time: new Date().toISOString()
@@ -400,25 +435,13 @@ async function handleApi(req, res, pathname, method) {
     const { order_id } = await parseBody(req);
     const order = db.orders.find(o => o.id === parseInt(order_id));
     if (!order) return sendJson(res, { code: 400, msg: '订单不存在' }, 400);
-    
-    order.status = 4; // 已签收
+    if (order.status !== 4) return sendJson(res, { code: 400, msg: '当前状态不允许签收' }, 400);
+    order.status = 5; // 已签收
     order.sign_time = new Date().toISOString();
-    // 司机收入入账
-    const driverWallet = db.wallets.find(w => w.user_id === order.driver_id);
-    if (driverWallet) driverWallet.balance += order.driver_amount;
-    // 记录司机收入
-    db.transactions.push({
-      id: db.nextIds.transaction++,
-      user_id: order.driver_id,
-      type: 'income',
-      amount: order.driver_amount,
-      balance_after: driverWallet ? driverWallet.balance : 0,
-      order_id: order.id,
-      remark: '运费收入',
-      create_time: new Date().toISOString()
-    });
+    // 创建结算单（待审核）
+    createSettlement(order, db);
     saveDB(db);
-    return sendJson(res, { code: 0, msg: '签收成功' });
+    return sendJson(res, { code: 0, msg: '签收成功，已提交结算' });
   }
 
   // 生成6位取货码
@@ -487,23 +510,10 @@ async function handleApi(req, res, pathname, method) {
       order.status = 4; // 已签收
       order.sign_time = new Date().toISOString();
       order.update_time = new Date().toISOString();
-      // 司机收入入账
-      const driverWallet = db.wallets.find(w => w.user_id === order.driver_id);
-      if (driverWallet) {
-        driverWallet.balance += order.driver_amount;
-        db.transactions.push({
-          id: db.nextIds.transaction++,
-          user_id: order.driver_id,
-          type: 'income',
-          amount: order.driver_amount,
-          balance_after: driverWallet.balance,
-          order_id: order.id,
-          remark: '运费收入',
-          create_time: new Date().toISOString()
-        });
-      }
+      // 创建结算单（不再直接打款，改为待审核）
+      createSettlement(order, db);
       saveDB(db);
-      return sendJson(res, { code: 0, msg: '送达确认成功', data: { status: order.status } });
+      return sendJson(res, { code: 0, msg: '送达确认成功，已提交结算', data: { status: order.status } });
     }
     return sendJson(res, { code: 400, msg: '未知操作' }, 400);
   }
@@ -512,6 +522,36 @@ async function handleApi(req, res, pathname, method) {
     const orderId = parseInt(pathname.split('/').pop());
     const order = db.orders.find(o => o.id === orderId);
     if (!order) return sendJson(res, { code: 404, msg: '订单不存在' }, 404);
+    // 附加关联信息
+    if (order.goods_id) {
+      const goods = db.goods.find(g => g.id === order.goods_id);
+      if (goods) {
+        order.start_addr = goods.start_addr;
+        order.end_addr = goods.end_addr;
+        order.goods_name = goods.remark || '货物';
+        order.weight = goods.weight;
+        order.goods_value = goods.goods_value;
+        order.sender_name = goods.sender_name;
+        order.sender_phone = goods.sender_phone;
+        order.receiver_name = goods.receiver_name;
+        order.receiver_phone = goods.receiver_phone;
+        order.photo_urls = goods.photo_urls || [];
+      }
+    }
+    // 附加商家信息
+    if (order.merchant_id) {
+      const merchant = db.users.find(u => u.id === order.merchant_id);
+      if (merchant) order.merchant_phone = merchant.phone;
+    }
+    // 附加司机信息
+    if (order.driver_id) {
+      const driver = db.users.find(u => u.id === order.driver_id);
+      if (driver) {
+        order.driver_name = driver.real_name || driver.nickname || '司机' + driver.id;
+        order.driver_phone = driver.phone || '';
+        order.driver_type = driver.role;
+      }
+    }
     return sendJson(res, { code: 0, data: order });
   }
 
@@ -524,8 +564,41 @@ async function handleApi(req, res, pathname, method) {
 
   if (pathname === '/api/wallet/info' && method === 'GET') {
     if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
-    const wallet = db.wallets.find(w => w.user_id === user.userId);
-    return sendJson(res, { code: 0, data: wallet || { balance: 0, frozen_amount: 0 } });
+    const wallet = db.wallets.find(w => w.user_id === user.userId) || { balance: 0, frozen_amount: 0 };
+    
+    // 计算本月收入：从本月第一天开始的结算单approved金额
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    let monthIncome = 0;
+    let pendingSettlement = 0;
+    
+    if (user.role === 2 || user.role === 3) {
+      // 司机/私家车：统计结算单收入
+      const mySettlements = db.settlements.filter(s => s.driver_id === user.userId);
+      monthIncome = mySettlements
+        .filter(s => s.status === 'approved' && s.approve_time >= monthStart)
+        .reduce((sum, s) => sum + s.amount, 0);
+      pendingSettlement = mySettlements
+        .filter(s => s.status === 'pending')
+        .reduce((sum, s) => sum + s.amount, 0);
+    } else {
+      // 商家/个人：统计交易支出
+      monthIncome = db.transactions.filter(t => 
+        t.user_id === user.userId && 
+        t.type === 'settlement' && 
+        t.create_time >= monthStart
+      ).reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      pendingSettlement = db.settlements.filter(s => 
+        s.merchant_id === user.userId && 
+        s.status === 'pending'
+      ).reduce((sum, s) => sum + s.amount, 0);
+    }
+    
+    return sendJson(res, { code: 0, data: {
+      ...wallet,
+      monthIncome: Math.round(monthIncome * 100) / 100,
+      pendingSettlement: Math.round(pendingSettlement * 100) / 100
+    }});
   }
 
   if (pathname === '/api/wallet/records' && method === 'GET') {
@@ -540,6 +613,26 @@ async function handleApi(req, res, pathname, method) {
     if (!user || (user.role !== 2 && user.role !== 3)) return sendJson(res, { code: 401, msg: '未授权' }, 401);
     const list = db.orders.filter(o => o.driver_id === user.userId);
     return sendJson(res, { code: 0, data: list });
+  }
+
+  // 司机/私家车主统计数据
+  if (pathname === '/api/driver/stats' && method === 'GET') {
+    if (!user || (user.role !== 2 && user.role !== 3)) return sendJson(res, { code: 401, msg: '未授权' }, 401);
+    const myOrders = db.orders.filter(o => o.driver_id === user.userId);
+    const today = new Date().toISOString().split('T')[0];
+    const todayOrders = myOrders.filter(o => o.create_time && o.create_time.startsWith(today));
+    const wallet = db.wallets.find(w => w.user_id === user.userId) || { balance: 0 };
+    const resData = {
+      totalOrders: myOrders.length,
+      todayOrders: todayOrders.length,
+      totalIncome: myOrders.reduce((sum, o) => sum + (o.driver_income || o.price * 0.9), 0),
+      balance: wallet.balance,
+      dailyLimit: user.role === 3 ? 2 : null, // 私家车每日限2单
+      todayUsed: todayOrders.length,
+      weightLimit: user.role === 3 ? 20 : null, // 私家车限20kg
+      valueLimit: user.role === 3 ? 2000 : null // 私家车限2000元
+    };
+    return sendJson(res, { code: 0, data: resData });
   }
 
   if (pathname === '/api/wallet/recharge' && method === 'POST') {
@@ -574,14 +667,23 @@ async function handleApi(req, res, pathname, method) {
 
   if (pathname === '/api/admin/stats' && method === 'GET') {
     if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员' }, 401);
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const todayOrders = db.orders.filter(o => o.create_time && o.create_time.startsWith(todayStr));
     return sendJson(res, {
       code: 0,
       data: {
         totalUsers: db.users.length,
         totalOrders: db.orders.length,
-        totalAmount: db.orders.reduce((sum, o) => sum + o.price, 0),
+        totalAmount: db.orders.reduce((sum, o) => sum + (o.price || 0), 0),
         merchants: db.users.filter(u => u.role === 1).length,
-        drivers: db.users.filter(u => u.role === 2 || u.role === 3).length
+        drivers: db.users.filter(u => u.role === 2).length,
+        privateCars: db.users.filter(u => u.role === 3).length,
+        personalUsers: db.users.filter(u => u.role === 5).length,
+        todayOrders: todayOrders.length,
+        todayAmount: todayOrders.reduce((sum, o) => sum + (o.price || 0), 0),
+        pendingOrders: db.orders.filter(o => [1, 2].includes(o.status)).length,
+        activeGoods: db.goods.filter(g => g.status === 1).length
       }
     });
   }
@@ -1074,7 +1176,7 @@ async function handleApi(req, res, pathname, method) {
   if (pathname === '/api/personal/orders' && method === 'GET') {
     if (!user || user.role !== 5) return sendJson(res, { code: 401, msg: '未授权' }, 401);
     const list = db.orders.filter(o => o.personal_id === user.userId || (o.merchant_id === null && db.goods.find(g => g.id === o.goods_id && g.personal_id === user.userId)));
-    return sendJson(res, { code: 0, data: list });
+    return sendJson(res, { code: 0, data: { list } });
   }
 
   // ========== 司机操作 ==========
@@ -1100,8 +1202,9 @@ async function handleApi(req, res, pathname, method) {
     if (order.status !== 3) return sendJson(res, { code: 400, msg: '当前状态不可送达' }, 400);
     order.status = 4; // 已送达待签收
     order.deliver_time = new Date().toISOString();
+    createSettlement(order, db);
     saveDB(db);
-    return sendJson(res, { code: 0, msg: '已确认送达' });
+    return sendJson(res, { code: 0, msg: '已确认送达，已提交结算' });
   }
 
   if (pathname === '/api/order/cancel' && method === 'POST') {
@@ -1166,10 +1269,165 @@ async function handleApi(req, res, pathname, method) {
     const order = db.orders.find(o => o.id === parseInt(order_id));
     if (!order) return sendJson(res, { code: 400, msg: '订单不存在' }, 400);
     if (order.status !== 4) return sendJson(res, { code: 400, msg: '当前状态不可签收' }, 400);
-    order.status = 4; // 确认签收
     order.confirm_time = new Date().toISOString();
+    createSettlement(order, db);
     saveDB(db);
-    return sendJson(res, { code: 0, msg: '已确认签收' });
+    return sendJson(res, { code: 0, msg: '已确认签收，已提交结算' });
+  }
+
+  // ========== 结算单 API ==========
+  // 管理员获取结算单列表
+  if (pathname === '/api/admin/settlements' && method === 'GET') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员' }, 401);
+    const urlParams = new URL(req.url, 'http://localhost');
+    const statusFilter = urlParams.searchParams.get('status') || 'all';
+    const page = parseInt(urlParams.searchParams.get('page')) || 1;
+    const pageSize = parseInt(urlParams.searchParams.get('pageSize')) || 20;
+
+    let list = db.settlements.map(s => {
+      const order = db.orders.find(o => o.id === s.order_id);
+      const driver = order ? db.users.find(u => u.id === order.driver_id) : null;
+      const driverTypeName = order ? (order.driver_type === 3 ? '私家车' : '货车') : '-';
+      return {
+        ...s,
+        order_no: order ? '#' + order.id : '-',
+        start_addr: order?.start_addr || '',
+        end_addr: order?.end_addr || '',
+        driver_name: driver ? (driver.real_name || driver.nickname || '司机' + driver.id) : (order?.driver_id ? '司机' + order.driver_id : '无'),
+        driver_phone: driver?.phone || '',
+        driver_type_name: driverTypeName
+      };
+    });
+
+    if (statusFilter !== 'all') {
+      list = list.filter(s => s.status === statusFilter);
+    }
+    list.sort((a, b) => new Date(b.create_time) - new Date(a.create_time));
+
+    const total = list.length;
+    const paged = list.slice((page - 1) * pageSize, page * pageSize);
+
+    // 统计
+    const pendingAmount = db.settlements.filter(s => s.status === 'pending').reduce((sum, s) => sum + s.amount, 0);
+    const approvedAmount = db.settlements.filter(s => s.status === 'approved').reduce((sum, s) => sum + s.amount, 0);
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const monthTotal = db.settlements.filter(s => s.status === 'approved' && s.approve_time >= monthStart).reduce((sum, s) => sum + s.amount, 0);
+
+    return sendJson(res, { code: 0, data: { list: paged, total, pendingAmount, approvedAmount, monthTotal } });
+  }
+
+  // 管理员审批结算单
+  if (pathname.startsWith('/api/admin/settlements/') && pathname.endsWith('/approve') && method === 'POST') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员' }, 401);
+    const parts = pathname.split('/');
+    const id = parseInt(parts[parts.length - 2]); // 倒数第二个是ID
+    console.log('[DEBUG] 结算审核 pathname:', pathname, 'parts:', parts, 'id:', id);
+    console.log('[DEBUG] settlements:', JSON.stringify(db.settlements));
+    const settlement = db.settlements.find(s => s.id === id);
+    if (!settlement) return sendJson(res, { code: 404, msg: '结算单不存在' }, 404);
+    if (settlement.status !== 'pending') return sendJson(res, { code: 400, msg: '只能审批待审核状态的结算单' }, 400);
+
+    settlement.status = 'approved';
+    settlement.approve_time = new Date().toISOString();
+
+    // 1. 钱包加钱给司机
+    if (settlement.driver_id) {
+      const driverWallet = db.wallets.find(w => w.user_id === settlement.driver_id);
+      if (driverWallet) {
+        driverWallet.balance += settlement.amount;
+        db.transactions.push({
+          id: db.nextIds.transaction++,
+          user_id: settlement.driver_id,
+          type: 'settlement',
+          amount: settlement.amount,
+          balance_after: driverWallet.balance,
+          settlement_id: settlement.id,
+          order_id: settlement.order_id,
+          remark: '结算单收入 #' + settlement.id,
+          create_time: new Date().toISOString()
+        });
+      }
+    }
+
+    // 2. 解冻付款方冻结金额（商家或平台扣减冻结，结算给司机后释放）
+    const order = db.orders.find(o => o.id === settlement.order_id);
+    if (order) {
+      const payerId = order.merchant_id || (db.goods.find(g => g.id === order.goods_id) || {}).personal_id;
+      if (payerId) {
+        const payerWallet = db.wallets.find(w => w.user_id === payerId);
+        if (payerWallet && payerWallet.frozen_amount > 0) {
+          payerWallet.frozen_amount = Math.max(0, payerWallet.frozen_amount - settlement.commission_fee);
+          db.transactions.push({
+            id: db.nextIds.transaction++,
+            user_id: payerId,
+            type: 'unfreeze',
+            amount: 0,
+            balance_after: payerWallet.frozen_amount,
+            settlement_id: settlement.id,
+            order_id: settlement.order_id,
+            remark: '结算完成，解冻¥' + settlement.commission_fee,
+            create_time: new Date().toISOString()
+          });
+        }
+      }
+    }
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '审批通过，款项已发放' });
+  }
+
+  // 管理员驳回结算单
+  if (pathname.startsWith('/api/admin/settlements/') && pathname.endsWith('/reject') && method === 'POST') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员' }, 401);
+    const parts = pathname.split('/');
+    const id = parseInt(parts[parts.length - 2]);
+    const { reason } = await parseBody(req);
+    const settlement = db.settlements.find(s => s.id === id);
+    if (!settlement) return sendJson(res, { code: 404, msg: '结算单不存在' }, 404);
+    if (settlement.status !== 'pending') return sendJson(res, { code: 400, msg: '只能驳回待审核状态的结算单' }, 400);
+
+    settlement.status = 'rejected';
+    settlement.reject_reason = reason || '未说明原因';
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '已驳回' });
+  }
+
+  // 司机查看自己的结算单
+  if (pathname === '/api/driver/settlements' && method === 'GET') {
+    if (!user || (user.role !== 2 && user.role !== 3)) return sendJson(res, { code: 401, msg: '未授权' }, 401);
+    const urlParams = new URL(req.url, 'http://localhost');
+    const statusFilter = urlParams.searchParams.get('status') || 'all';
+    const page = parseInt(urlParams.searchParams.get('page')) || 1;
+    const pageSize = parseInt(urlParams.searchParams.get('pageSize')) || 20;
+
+    let list = db.settlements.filter(s => s.driver_id === user.userId);
+    if (statusFilter !== 'all') {
+      list = list.filter(s => s.status === statusFilter);
+    }
+    list.sort((a, b) => new Date(b.create_time) - new Date(a.create_time));
+
+    const total = list.length;
+    const paged = list.slice((page - 1) * pageSize, page * pageSize);
+    return sendJson(res, { code: 0, data: { list: paged, total } });
+  }
+
+  // 商家查看自己的结算单
+  if (pathname === '/api/merchant/settlements' && method === 'GET') {
+    if (!user || user.role !== 1) return sendJson(res, { code: 401, msg: '未授权' }, 401);
+    const urlParams = new URL(req.url, 'http://localhost');
+    const statusFilter = urlParams.searchParams.get('status') || 'all';
+    const page = parseInt(urlParams.searchParams.get('page')) || 1;
+    const pageSize = parseInt(urlParams.searchParams.get('pageSize')) || 20;
+
+    let list = db.settlements.filter(s => s.merchant_id === user.userId);
+    if (statusFilter !== 'all') {
+      list = list.filter(s => s.status === statusFilter);
+    }
+    list.sort((a, b) => new Date(b.create_time) - new Date(a.create_time));
+
+    const total = list.length;
+    const paged = list.slice((page - 1) * pageSize, page * pageSize);
+    return sendJson(res, { code: 0, data: { list: paged, total } });
   }
 
   // 404

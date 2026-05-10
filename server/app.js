@@ -1,0 +1,1221 @@
+/**
+ * 顺路货运撮合平台 - 纯Node.js内置模块版
+ * 功能：用户 | 商家 | 司机 | 订单 | 钱包 | 运营后台
+ */
+
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+const QRCode = require('qrcode');
+const formidable = require('formidable');
+
+// 简易SQLite（用JSON文件模拟数据库）
+const DB_FILE = path.join(__dirname, '../data/db.json');
+
+// 初始化数据库
+function initDB() {
+  if (!fs.existsSync(path.dirname(DB_FILE))) {
+    fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
+  }
+  if (!fs.existsSync(DB_FILE)) {
+    const emptyDB = {
+      users: [],
+      merchant_auths: [],
+      driver_auths: [],
+      goods: [],
+      routes: [],
+      orders: [],
+      wallets: [],
+      transactions: [],
+      region_configs: [
+        { id: 1, province: '四川', city: '甘孜', area: null, commission_rate: 6.00, private_rate: 12.00, status: 1 },
+        { id: 2, province: '四川', city: '阿坝', area: null, commission_rate: 6.00, private_rate: 12.00, status: 1 }
+      ],
+      photos: [],
+      messages: [],
+      blacklist: [],      // 黑名单记录
+      complaints: [],      // 投诉记录
+      call_logs: [],       // 通话记录
+      nextIds: { user: 1, merchant_auth: 1, driver_auth: 1, goods: 1, route: 1, order: 1, wallet: 1, photo: 1, message: 1, transaction: 1, blacklist: 1, complaint: 1, call_log: 1 }
+    };
+    fs.writeFileSync(DB_FILE, JSON.stringify(emptyDB, null, 2));
+  }
+  return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+}
+
+function saveDB(db) {
+  fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
+}
+
+// 工具函数
+function hashPassword(pwd) {
+  return crypto.createHash('sha256').update(pwd + 'shunlu_salt').digest('hex');
+}
+
+function generateToken(userId, role) {
+  const payload = { userId, role, exp: Date.now() + 7 * 24 * 60 * 60 * 1000 };
+  return Buffer.from(JSON.stringify(payload)).toString('base64');
+}
+
+function verifyToken(token) {
+  try {
+    const payload = JSON.parse(Buffer.from(token, 'base64').toString());
+    if (payload.exp < Date.now()) return null;
+    return payload;
+  } catch { return null; }
+}
+
+function parseBody(req) {
+  return new Promise((resolve) => {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try { resolve(JSON.parse(body)); }
+      catch { resolve({}); }
+    });
+  });
+}
+
+function sendJson(res, data, status = 200) {
+  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify(data));
+}
+
+// ==================== 计价规则 ====================
+
+/**
+ * 计算运费和抽成
+ * @param {number} distance 距离(km)
+ * @param {number} weight 重量(kg)
+ * @param {number} volume 体积(m³，可选)
+ * @param {number} driverType 司机类型 2=货车 3=私家车
+ * @param {string} pickupZone 取货区域（判断是否县城内）
+ * @param {string} deliveryZone 送达区域
+ * @returns {object} { freight, commission, driverIncome, details }
+ */
+function calculatePrice(distance, weight, driverType, pickupZone = '', deliveryZone = '') {
+  const isCounty = isCountyDelivery(pickupZone, deliveryZone);
+  const result = { freight: 0, commission: 0, driverIncome: 0, details: '' };  
+  
+  if (driverType === 3) { // 私家车（≤20kg小件）
+    if (isCounty) {
+      // 县城内：固定10元
+      result.freight = 10;
+      result.commission = Math.round(result.freight * 0.1 * 10) / 10; // 10%抽成
+    } else {
+      // 跨城：起步价10元 + 里程阶梯加价
+      let freight = 10;
+      if (distance <= 100) {
+        freight += distance * 0.2;
+      } else if (distance <= 200) {
+        freight += 100 * 0.2 + (distance - 100) * 0.15;
+      } else {
+        freight += 100 * 0.2 + 100 * 0.15 + (distance - 200) * 0.1;
+      }
+      result.freight = Math.round(freight * 10) / 10;
+      result.commission = Math.round(result.freight * 0.1 * 10) / 10; // 10%抽成
+    }
+    result.details = `私家车 | ${isCounty ? '县城内固定' : `${distance}km起步10元+阶梯`} | 运费¥${result.freight} | 抽成¥${result.commission}`;
+  } else { // 货车
+    const tons = weight / 1000; // kg转吨
+    const isOneTon = tons <= 1;
+    
+    // 基础里程单价
+    let unitPrice = 0;
+    if (distance <= 100) unitPrice = 1.2;
+    else if (distance <= 200) unitPrice = 1;
+    else if (distance <= 300) unitPrice = 1;
+    else unitPrice = 0.5;
+    
+    if (isCounty) {
+      // 县城内：起步价50元 + 吨位计算
+      result.freight = Math.max(50, unitPrice * distance * Math.max(tons, 1));
+      result.commission = Math.round(result.freight * 0.1 * 10) / 10; // 10%抽成
+    } else {
+      // 县城外：里程单价 × 公里数 × 吨位
+      result.freight = unitPrice * distance * Math.max(tons, 1);
+      result.commission = Math.round(result.freight * 0.1 * 10) / 10; // 10%抽成
+    }
+    result.freight = Math.round(result.freight);
+    result.details = `货车${isOneTon ? '(1吨标准)' : `(${tons.toFixed(2)}吨)`} | ${isCounty ? '县城内起步50元' : `${distance}km单价¥${unitPrice}/km`} | 运费¥${result.freight} | 抽成¥${result.commission}`;
+  }
+  
+  result.driverIncome = Math.round((result.freight - result.commission) * 10) / 10;
+  return result;
+}
+
+/**
+ * 判断是否县城内配送（两端都在县城/城区才算）
+ */
+function isCountyDelivery(pickupZone, deliveryZone) {
+  const countyKeywords = ['县城', '城区', '市中心', '镇中心', '康定城区', '炉霍城区', '甘孜城区'];
+  const pickupIsCounty = countyKeywords.some(k => pickupZone?.includes(k));
+  const deliveryIsCounty = countyKeywords.some(k => deliveryZone?.includes(k));
+  // 两端都在县城/城区才算县城内
+  return pickupIsCounty && deliveryIsCounty;
+}
+
+/**
+ * 获取县城关键词列表
+ */
+function getCountyKeywords() {
+  return ['县城', '城区', '市中心', '镇中心', '康定城区', '炉霍城区', '甘孜城区', '新都桥', '塔公镇', '雅拉乡'];
+}
+
+// ==================== API路由 ====================
+
+async function handleApi(req, res, pathname, method) {
+  const db = initDB();
+  const token = req.headers['authorization']?.replace('Bearer ', '');
+  const user = token ? verifyToken(token) : null;
+
+  // ========== 用户相关 ==========
+  if (pathname === '/api/user/register' && method === 'POST') {
+    const { phone, password, role } = await parseBody(req);
+    if (!phone || !password || !role) return sendJson(res, { code: 400, msg: '参数不完整' }, 400);
+    if (db.users.find(u => u.phone === phone)) return sendJson(res, { code: 400, msg: '手机号已注册' }, 400);
+    
+    const userId = db.nextIds.user++;
+    db.users.push({
+      id: userId,
+      phone,
+      password: hashPassword(password),
+      role: parseInt(role),
+      real_name: null,
+      id_card: null,
+      status: 1,
+      create_time: new Date().toISOString()
+    });
+    // 创建钱包
+    db.wallets.push({ id: db.nextIds.wallet++, user_id: userId, balance: 0, frozen_amount: 0 });
+    saveDB(db);
+    
+    return sendJson(res, { code: 0, msg: '注册成功', data: { token: generateToken(userId, role), user_id: userId } });
+  }
+
+  if (pathname === '/api/user/login' && method === 'POST') {
+    const { phone, password } = await parseBody(req);
+    const user = db.users.find(u => u.phone === phone);
+    if (!user || user.password !== hashPassword(password)) {
+      return sendJson(res, { code: 401, msg: '账号或密码错误' }, 401);
+    }
+    return sendJson(res, { code: 0, msg: '登录成功', data: { token: generateToken(user.id, user.role), userInfo: user } });
+  }
+
+  if (pathname === '/api/user/real-auth' && method === 'POST') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const { real_name, id_card, img_url } = await parseBody(req);
+    const u = db.users.find(u => u.id === user.userId);
+    if (u) { u.real_name = real_name; u.id_card = id_card; }
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '实名认证成功' });
+  }
+
+  // ========== 商家相关 ==========
+  if (pathname === '/api/merchant/publish-goods' && method === 'POST') {
+    if (!user || user.role !== 1) return sendJson(res, { code: 401, msg: '仅商家可发布' }, 401);
+    const { start_addr, end_addr, weight, price, goods_value, remark, sender_name, sender_phone, receiver_name, receiver_phone, photo_urls } = await parseBody(req);
+    
+    const goodsId = db.nextIds.goods++;
+    db.goods.push({
+      id: goodsId,
+      merchant_id: user.userId,
+      start_addr, end_addr,
+      weight: parseFloat(weight),
+      price: parseFloat(price),
+      goods_value: parseFloat(goods_value || 0),
+      remark,
+      sender_name: sender_name || '',
+      sender_phone: sender_phone || '',
+      receiver_name: receiver_name || '',
+      receiver_phone: receiver_phone || '',
+      photo_urls: photo_urls || [],
+      status: 1, // 待接单
+      create_time: new Date().toISOString()
+    });
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '发布成功', data: { goods_id: goodsId } });
+  }
+
+  if (pathname === '/api/merchant/goods-list' && method === 'GET') {
+    if (!user || user.role !== 1) return sendJson(res, { code: 401, msg: '未授权' }, 401);
+    const list = db.goods.filter(g => g.merchant_id === user.userId);
+    return sendJson(res, { code: 0, data: list });
+  }
+
+  // 商家查看自己的订单
+  if (pathname === '/api/merchant/orders' && method === 'GET') {
+    if (!user || user.role !== 1) return sendJson(res, { code: 401, msg: '未授权' }, 401);
+    const list = db.orders.filter(o => o.merchant_id === user.userId);
+    return sendJson(res, { code: 0, data: list });
+  }
+
+  // 商家订单详情
+  if (pathname.startsWith('/api/merchant/order/') && method === 'GET') {
+    if (!user || user.role !== 1) return sendJson(res, { code: 401, msg: '未授权' }, 401);
+    const orderId = parseInt(pathname.split('/').pop());
+    const order = db.orders.find(o => o.id === orderId && o.merchant_id === user.userId);
+    if (!order) return sendJson(res, { code: 404, msg: '订单不存在' }, 404);
+    // 附加货物照片
+    if (order.goods_id) {
+      const goods = db.goods.find(g => g.id === order.goods_id);
+      if (goods) {
+        order.goods = goods;
+        order.photo_urls = goods.photo_urls || [];
+      }
+    }
+    return sendJson(res, { code: 0, data: order });
+  }
+
+  // ========== 司机相关 ==========
+  if (pathname === '/api/driver/publish-route' && method === 'POST') {
+    if (!user || (user.role !== 2 && user.role !== 3)) return sendJson(res, { code: 401, msg: '仅司机可发布' }, 401);
+    const { start_addr, end_addr, departure_time, space, remark, license_plate, vehicle_photos,
+           start_lat, start_lng, end_lat, end_lng } = await parseBody(req);
+
+    const routeId = db.nextIds.route++;
+    db.routes.push({
+      id: routeId,
+      driver_id: user.userId,
+      driver_type: user.role, // 2-货车 3-私家车
+      start_addr, end_addr,
+      departure_time: departure_time || '',
+      depart_time: departure_time || '',
+      remain_space: parseFloat(space) || 0,
+      space: parseFloat(space) || 0,
+      remark: remark || '',
+      license_plate: license_plate || '',
+      vehicle_photos: vehicle_photos || [],
+      start_lat: parseFloat(start_lat) || 0,
+      start_lng: parseFloat(start_lng) || 0,
+      end_lat: parseFloat(end_lat) || 0,
+      end_lng: parseFloat(end_lng) || 0,
+      status: 1,
+      create_time: new Date().toISOString(),
+    });
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '行程发布成功', data: { route_id: routeId } });
+  }
+
+  if (pathname === '/api/driver/match-goods' && method === 'GET') {
+    if (!user || (user.role !== 2 && user.role !== 3)) return sendJson(res, { code: 401, msg: '未授权' }, 401);
+    // 匹配待接单的货源
+    const pendingGoods = db.goods.filter(g => g.status === 1);
+    // TODO: 按路线、时间智能匹配
+    return sendJson(res, { code: 0, data: pendingGoods });
+  }
+
+  if (pathname === '/api/driver/take-order' && method === 'POST') {
+    if (!user || (user.role !== 2 && user.role !== 3)) return sendJson(res, { code: 401, msg: '仅司机可接单' }, 401);
+    const { goods_id } = await parseBody(req);
+    const goods = db.goods.find(g => g.id === parseInt(goods_id));
+    if (!goods || goods.status !== 1) return sendJson(res, { code: 400, msg: '货源不可用' }, 400);
+    
+    // 私家车约束检查
+    if (user.role === 3) {
+      const todayOrders = db.orders.filter(o => 
+        o.driver_id === user.userId && 
+        o.create_time.startsWith(new Date().toISOString().slice(0, 10))
+      ).length;
+      if (todayOrders >= 2) return sendJson(res, { code: 400, msg: '私家车每日限接2单' }, 400);
+      if (goods.weight > 20) return sendJson(res, { code: 400, msg: '私家车单票限20kg' }, 400);
+      if (goods.goods_value > 2000) return sendJson(res, { code: 400, msg: '私家车单票货值限2000元' }, 400);
+    }
+    
+    // 从区域配置读取佣金率
+    let commissionRate = user.role === 2 ? 6 : 12; // 默认值
+    const regionConfig = db.region_configs.find(r => r.status === 1);
+    if (regionConfig) {
+      commissionRate = user.role === 2 ? regionConfig.commission_rate : regionConfig.private_rate;
+    }
+    const commissionFee = Math.round(goods.price * commissionRate) / 100;
+    const driverAmount = goods.price - commissionFee;
+    
+    const orderId = db.nextIds.order++;
+    db.orders.push({
+      id: orderId,
+      goods_id: goods.id,
+      merchant_id: goods.merchant_id,
+      driver_id: user.userId,
+      price: goods.price,
+      commission_rate: commissionRate,
+      commission_fee: commissionFee,
+      driver_amount: driverAmount,
+      status: 1, // 待支付
+      create_time: new Date().toISOString()
+    });
+    goods.status = 2; // 已接单
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '接单成功', data: { order_id: orderId } });
+  }
+
+  // ========== 订单相关 ==========
+  if (pathname === '/api/order/pay' && method === 'POST') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const { order_id } = await parseBody(req);
+    const order = db.orders.find(o => o.id === parseInt(order_id));
+    if (!order || order.merchant_id !== user.userId) return sendJson(res, { code: 400, msg: '订单不存在' }, 400);
+    
+    const wallet = db.wallets.find(w => w.user_id === user.userId);
+    if (wallet.balance < order.price) return sendJson(res, { code: 400, msg: '余额不足' }, 400);
+    
+    wallet.balance -= order.price;
+    // 生成取货码和送达码
+    order.pickup_code = generateCode();
+    order.delivery_code = generateCode();
+    order.status = 2; // 待取货
+    order.update_time = new Date().toISOString();
+    // 记录支付交易
+    db.transactions.push({
+      id: db.nextIds.transaction++,
+      user_id: user.userId,
+      type: 'pay',
+      amount: -order.price,
+      balance_after: wallet.balance,
+      order_id: order.id,
+      remark: '运费支付',
+      create_time: new Date().toISOString()
+    });
+    // 冻结金额记录
+    if (wallet) {
+      wallet.frozen_amount = (wallet.frozen_amount || 0) + order.commission_fee;
+      db.transactions.push({
+        id: db.nextIds.transaction++,
+        user_id: order.driver_id,
+        type: 'freeze',
+        amount: 0,
+        balance_after: 0,
+        order_id: order.id,
+        remark: '运费冻结¥' + order.commission_fee,
+        create_time: new Date().toISOString()
+      });
+    }
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '支付成功', data: { pickup_code: order.pickup_code, delivery_code: order.delivery_code } });
+  }
+
+  if (pathname === '/api/order/sign' && method === 'POST') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const { order_id } = await parseBody(req);
+    const order = db.orders.find(o => o.id === parseInt(order_id));
+    if (!order) return sendJson(res, { code: 400, msg: '订单不存在' }, 400);
+    
+    order.status = 4; // 已签收
+    order.sign_time = new Date().toISOString();
+    // 司机收入入账
+    const driverWallet = db.wallets.find(w => w.user_id === order.driver_id);
+    if (driverWallet) driverWallet.balance += order.driver_amount;
+    // 记录司机收入
+    db.transactions.push({
+      id: db.nextIds.transaction++,
+      user_id: order.driver_id,
+      type: 'income',
+      amount: order.driver_amount,
+      balance_after: driverWallet ? driverWallet.balance : 0,
+      order_id: order.id,
+      remark: '运费收入',
+      create_time: new Date().toISOString()
+    });
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '签收成功' });
+  }
+
+  // 生成6位取货码
+  function generateCode() {
+    return Math.random().toString(36).toUpperCase().slice(2, 8);
+  }
+
+  // 生成订单二维码数据
+  function makeQRPayload(orderId, code, type) {
+    const data = { o: orderId, c: code, t: type };
+    return Buffer.from(JSON.stringify(data)).toString('base64');
+  }
+
+  if (pathname.startsWith('/api/orders/') && pathname.endsWith('/qrcode') && method === 'GET') {
+    const orderId = parseInt(pathname.split('/')[3]);
+    const order = db.orders.find(o => o.id === orderId);
+    if (!order) return sendJson(res, { code: 404, msg: '订单不存在' }, 404);
+    // 如果没有码就生成
+    if (!order.pickup_code) {
+      order.pickup_code = generateCode();
+      order.delivery_code = generateCode();
+      saveDB(db);
+    }
+    try {
+      const pickupQR = await QRCode.toDataURL('shunlu://pickup?' + makeQRPayload(orderId, order.pickup_code, 'pickup'));
+      const deliveryQR = await QRCode.toDataURL('shunlu://delivery?' + makeQRPayload(orderId, order.delivery_code, 'delivery'));
+      return sendJson(res, { code: 0, data: {
+        pickup_code: order.pickup_code,
+        delivery_code: order.delivery_code,
+        qr_url: pickupQR,
+        delivery_qr_url: deliveryQR,
+      }});
+    } catch(e) {
+      return sendJson(res, { code: 0, data: {
+        pickup_code: order.pickup_code,
+        delivery_code: order.delivery_code,
+        qr_url: '',
+        delivery_qr_url: '',
+      }});
+    }
+  }
+
+  // 司机扫码确认取货
+  if (pathname.startsWith('/api/orders/') && pathname.includes('/verify') && method === 'POST') {
+    const parts = pathname.split('/');
+    const orderId = parseInt(parts[3]);
+    const { code, action } = await parseBody(req);
+    const order = db.orders.find(o => o.id === orderId);
+    if (!order) return sendJson(res, { code: 404, msg: '订单不存在' }, 404);
+    // 如果没有码就生成
+    if (!order.pickup_code) {
+      order.pickup_code = generateCode();
+      order.delivery_code = generateCode();
+    }
+    if (action === 'pickup') {
+      if (order.pickup_code !== code) return sendJson(res, { code: 400, msg: '取货码错误' }, 400);
+      if (order.status < 2) return sendJson(res, { code: 400, msg: '订单状态不允许取货' }, 400);
+      order.status = 3; // 取货完成，配送中
+      order.pickup_time = new Date().toISOString();
+      order.update_time = new Date().toISOString();
+      saveDB(db);
+      return sendJson(res, { code: 0, msg: '取货确认成功', data: { status: order.status } });
+    }
+    if (action === 'delivery') {
+      if (order.delivery_code !== code) return sendJson(res, { code: 400, msg: '送达码错误' }, 400);
+      order.status = 4; // 已签收
+      order.sign_time = new Date().toISOString();
+      order.update_time = new Date().toISOString();
+      // 司机收入入账
+      const driverWallet = db.wallets.find(w => w.user_id === order.driver_id);
+      if (driverWallet) {
+        driverWallet.balance += order.driver_amount;
+        db.transactions.push({
+          id: db.nextIds.transaction++,
+          user_id: order.driver_id,
+          type: 'income',
+          amount: order.driver_amount,
+          balance_after: driverWallet.balance,
+          order_id: order.id,
+          remark: '运费收入',
+          create_time: new Date().toISOString()
+        });
+      }
+      saveDB(db);
+      return sendJson(res, { code: 0, msg: '送达确认成功', data: { status: order.status } });
+    }
+    return sendJson(res, { code: 400, msg: '未知操作' }, 400);
+  }
+
+  if (pathname.startsWith('/api/order/detail') && method === 'GET') {
+    const orderId = parseInt(pathname.split('/').pop());
+    const order = db.orders.find(o => o.id === orderId);
+    if (!order) return sendJson(res, { code: 404, msg: '订单不存在' }, 404);
+    return sendJson(res, { code: 0, data: order });
+  }
+
+  // ========== 钱包相关 ==========
+  if (pathname === '/api/wallet/balance' && method === 'GET') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const wallet = db.wallets.find(w => w.user_id === user.userId);
+    return sendJson(res, { code: 0, data: wallet || { balance: 0, frozen_amount: 0 } });
+  }
+
+  if (pathname === '/api/wallet/info' && method === 'GET') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const wallet = db.wallets.find(w => w.user_id === user.userId);
+    return sendJson(res, { code: 0, data: wallet || { balance: 0, frozen_amount: 0 } });
+  }
+
+  if (pathname === '/api/wallet/records' && method === 'GET') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const records = db.transactions.filter(t => t.user_id === user.userId)
+      .sort((a, b) => new Date(b.create_time) - new Date(a.create_time));
+    return sendJson(res, { code: 0, data: records });
+  }
+
+  // 司机查看自己的订单
+  if (pathname === '/api/driver/orders' && method === 'GET') {
+    if (!user || (user.role !== 2 && user.role !== 3)) return sendJson(res, { code: 401, msg: '未授权' }, 401);
+    const list = db.orders.filter(o => o.driver_id === user.userId);
+    return sendJson(res, { code: 0, data: list });
+  }
+
+  if (pathname === '/api/wallet/recharge' && method === 'POST') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const { amount } = await parseBody(req);
+    const wallet = db.wallets.find(w => w.user_id === user.userId);
+    if (wallet) wallet.balance += parseFloat(amount);
+    // 记录充值交易
+    db.transactions.push({
+      id: db.nextIds.transaction++,
+      user_id: user.userId,
+      type: 'recharge',
+      amount: parseFloat(amount),
+      balance_after: wallet.balance,
+      remark: '充值',
+      create_time: new Date().toISOString()
+    });
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '充值成功', data: { balance: wallet.balance } });
+  }
+
+  // ========== 运营后台 ==========
+  if (pathname === '/api/admin/order-list' && method === 'GET') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员' }, 401);
+    return sendJson(res, { code: 0, data: db.orders });
+  }
+
+  if (pathname === '/api/admin/user-list' && method === 'GET') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员' }, 401);
+    return sendJson(res, { code: 0, data: db.users.map(u => ({ ...u, password: undefined })) });
+  }
+
+  if (pathname === '/api/admin/stats' && method === 'GET') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员' }, 401);
+    return sendJson(res, {
+      code: 0,
+      data: {
+        totalUsers: db.users.length,
+        totalOrders: db.orders.length,
+        totalAmount: db.orders.reduce((sum, o) => sum + o.price, 0),
+        merchants: db.users.filter(u => u.role === 1).length,
+        drivers: db.users.filter(u => u.role === 2 || u.role === 3).length
+      }
+    });
+  }
+
+  // 佣金配置
+  if (pathname === '/api/admin/commission-config' && method === 'GET') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员' }, 401);
+    return sendJson(res, { code: 0, data: db.region_configs });
+  }
+
+  if (pathname === '/api/admin/commission-config' && method === 'POST') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员' }, 401);
+    const { truck_rate, private_rate } = await parseBody(req);
+    const config = db.region_configs.find(r => r.status === 1);
+    if (config) {
+      config.commission_rate = parseFloat(truck_rate) || 6;
+      config.private_rate = parseFloat(private_rate) || 12;
+    }
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '配置已更新', data: config });
+  }
+
+
+  // ========== 运营后台 - 黑名单/白名单 ==========
+  if (pathname === '/api/admin/blacklist' && method === 'GET') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员' }, 401);
+    const list = (db.blacklist || []).map(b => {
+      const u = db.users.find(u => u.id === b.user_id);
+      return { ...b, phone: u?.phone, real_name: u?.real_name, role: u?.role };
+    });
+    return sendJson(res, { code: 0, data: list });
+  }
+  if (pathname === '/api/admin/blacklist' && method === 'POST') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员' }, 401);
+    const { user_id, type, reason } = await parseBody(req);
+    if (!user_id || !type) return sendJson(res, { code: 400, msg: '缺少参数' }, 400);
+    if (!db.blacklist) db.blacklist = [];
+    const existing = db.blacklist.find(b => b.user_id === parseInt(user_id) && b.status !== 0);
+    if (existing) return sendJson(res, { code: 400, msg: '该用户已在名单中' }, 400);
+    if (!db.nextIds) db.nextIds = {};
+    if (!db.nextIds.blacklist) db.nextIds.blacklist = 1;
+    const id = db.nextIds.blacklist++;
+    db.blacklist.push({ id, user_id: parseInt(user_id), type, reason: reason || '', operator_id: user.userId, status: 1, create_time: new Date().toISOString() });
+    const u = db.users.find(u => u.id === parseInt(user_id));
+    if (u) { u.status = type === 'blacklist' ? -1 : 2; u.blacklist_type = type; u.blacklist_reason = reason; }
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '已添加', data: { id } });
+  }
+  if (pathname.startsWith('/api/admin/blacklist/') && method === 'DELETE') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员' }, 401);
+    const id = parseInt(pathname.split('/').pop());
+    if (!db.blacklist) { saveDB(db); return sendJson(res, { code: 0, msg: '已移除' }); }
+    const record = db.blacklist.find(b => b.id === id);
+    if (record) {
+      const u = db.users.find(u => u.id === record.user_id);
+      if (u) { u.status = 1; delete u.blacklist_type; delete u.blacklist_reason; }
+    }
+    db.blacklist = db.blacklist.filter(b => b.id !== id);
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '已移除' });
+  }
+
+  // ========== 运营后台 - 用户状态管理 ==========
+  if (pathname.startsWith('/api/admin/users/') && pathname.endsWith('/status') && method === 'PUT') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员' }, 401);
+    const parts = pathname.split('/');
+    const id = parseInt(parts[3]);
+    const { status, reason } = await parseBody(req);
+    const u = db.users.find(u => u.id === id);
+    if (!u) return sendJson(res, { code: 404, msg: '用户不存在' }, 404);
+    const oldStatus = u.status;
+    u.status = parseInt(status);
+    if (parseInt(status) === -1) {
+      if (!db.blacklist) db.blacklist = [];
+      if (!db.nextIds) db.nextIds = {};
+      if (!db.nextIds.blacklist) db.nextIds.blacklist = 1;
+      const existing = db.blacklist.find(b => b.user_id === id);
+      if (!existing) {
+        const bid = db.nextIds.blacklist++;
+        db.blacklist.push({ id: bid, user_id: id, type: 'blacklist', reason: reason || '管理员操作', operator_id: user.userId, status: 1, create_time: new Date().toISOString() });
+      }
+      u.blacklist_type = 'blacklist'; u.blacklist_reason = reason;
+    } else if (parseInt(status) === 2) {
+      if (!db.blacklist) db.blacklist = [];
+      if (!db.nextIds) db.nextIds = {};
+      if (!db.nextIds.blacklist) db.nextIds.blacklist = 1;
+      const existing = db.blacklist.find(b => b.user_id === id);
+      if (!existing) {
+        const bid = db.nextIds.blacklist++;
+        db.blacklist.push({ id: bid, user_id: id, type: 'whitelist', reason: reason || '管理员操作', operator_id: user.userId, status: 1, create_time: new Date().toISOString() });
+      }
+      u.blacklist_type = 'whitelist'; u.blacklist_reason = reason;
+    } else {
+      u.blacklist_type = null; u.blacklist_reason = null;
+      if (db.blacklist) db.blacklist = db.blacklist.filter(b => b.user_id !== id);
+    }
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '状态已更新', data: { oldStatus, newStatus: u.status } });
+  }
+
+  // ========== 运营后台 - 投诉管理 ==========
+  if (pathname === '/api/admin/complaints' && method === 'GET') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员' }, 401);
+    if (!db.complaints) { db.complaints = []; saveDB(db); }
+    const list = db.complaints.map(c => {
+      const complainant = db.users.find(u => u.id === c.complainant_id);
+      return { ...c, complainant_phone: complainant?.phone };
+    });
+    return sendJson(res, { code: 0, data: list });
+  }
+  if (pathname === '/api/admin/complaints' && method === 'POST') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const { order_id, type, description, evidence } = await parseBody(req);
+    if (!order_id || !type || !description) return sendJson(res, { code: 400, msg: '缺少必填参数' }, 400);
+    if (!db.complaints) db.complaints = [];
+    if (!db.nextIds) db.nextIds = {};
+    if (!db.nextIds.complaint) db.nextIds.complaint = 1;
+    const id = db.nextIds.complaint++;
+    db.complaints.push({ id, order_id: parseInt(order_id), complainant_id: user.userId, type, description, evidence: evidence || '', status: 'pending', handler_id: null, handle_remark: '', create_time: new Date().toISOString(), handle_time: null });
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '投诉已提交', data: { complaint_id: id } });
+  }
+  if (pathname.startsWith('/api/admin/complaints/') && method === 'PUT') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员' }, 401);
+    const id = parseInt(pathname.split('/').pop());
+    if (!db.complaints) { db.complaints = []; saveDB(db); }
+    const complaint = db.complaints.find(c => c.id === id);
+    if (!complaint) return sendJson(res, { code: 404, msg: '投诉不存在' }, 404);
+    const { status, handle_remark, penalty_amount } = await parseBody(req);
+    complaint.status = status; complaint.handler_id = user.userId;
+    complaint.handle_remark = handle_remark || ''; complaint.handle_time = new Date().toISOString();
+    if (penalty_amount && parseFloat(penalty_amount) > 0 && complaint.order_id) {
+      const order = db.orders.find(o => o.id === complaint.order_id);
+      if (order) {
+        const targetId = order.driver_id || order.merchant_id;
+        if (targetId) {
+          const wallet = db.wallets.find(w => w.user_id === targetId);
+          if (wallet) {
+            wallet.balance -= parseFloat(penalty_amount);
+            if (!db.transactions) db.transactions = [];
+            if (!db.nextIds) db.nextIds = {};
+            if (!db.nextIds.transaction) db.nextIds.transaction = 1;
+            db.transactions.push({ id: db.nextIds.transaction++, user_id: targetId, type: 'penalty', amount: -parseFloat(penalty_amount), balance_after: wallet.balance, order_id: complaint.order_id, remark: '投诉罚款: ' + (handle_remark || type), create_time: new Date().toISOString() });
+          }
+        }
+      }
+    }
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '投诉已处理', data: complaint });
+  }
+
+  // ========== 运营后台 - 通讯记录 ==========
+  if (pathname === '/api/admin/messages' && method === 'GET') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员' }, 401);
+    if (!db.messages) { db.messages = []; saveDB(db); }
+    const records = db.messages.map(m => {
+      const fromUser = db.users.find(u => u.id === m.from_user_id);
+      const toUser = db.users.find(u => u.id === m.to_user_id);
+      const roleNames = ['', '商家', '货车司机', '私家车主', '管理员', '个人用户'];
+      return { ...m, from_phone: fromUser?.phone, from_name: fromUser?.real_name || roleNames[fromUser?.role] || '-', to_phone: toUser?.phone, to_name: toUser?.real_name || roleNames[toUser?.role] || '-' };
+    }).sort((a, b) => new Date(b.create_time) - new Date(a.create_time));
+    return sendJson(res, { code: 0, data: records });
+  }
+  if (pathname === '/api/admin/calls' && method === 'GET') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员' }, 401);
+    if (!db.messages) { db.messages = []; saveDB(db); }
+    const roleNames = ['', '商家', '货车司机', '私家车主', '管理员', '个人用户'];
+    const calls = db.messages.filter(m => m.type === 'call_request').map(m => {
+      const fromUser = db.users.find(u => u.id === m.from_user_id);
+      const toUser = db.users.find(u => u.id === m.to_user_id);
+      const order = m.order_id ? db.orders.find(o => o.id === m.order_id) : null;
+      return { ...m, from_phone: fromUser?.phone, from_name: fromUser?.real_name || roleNames[fromUser?.role] || '-', from_role: fromUser?.role, to_phone: toUser?.phone, to_name: toUser?.real_name || roleNames[toUser?.role] || '-', to_role: toUser?.role, order_no: order?.id ? '#' + order.id : null };
+    }).sort((a, b) => new Date(b.create_time) - new Date(a.create_time));
+    return sendJson(res, { code: 0, data: calls });
+  }
+
+  // ========== 智能匹配（按距离排序） ==========
+  if (pathname === '/api/match/nearby-goods' && method === 'GET') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const pendingGoods = db.goods.filter(g => g.status === 1);
+    
+    // 按价格排序（简化：无真实GPS时按发布时间+价格综合排序）
+    // 真实场景：计算司机位置到货源出发地距离，按距离排序
+    const driverRoutes = db.routes.filter(r => r.driver_id === user.userId && r.status === 1);
+    
+    const scored = pendingGoods.map(g => {
+      let score = 100;
+      // 如果司机有行程，计算路线匹配度
+      if (driverRoutes.length > 0) {
+        const route = driverRoutes[0];
+        if (g.start_addr && route.start_addr && g.start_addr.includes(route.start_addr.slice(0, 2))) score += 30;
+        if (g.end_addr && route.end_addr && g.end_addr.includes(route.end_addr.slice(0, 2))) score += 30;
+      }
+      // 价格越高越优先
+      score += Math.min(g.price / 10, 20);
+      // 越新越优先
+      const ageHours = (Date.now() - new Date(g.create_time).getTime()) / 3600000;
+      score -= Math.min(ageHours * 2, 20);
+      return { ...g, matchScore: Math.round(score) };
+    });
+    
+    scored.sort((a, b) => b.matchScore - a.matchScore);
+    return sendJson(res, { code: 0, data: scored });
+  }
+  
+  // ========== 智能匹配（个人找司机） ==========
+  if (pathname === '/api/match/nearby-drivers' && method === 'GET') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const activeRoutes = db.routes.filter(r => r.status === 1);
+    const drivers = activeRoutes.map(r => {
+      const driverUser = db.users.find(u => u.id === r.driver_id);
+      return {
+        route_id: r.id,
+        driver_id: r.driver_id,
+        driver_type: r.driver_type || driverUser?.role,
+        driver_name: driverUser?.real_name || '司机' + r.driver_id,
+        start_addr: r.start_addr,
+        end_addr: r.end_addr,
+        depart_time: r.depart_time,
+        remain_space: r.remain_space,
+        matchScore: 80 + Math.floor(Math.random() * 20) // 简化评分
+      };
+    });
+    drivers.sort((a, b) => b.matchScore - a.matchScore);
+    return sendJson(res, { code: 0, data: drivers });
+  }
+  
+  // ========== 照片上传 ==========
+  if (pathname === '/api/photo/upload' && method === 'POST') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const { order_id, photo_data, photo_type } = await parseBody(req);
+    const photoId = db.nextIds.photo++;
+    const photoDir = path.join(__dirname, '../data/photos');
+    if (!fs.existsSync(photoDir)) fs.mkdirSync(photoDir, { recursive: true });
+    
+    // 保存base64图片
+    const matches = (photo_data || '').match(/^data:image\/(\w+);base64,(.+)$/);
+    if (matches) {
+      const ext = matches[1];
+      const buffer = Buffer.from(matches[2], 'base64');
+      const filename = `order_${order_id}_${photo_type}_${photoId}.${ext}`;
+      fs.writeFileSync(path.join(photoDir, filename), buffer);
+      db.photos.push({
+        id: photoId,
+        order_id: parseInt(order_id),
+        photo_type, // 'pickup'取货照, 'deliver'送达照, 'goods'货物照
+        filename,
+        uploader_id: user.userId,
+        create_time: new Date().toISOString()
+      });
+      saveDB(db);
+      return sendJson(res, { code: 0, msg: '上传成功', data: { photo_id: photoId, filename } });
+    }
+    return sendJson(res, { code: 400, msg: '图片格式错误' }, 400);
+  }
+
+  // 简单文件上传接口（小程序wx.uploadFile用）
+  if (pathname === '/api/upload/photo' && method === 'POST') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const form = formidable({ multiples: false });
+    form.parse(req, (err, fields, files) => {
+      if (err) return sendJson(res, { code: 500, msg: '解析失败' }, 500);
+      const file = files.photo;
+      if (!file) return sendJson(res, { code: 400, msg: '未上传文件' }, 400);
+      const photoDir = path.join(__dirname, '../data/photos');
+      if (!fs.existsSync(photoDir)) fs.mkdirSync(photoDir, { recursive: true });
+      const fileData = Array.isArray(file) ? file[0] : file;
+      const ext = path.extname(fileData.originalFilename || '.jpg') || '.jpg';
+      const filename = `goods_${Date.now()}_${Math.random().toString(36).slice(2, 6)}${ext}`;
+      const dest = path.join(photoDir, filename);
+      fs.copyFileSync(fileData.filepath, dest);
+      // 返回可访问的URL
+      const photoUrl = `/photos/${filename}`;
+      return sendJson(res, { code: 0, msg: '上传成功', data: photoUrl });
+    });
+    return;
+  }
+  
+  // 照片列表
+  if (pathname.startsWith('/api/photo/list') && method === 'GET') {
+    const orderId = parseInt(pathname.split('/').pop());
+    const photos = db.photos.filter(p => p.order_id === orderId);
+    return sendJson(res, { code: 0, data: photos });
+  }
+  
+  // 照片文件访问
+  if (pathname.startsWith('/photos/') && method === 'GET') {
+    const filename = pathname.replace('/photos/', '');
+    const filePath = path.join(__dirname, '../data/photos', filename);
+    if (fs.existsSync(filePath)) {
+      const ext = path.extname(filename).slice(1);
+      res.writeHead(200, { 'Content-Type': `image/${ext}` });
+      return res.end(fs.readFileSync(filePath));
+    }
+    return sendJson(res, { code: 404, msg: '图片不存在' }, 404);
+  }
+  
+  // ========== 隐私消息（中间层通话） ==========
+  if (pathname === '/api/message/send' && method === 'POST') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const { to_user_id, content, order_id } = await parseBody(req);
+    const msgId = db.nextIds.message++;
+    db.messages.push({
+      id: msgId,
+      from_user_id: user.userId,
+      to_user_id: parseInt(to_user_id),
+      order_id: parseInt(order_id) || null,
+      content,
+      type: 'text', // text, image, call_request
+      read: 0,
+      create_time: new Date().toISOString()
+    });
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '发送成功', data: { message_id: msgId } });
+  }
+  
+  // 获取消息列表
+  if (pathname.startsWith('/api/message/list') && method === 'GET') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const otherUserId = parseInt(pathname.split('/').pop());
+    const msgs = db.messages.filter(m => 
+      (m.from_user_id === user.userId && m.to_user_id === otherUserId) ||
+      (m.from_user_id === otherUserId && m.to_user_id === user.userId)
+    ).sort((a, b) => new Date(a.create_time) - new Date(b.create_time));
+    // 标记已读
+    msgs.forEach(m => { if (m.to_user_id === user.userId) m.read = 1; });
+    saveDB(db);
+    return sendJson(res, { code: 0, data: msgs });
+  }
+  
+  // 通话请求（虚拟号码）
+  if (pathname === '/api/message/call-request' && method === 'POST') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const { to_user_id, order_id } = await parseBody(req);
+    const msgId = db.nextIds.message++;
+    // 生成虚拟号码（实际应接运营商API）
+    const virtualNo = '170' + Math.random().toString().slice(2, 8);
+    db.messages.push({
+      id: msgId,
+      from_user_id: user.userId,
+      to_user_id: parseInt(to_user_id),
+      order_id: parseInt(order_id) || null,
+      content: `通话请求已发起，虚拟号码: ${virtualNo}（5分钟内有效）`,
+      type: 'call_request',
+      virtual_no: virtualNo,
+      read: 0,
+      create_time: new Date().toISOString()
+    });
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '通话请求已发送', data: { virtual_no: virtualNo, message_id: msgId } });
+  }
+  
+  // 获取会话列表
+  if (pathname === '/api/message/conversations' && method === 'GET') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const otherUserIds = new Set();
+    db.messages.filter(m => m.from_user_id === user.userId || m.to_user_id === user.userId)
+      .forEach(m => {
+        const other = m.from_user_id === user.userId ? m.to_user_id : m.from_user_id;
+        otherUserIds.add(other);
+      });
+    const convs = [...otherUserIds].map(uid => {
+      const u = db.users.find(u => u.id === uid);
+      const lastMsg = db.messages.filter(m => 
+        (m.from_user_id === user.userId && m.to_user_id === uid) ||
+        (m.from_user_id === uid && m.to_user_id === user.userId)
+      ).sort((a, b) => new Date(b.create_time) - new Date(a.create_time))[0];
+      const unread = db.messages.filter(m => m.to_user_id === user.userId && m.from_user_id === uid && m.read === 0).length;
+      return {
+        user_id: uid,
+        user_name: u?.real_name || ['','商家','货车司机','私家车主','管理员','个人用户'][u?.role] + uid,
+        last_message: lastMsg?.content?.slice(0, 30),
+        last_time: lastMsg?.create_time,
+        unread
+      };
+    });
+    return sendJson(res, { code: 0, data: convs });
+  }
+
+  // ========== 计价API ==========
+  if (pathname === '/api/price/calculate' && method === 'POST') {
+    const { distance, weight, volume, driver_type, pickup_zone, delivery_zone } = await parseBody(req);
+    if (!distance || !weight || !driver_type) {
+      return sendJson(res, { code: 400, msg: '请提供距离、重量、司机类型' }, 400);
+    }
+    const result = calculatePrice(
+      parseFloat(distance),
+      parseFloat(weight),
+      parseInt(driver_type),
+      pickup_zone || '',
+      delivery_zone || ''
+    );
+    return sendJson(res, { code: 0, data: result });
+  }
+  
+  // 计价规则查询
+  if (pathname === '/api/price/rules' && method === 'GET') {
+    return sendJson(res, {
+      code: 0,
+      data: {
+        private_car: {
+          label: '私家车（≤20kg小件）',
+          county_flat: 20,
+          county_commission: 3,
+          distance_rates: [
+            { range: '0-100km', rate: 0.2 },
+            { range: '100-200km', rate: 0.15 },
+            { range: '200km以上', rate: 0.1 }
+          ],
+          out_county_commission_rate: 0.10
+        },
+        truck: {
+          label: '货车（按重量/体积取大）',
+          county_flat_commission: 10,
+          distance_rates: [
+            { range: '0-100km', rate: 1.2 },
+            { range: '100-200km', rate: 1.0 },
+            { range: '200-300km', rate: 1.0 },
+            { range: '300-400km', rate: 0.5 },
+            { range: '400km以上', rate: 0.5 }
+          ],
+          formula: '里程单价 × 公里数 × 吨位（取重量与体积费用更高方）',
+          out_county_commission_rate: 0.10
+        },
+        examples: [
+          {
+            route: '成都 → 塔公镇（约380km）',
+            private_car: { freight: 53, commission: 5.3, driver_income: 47.7 },
+            truck_1ton: { freight: 360, commission: 36, driver_income: 324 }
+          }
+        ]
+      }
+    });
+  }
+  
+  // 估算距离（简化：根据地址关键词推算）
+  if (pathname === '/api/price/estimate-distance' && method === 'POST') {
+    const { start_addr, end_addr } = await parseBody(req);
+    // 简化距离估算：实际应接入地图API计算
+    let distance = 50; // 默认50km
+    const longRoutes = [
+      { keywords: ['成都', '塔公'], km: 380 },
+      { keywords: ['成都', '康定'], km: 330 },
+      { keywords: ['成都', '炉霍'], km: 450 },
+      { keywords: ['康定', '炉霍'], km: 260 },
+      { keywords: ['康定', '塔公'], km: 110 },
+      { keywords: ['康定', '新都桥'], km: 80 },
+      { keywords: ['炉霍', '甘孜'], km: 95 }
+    ];
+    for (const r of longRoutes) {
+      const s1 = r.keywords[0], s2 = r.keywords[1];
+      if ((start_addr?.includes(s1) && end_addr?.includes(s2)) || (start_addr?.includes(s2) && end_addr?.includes(s1))) {
+        distance = r.km;
+        break;
+      }
+    }
+    return sendJson(res, { code: 0, data: { distance, start_addr, end_addr } });
+  }
+
+  // ========== 用户信息 ==========
+  if (pathname === '/api/user/info' && method === 'GET') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const u = db.users.find(u => u.id === user.userId);
+    if (!u) return sendJson(res, { code: 404, msg: '用户不存在' }, 404);
+    return sendJson(res, { code: 0, data: { ...u, password: undefined } });
+  }
+
+  // ========== 个人端 ==========
+  if (pathname === '/api/personal/publish-goods' && method === 'POST') {
+    if (!user || user.role !== 5) return sendJson(res, { code: 401, msg: '仅个人用户可发布' }, 401);
+    const { start_addr, end_addr, weight, price, goods_value, remark, sender_name, sender_phone, receiver_name, receiver_phone } = await parseBody(req);
+    const goodsId = db.nextIds.goods++;
+    db.goods.push({
+      id: goodsId, personal_id: user.userId, merchant_id: null,
+      start_addr, end_addr, weight: parseFloat(weight), price: parseFloat(price),
+      goods_value: parseFloat(goods_value || 0), remark,
+      sender_name, sender_phone, receiver_name, receiver_phone,
+      status: 1, create_time: new Date().toISOString()
+    });
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '发布成功', data: { goods_id: goodsId } });
+  }
+
+  if (pathname === '/api/personal/goods-list' && method === 'GET') {
+    if (!user || user.role !== 5) return sendJson(res, { code: 401, msg: '未授权' }, 401);
+    const list = db.goods.filter(g => g.personal_id === user.userId);
+    return sendJson(res, { code: 0, data: list });
+  }
+
+  if (pathname === '/api/personal/orders' && method === 'GET') {
+    if (!user || user.role !== 5) return sendJson(res, { code: 401, msg: '未授权' }, 401);
+    const list = db.orders.filter(o => o.personal_id === user.userId || (o.merchant_id === null && db.goods.find(g => g.id === o.goods_id && g.personal_id === user.userId)));
+    return sendJson(res, { code: 0, data: list });
+  }
+
+  // ========== 司机操作 ==========
+  if (pathname === '/api/order/pickup' && method === 'POST') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const { order_id } = await parseBody(req);
+    const order = db.orders.find(o => o.id === parseInt(order_id));
+    if (!order) return sendJson(res, { code: 400, msg: '订单不存在' }, 400);
+    if (order.driver_id !== user.userId) return sendJson(res, { code: 403, msg: '非您的订单' }, 403);
+    if (order.status !== 2) return sendJson(res, { code: 400, msg: '当前状态不可取货' }, 400);
+    order.status = 3; // 配送中
+    order.pickup_time = new Date().toISOString();
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '已确认取货' });
+  }
+
+  if (pathname === '/api/order/deliver' && method === 'POST') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const { order_id } = await parseBody(req);
+    const order = db.orders.find(o => o.id === parseInt(order_id));
+    if (!order) return sendJson(res, { code: 400, msg: '订单不存在' }, 400);
+    if (order.driver_id !== user.userId) return sendJson(res, { code: 403, msg: '非您的订单' }, 403);
+    if (order.status !== 3) return sendJson(res, { code: 400, msg: '当前状态不可送达' }, 400);
+    order.status = 4; // 已送达待签收
+    order.deliver_time = new Date().toISOString();
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '已确认送达' });
+  }
+
+  if (pathname === '/api/order/cancel' && method === 'POST') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const { order_id, reason } = await parseBody(req);
+    const order = db.orders.find(o => o.id === parseInt(order_id));
+    if (!order) return sendJson(res, { code: 400, msg: '订单不存在' }, 400);
+    if ([3, 4].includes(order.status)) return sendJson(res, { code: 400, msg: '配送中/已送达不可取消' }, 400);
+    // 退款
+    if (order.status >= 2) {
+      const wallet = db.wallets.find(w => w.user_id === (order.merchant_id || order.personal_id));
+      if (wallet) {
+        wallet.balance += order.price;
+        db.transactions.push({
+          id: db.nextIds.transaction++,
+          user_id: wallet.user_id, type: 'refund', amount: order.price,
+          balance_after: wallet.balance, order_id: order.id, remark: '取消退款',
+          create_time: new Date().toISOString()
+        });
+      }
+    }
+    order.status = 5; // 已取消
+    order.cancel_reason = reason || '用户取消';
+    order.cancel_time = new Date().toISOString();
+    // 恢复货源状态
+    const goods = db.goods.find(g => g.id === order.goods_id);
+    if (goods) goods.status = 1;
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '已取消' });
+  }
+
+  // ========== 钱包提现 ==========
+  if (pathname === '/api/wallet/withdraw' && method === 'POST') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const { amount } = await parseBody(req);
+    const wallet = db.wallets.find(w => w.user_id === user.userId);
+    if (!wallet) return sendJson(res, { code: 400, msg: '钱包不存在' }, 400);
+    if (wallet.balance < parseFloat(amount)) return sendJson(res, { code: 400, msg: '余额不足' }, 400);
+    if (parseFloat(amount) < 10) return sendJson(res, { code: 400, msg: '最低提现10元' }, 400);
+    wallet.balance -= parseFloat(amount);
+    db.transactions.push({
+      id: db.nextIds.transaction++, user_id: user.userId,
+      type: 'withdraw', amount: -parseFloat(amount),
+      balance_after: wallet.balance, remark: '提现申请',
+      create_time: new Date().toISOString()
+    });
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '提现申请已提交' });
+  }
+
+  // ========== 司机行程 ==========
+  if (pathname === '/api/driver/my-routes' && method === 'GET') {
+    if (!user || (user.role !== 2 && user.role !== 3)) return sendJson(res, { code: 401, msg: '未授权' }, 401);
+    const list = db.routes.filter(r => r.driver_id === user.userId).sort((a, b) => new Date(b.create_time || b.id) - new Date(a.create_time || a.id));
+    return sendJson(res, { code: 0, data: list });
+  }
+
+  // ========== 商家/个人确认签收 ==========
+  if (pathname === '/api/order/confirm-receipt' && method === 'POST') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const { order_id } = await parseBody(req);
+    const order = db.orders.find(o => o.id === parseInt(order_id));
+    if (!order) return sendJson(res, { code: 400, msg: '订单不存在' }, 400);
+    if (order.status !== 4) return sendJson(res, { code: 400, msg: '当前状态不可签收' }, 400);
+    order.status = 4; // 确认签收
+    order.confirm_time = new Date().toISOString();
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '已确认签收' });
+  }
+
+  // 404
+  sendJson(res, { code: 404, msg: '接口不存在' }, 404);
+}
+
+// ==================== HTTP服务器 ====================
+
+const server = http.createServer(async (req, res) => {
+  const url = new URL(req.url, `http://localhost`);
+  const pathname = url.pathname;
+
+  // API路由
+  if (pathname.startsWith('/api/')) {
+    return handleApi(req, res, pathname, req.method);
+  }
+
+  // 去掉末尾 / 再处理
+  const cleanPath = pathname.replace(/\/$/, '');
+
+  // 静态文件 - 支持三个端
+  let filePath = null;
+
+  if (cleanPath === '/' || cleanPath.startsWith('/admin')) {
+    filePath = path.join(__dirname, '../admin', cleanPath === '/' || cleanPath === '/admin' ? 'index.html' : cleanPath.replace('/admin', '') || 'index.html');
+  } else if (pathname === '/merchant' || pathname.startsWith('/merchant/')) {
+    filePath = path.join(__dirname, '../merchant', pathname === '/merchant' ? 'index.html' : pathname.replace('/merchant/', ''));
+  } else if (pathname === '/driver' || pathname.startsWith('/driver/')) {
+    filePath = path.join(__dirname, '../driver', pathname === '/driver' ? 'index.html' : pathname.replace('/driver/', ''));
+  } else if (pathname === '/personal' || pathname.startsWith('/personal/')) {
+    filePath = path.join(__dirname, '../personal', pathname === '/personal' ? 'index.html' : pathname.replace('/personal/', ''));
+  }
+  
+  if (filePath && fs.existsSync(filePath) && !fs.statSync(filePath).isDirectory()) {
+    const ext = path.extname(filePath);
+    const types = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript', '.css': 'text/css' };
+    res.writeHead(200, { 'Content-Type': types[ext] || 'application/octet-stream' });
+    return res.end(fs.readFileSync(filePath));
+  }
+
+  sendJson(res, { code: 404, msg: 'Not Found' }, 404);
+});
+
+const PORT = 3458;
+server.listen(PORT, () => {
+  console.log(`\n🚚 顺路货运撮合平台启动成功！`);
+  console.log(`   后台地址: http://localhost:${PORT}`);
+  console.log(`   API文档:  http://localhost:${PORT}/api-docs\n`);
+});

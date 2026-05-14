@@ -1,0 +1,82 @@
+{
+  "pages": [
+    "pages/role-select/role-select",
+    "pages/login/login",
+    "pages/register/register",
+    "pages/merchant/home/home",
+    "pages/merchant/publish-order/publish-order",
+    "pages/merchant/orders/orders",
+    "pages/merchant/order-detail/order-detail",
+    "pages/merchant/wallet/wallet",
+    "pages/merchant/messages/messages",
+    "pages/merchant/chat/chat",
+    "pages/merchant/profile/profile",
+    "pages/merchant/withdraw/withdraw",
+    "pages/driver/home/home",
+    "pages/driver/find-goods/find-goods",
+    "pages/driver/publish-route/publish-route",
+    "pages/driver/my-routes/my-routes",
+    "pages/driver/orders/orders",
+    "pages/driver/order-detail/order-detail",
+    "pages/driver/wallet/wallet",
+    "pages/driver/messages/messages",
+    "pages/driver/chat/chat",
+    "pages/driver/profile/profile",
+    "pages/private-car/home/home",
+    "pages/private-car/find-goods/find-goods",
+    "pages/private-car/publish-route/publish-route",
+    "pages/private-car/my-routes/my-routes",
+    "pages/private-car/orders/orders",
+    "pages/private-car/order-detail/order-detail",
+    "pages/private-car/wallet/wallet",
+    "pages/private-car/messages/messages",
+    "pages/private-car/chat/chat",
+    "pages/private-car/profile/profile",
+    "pages/personal/home/home",
+    "pages/personal/find-drivers/find-drivers",
+    "pages/personal/send-package/send-package",
+    "pages/personal/my-packages/my-packages",
+    "pages/personal/orders/orders",
+    "pages/personal/order-detail/order-detail",
+    "pages/personal/wallet/wallet",
+    "pages/personal/messages/messages",
+    "pages/personal/chat/chat",
+    "pages/personal/profile/profile"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#1890ff",
+    "navigationBarTitleText": "顺路货运",
+    "navigationBarTextStyle": "white"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#999",
+    "selectedColor": "#1890ff",
+    "backgroundColor": "#fff",
+    "list": [
+      {
+        "pagePath": "pages/merchant/home/home",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/driver/home/home",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/private-car/home/home",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/personal/home/home",
+        "text": "首页"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json",
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于选择地址和导航"
+    }
+  },
+  "requiredPrivateInfos": ["chooseLocation"]
+}

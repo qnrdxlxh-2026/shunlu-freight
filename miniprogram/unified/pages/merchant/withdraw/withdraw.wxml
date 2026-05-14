@@ -1,0 +1,54 @@
+<view class="withdraw-page">
+  <!-- 可用余额 -->
+  <view class="balance-section">
+    <text class="balance-label">可提现余额（元）</text>
+    <text class="balance-num">¥{{balance}}</text>
+  </view>
+
+  <!-- 提现金额输入 -->
+  <view class="input-section">
+    <view class="input-label">提现金额</view>
+    <view class="amount-input-wrap">
+      <text class="yuan">¥</text>
+      <input
+        class="amount-input"
+        type="digit"
+        placeholder="0.00"
+        value="{{amount}}"
+        bindinput="onAmountInput"
+      />
+      <view class="btn-all" bindtap="withdrawAll">全部</view>
+    </view>
+  </view>
+
+  <!-- 快捷金额 -->
+  <view class="quick-amounts">
+    <view class="quick-item" bindtap="setAmount" data-amt="50">50元</view>
+    <view class="quick-item" bindtap="setAmount" data-amt="100">100元</view>
+    <view class="quick-item" bindtap="setAmount" data-amt="200">200元</view>
+    <view class="quick-item" bindtap="setAmount" data-amt="500">500元</view>
+  </view>
+
+  <!-- 手续费说明 -->
+  <view class="fee-section">
+    <text class="fee-text">提现手续费：{{fee}}元</text>
+    <text class="fee-text">实际到账：<text class="actual">¥{{actualAmount}}</text></text>
+  </view>
+
+  <!-- 提现说明 -->
+  <view class="notice-section">
+    <view class="notice-title">💡 提现须知</view>
+    <view class="notice-item">1. 最低提现 {{minAmount}} 元</view>
+    <view class="notice-item">2. 提现申请提交后 1-3 个工作日到账</view>
+    <view class="notice-item">3. 如有疑问请联系客服</view>
+  </view>
+
+  <!-- 提交按钮 -->
+  <view class="bottom-area">
+    <button
+      class="btn-submit {{(!amount || loading) ? 'disabled' : ''}}"
+      bindtap="submitWithdraw"
+      disabled="{{!amount || loading}}"
+    >{{loading ? '提交中...' : '确认提现'}}</button>
+  </view>
+</view>

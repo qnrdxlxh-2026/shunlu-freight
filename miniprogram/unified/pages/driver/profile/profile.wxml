@@ -1,0 +1,186 @@
+<view class="profile-page">
+  <!-- 用户卡片 -->
+  <view class="user-card">
+    <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+      <image class="avatar" src="{{avatarUrl}}" mode="aspectFill"></image>
+      <view class="avatar-edit-badge">✏️</view>
+    </button>
+    <view class="user-detail">
+      <view class="user-name-row">
+        <input class="name-edit-input" value="{{userInfo.phone}}" disabled />
+        <text class="edit-icon" bindtap="editName">✏️</text>
+      </view>
+      <view class="user-sub">已认证 · 顺路货运司机端</view>
+    </view>
+  </view>
+
+  <!-- 统计 -->
+  <view class="stats-row">
+    <view class="stat-item">
+      <input class="stat-num-input" value="{{orderCount || 0}}" disabled />
+      <text class="stat-label">接单数</text>
+    </view>
+    <view class="stat-div"></view>
+    <view class="stat-item">
+      <text class="stat-num">¥{{totalIncome || '0.00'}}</text>
+      <text class="stat-label">累计收入</text>
+    </view>
+    <view class="stat-div"></view>
+    <view class="stat-item">
+      <text class="stat-num">¥{{balance || '0.00'}}</text>
+      <text class="stat-label">可提现</text>
+    </view>
+  </view>
+
+  <!-- 证件审核状态卡片 -->
+  <view class="cert-card" bindtap="openDriverModal">
+    <view class="cert-left">
+      <text class="cert-icon">📋</text>
+      <view class="cert-info">
+        <text class="cert-title">证件审核</text>
+        <text class="cert-status approved" wx:if="{{auditStatus === 'approved'}}">✅ 已通过</text>
+        <text class="cert-status pending" wx:elif="{{auditStatus === 'pending'}}">⏳ 审核中</text>
+        <text class="cert-status rejected" wx:elif="{{auditStatus === 'rejected'}}">❌ 未通过 - {{rejectReason}}</text>
+        <text class="cert-status" wx:else>⚠️ 未提交，请完善资料</text>
+      </view>
+    </view>
+    <text class="arrow">›</text>
+  </view>
+
+  <!-- 核心功能 -->
+  <view class="menu-section">
+    <view class="menu-title-row">
+      <text class="menu-title-label">{{sectionTitles.driverService || '🚚 司机服务'}}</text>
+      <text class="edit-icon sm" bindtap="editMenuTitle" data-type="driver-service">✏️</text>
+    </view>
+    <view class="menu-item" bindtap="goFindGoods">
+      <view class="menu-icon-wrap blue">🔍</view>
+      <view class="menu-text-wrap">
+        <input class="menu-text-input" value="{{menuNames.findGoods || '找货源'}}" bindblur="saveMenuName" data-key="findGoods" />
+      </view>
+      <text class="menu-hint">附近货源</text>
+      <text class="arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goMyRoutes">
+      <view class="menu-icon-wrap teal">📍</view>
+      <view class="menu-text-wrap">
+        <input class="menu-text-input" value="{{menuNames.myRoutes || '我的常跑路线'}}" bindblur="saveMenuName" data-key="myRoutes" />
+      </view>
+      <text class="arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goOrders">
+      <view class="menu-icon-wrap green">📜</view>
+      <view class="menu-text-wrap">
+        <input class="menu-text-input" value="{{menuNames.allOrders || '全部订单'}}" bindblur="saveMenuName" data-key="allOrders" />
+      </view>
+      <text class="menu-hint">订单记录</text>
+      <text class="arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goWallet">
+      <view class="menu-icon-wrap gold">💰</view>
+      <view class="menu-text-wrap">
+        <input class="menu-text-input" value="{{menuNames.myWallet || '我的钱包'}}" bindblur="saveMenuName" data-key="myWallet" />
+      </view>
+      <text class="menu-hint">资金流水</text>
+      <text class="arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 账户 -->
+  <view class="menu-section">
+    <view class="menu-title-row">
+      <text class="menu-title-label">{{sectionTitles.account || '🔐 账户与工具'}}</text>
+      <text class="edit-icon sm" bindtap="editMenuTitle" data-type="account">✏️</text>
+    </view>
+    <view class="menu-item" bindtap="goMessages">
+      <view class="menu-icon-wrap pink">💬</view>
+      <view class="menu-text-wrap">
+        <input class="menu-text-input" value="{{menuNames.messages || '消息中心'}}" bindblur="saveMenuName" data-key="messages" />
+      </view>
+      <text class="arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goEditProfile">
+      <view class="menu-icon-wrap gray">✏️</view>
+      <view class="menu-text-wrap">
+        <input class="menu-text-input" value="{{menuNames.editProfile || '编辑资料'}}" bindblur="saveMenuName" data-key="editProfile" />
+      </view>
+      <text class="arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goAbout">
+      <view class="menu-icon-wrap purple">ℹ️</view>
+      <view class="menu-text-wrap">
+        <input class="menu-text-input" value="{{menuNames.about || '关于顺路货运'}}" bindblur="saveMenuName" data-key="about" />
+      </view>
+      <text class="arrow">›</text>
+    </view>
+  </view>
+
+  <button class="logout-btn" bindtap="logout">退出登录</button>
+
+  <!-- 证件信息弹窗 -->
+  <view class="modal-mask" wx:if="{{showDriverModal}}" bindtap="closeDriverModal"></view>
+  <view class="modal-content" wx:if="{{showDriverModal}}">
+    <view class="modal-header">
+      <text class="modal-title">证件信息</text>
+      <text class="modal-close" bindtap="closeDriverModal">✕</text>
+    </view>
+    <scroll-view scroll-y class="modal-body">
+      <view class="cert-section-title">🪪 驾驶证</view>
+      <view class="photo-grid-2col">
+        <view class="photo-upload-card">
+          <image wx:if="{{tempLicenseFront}}" class="photo-preview" src="{{tempLicenseFront}}" mode="aspectFill"></image>
+          <view wx:else class="photo-placeholder" bindtap="choosePhoto" data-field="tempLicenseFront">
+            <text class="photo-plus">+</text>
+            <text class="photo-label">正面</text>
+          </view>
+          <text wx:if="{{tempLicenseFront}}" class="photo-card-label">驾驶证正面</text>
+          <text wx:if="{{tempLicenseFront}}" class="photo-del-btn" bindtap="removePhoto" data-field="tempLicenseFront">×</text>
+        </view>
+        <view class="photo-upload-card">
+          <image wx:if="{{tempLicenseBack}}" class="photo-preview" src="{{tempLicenseBack}}" mode="aspectFill"></image>
+          <view wx:else class="photo-placeholder" bindtap="choosePhoto" data-field="tempLicenseBack">
+            <text class="photo-plus">+</text>
+            <text class="photo-label">反面</text>
+          </view>
+          <text wx:if="{{tempLicenseBack}}" class="photo-card-label">驾驶证反面</text>
+          <text wx:if="{{tempLicenseBack}}" class="photo-del-btn" bindtap="removePhoto" data-field="tempLicenseBack">×</text>
+        </view>
+      </view>
+      <view class="cert-section-title">🚗 行驶证</view>
+      <view class="photo-grid-2col">
+        <view class="photo-upload-card">
+          <image wx:if="{{tempVehicleFront}}" class="photo-preview" src="{{tempVehicleFront}}" mode="aspectFill"></image>
+          <view wx:else class="photo-placeholder" bindtap="choosePhoto" data-field="tempVehicleFront">
+            <text class="photo-plus">+</text>
+            <text class="photo-label">正面</text>
+          </view>
+          <text wx:if="{{tempVehicleFront}}" class="photo-card-label">行驶证正面</text>
+          <text wx:if="{{tempVehicleFront}}" class="photo-del-btn" bindtap="removePhoto" data-field="tempVehicleFront">×</text>
+        </view>
+        <view class="photo-upload-card">
+          <image wx:if="{{tempVehicleBack}}" class="photo-preview" src="{{tempVehicleBack}}" mode="aspectFill"></image>
+          <view wx:else class="photo-placeholder" bindtap="choosePhoto" data-field="tempVehicleBack">
+            <text class="photo-plus">+</text>
+            <text class="photo-label">反面</text>
+          </view>
+          <text wx:if="{{tempVehicleBack}}" class="photo-card-label">行驶证反面</text>
+          <text wx:if="{{tempVehicleBack}}" class="photo-del-btn" bindtap="removePhoto" data-field="tempVehicleBack">×</text>
+        </view>
+      </view>
+      <view class="cert-section-title">📸 车辆照片（选填）</view>
+      <view class="photo-grid">
+        <view class="photo-item" wx:for="{{tempVehiclePhotos}}" wx:key="*this">
+          <image class="photo-thumb" src="{{item}}" mode="aspectFill"></image>
+          <text class="photo-del" bindtap="delVehiclePhoto" data-index="{{index}}">×</text>
+        </view>
+        <view class="photo-add" bindtap="chooseVehiclePhoto" wx:if="{{tempVehiclePhotos.length < 3}}">
+          <text class="photo-add-icon">+</text>
+        </view>
+      </view>
+    </scroll-view>
+    <view class="modal-footer">
+      <button class="modal-btn cancel" bindtap="closeDriverModal">取消</button>
+      <button class="modal-btn confirm" bindtap="submitAudit">提交审核</button>
+    </view>
+  </view>
+</view>

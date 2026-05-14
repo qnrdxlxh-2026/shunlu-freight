@@ -29,8 +29,7 @@ App({
           if (res.statusCode === 200 && res.data.code === 0) {
             resolve(res.data);
           } else if (res.statusCode === 401) {
-            wx.removeStorageSync('token');
-            wx.redirectTo({ url: '/pages/login/login' });
+            // 不自动跳转，由各页面自行处理 401
             reject(new Error('未登录'));
           } else {
             reject(new Error(res.data.msg || '请求失败'));

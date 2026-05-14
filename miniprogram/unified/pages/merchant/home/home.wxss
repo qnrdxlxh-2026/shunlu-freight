@@ -1,0 +1,235 @@
+.home-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #e8f0fe 0%, #f5f5f5 40%);
+  padding-bottom: 40rpx;
+}
+
+/* 用户卡片 */
+.user-card {
+  background: linear-gradient(135deg, #1890ff 0%, #4da6ff 100%);
+  margin: 24rpx;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 8rpx 30rpx rgba(24, 144, 255, 0.3);
+}
+
+.user-left {
+  display: flex;
+  align-items: center;
+}
+
+.avatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50rpx;
+  border: 4rpx solid rgba(255,255,255,0.5);
+  background: #fff;
+}
+
+.user-info {
+  margin-left: 24rpx;
+}
+
+.phone {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #fff;
+}
+
+.role-badge {
+  display: inline-block;
+  margin-top: 8rpx;
+  background: rgba(255,255,255,0.25);
+  border-radius: 20rpx;
+  padding: 4rpx 16rpx;
+}
+
+.role-text {
+  font-size: 22rpx;
+  color: #fff;
+}
+
+.balance-box {
+  text-align: right;
+}
+
+.balance-label {
+  display: block;
+  font-size: 22rpx;
+  color: rgba(255,255,255,0.8);
+}
+
+.balance-num {
+  display: block;
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #fff;
+  margin-top: 4rpx;
+}
+
+/* 统计卡片 */
+.stats-card {
+  background: #fff;
+  margin: 0 24rpx 24rpx;
+  border-radius: 20rpx;
+  padding: 32rpx 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.06);
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8rpx 0;
+}
+
+.stat-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  margin-bottom: 12rpx;
+}
+
+.stat-icon.blue  { background: #e6f4ff; }
+.stat-icon.orange { background: #fff7e6; }
+.stat-icon.green { background: #e6fffb; }
+.stat-icon.red   { background: #fff1f0; }
+
+.stat-num {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.stat-label {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 4rpx;
+}
+
+.stat-divider {
+  width: 1rpx;
+  height: 80rpx;
+  background: #f0f0f0;
+}
+
+/* 功能菜单 */
+.menu-section {
+  margin: 0 24rpx 24rpx;
+}
+
+.menu-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20rpx;
+  padding-left: 8rpx;
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20rpx;
+}
+
+.menu-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 32rpx 24rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.menu-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 6rpx;
+}
+
+.menu-card.blue::before  { background: linear-gradient(90deg, #1890ff, #69b1ff); }
+.menu-card.green::before { background: linear-gradient(90deg, #52c41a, #73d13d); }
+.menu-card.orange::before { background: linear-gradient(90deg, #fa8c16, #ffc53d); }
+.menu-card.red::before  { background: linear-gradient(90deg, #ff4d4f, #ff7875); }
+
+.menu-icon-wrap {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16rpx;
+}
+
+.menu-card.blue .menu-icon-wrap  { background: #e6f4ff; }
+.menu-card.green .menu-icon-wrap { background: #f6ffed; }
+.menu-card.orange .menu-icon-wrap { background: #fff7e6; }
+.menu-card.red .menu-icon-wrap { background: #fff1f0; }
+
+.menu-icon {
+  width: 56rpx;
+  height: 56rpx;
+}
+
+.menu-name {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6rpx;
+}
+
+.menu-desc {
+  display: block;
+  font-size: 22rpx;
+  color: #999;
+}
+
+/* 最近订单 */
+.recent-section {
+  background: #fff;
+  margin: 0 24rpx;
+  border-radius: 20rpx;
+  padding: 28rpx 28rpx 8rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.05);
+}
+
+.recent-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.recent-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.more-btn {
+  display: flex;
+  align-items: center;
+  font-size: 24rpx;
+  color: #1890ff;
+}
+
+.arrow-icon {
+  width: 32rpx;
+  height: 32rpx;
+  margin-left: 4rpx;
+}

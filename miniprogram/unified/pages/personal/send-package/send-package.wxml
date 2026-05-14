@@ -1,0 +1,133 @@
+<view class="container">
+  <view class="form-card">
+    <!-- 寄件人信息 -->
+    <view class="form-section">
+      <view class="section-title">📤 寄件人信息 <text class="required-star">*</text></view>
+      <view class="input-group">
+        <text class="input-label">姓名<text class="required-star">*</text></text>
+        <view class="input-wrap">
+          <input placeholder="请输入寄件人姓名（必填）" value="{{senderName}}" bindinput="onSenderName" />
+        </view>
+      </view>
+      <view class="input-group">
+        <text class="input-label">手机号<text class="required-star">*</text></text>
+        <view class="input-wrap">
+          <input type="number" placeholder="请输入寄件人手机号（必填）" maxlength="11" value="{{senderPhone}}" bindinput="onSenderPhone" />
+        </view>
+      </view>
+      <view class="input-group">
+        <text class="input-label">取件地址</text>
+        <view class="input-wrap addr-wrap" bindtap="chooseSenderLocation">
+          <text class="input-icon">📍</text>
+          <input placeholder="点击选择取件地址" value="{{senderAddress}}" disabled />
+          <text class="addr-arrow">›</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="divider-line"></view>
+
+    <!-- 收件人信息 -->
+    <view class="form-section">
+      <view class="section-title">📥 收件人信息 <text class="required-star">*</text></view>
+      <view class="input-group">
+        <text class="input-label">姓名<text class="required-star">*</text></text>
+        <view class="input-wrap">
+          <input placeholder="请输入收件人姓名（必填）" value="{{receiverName}}" bindinput="onReceiverName" />
+        </view>
+      </view>
+      <view class="input-group">
+        <text class="input-label">手机号<text class="required-star">*</text></text>
+        <view class="input-wrap">
+          <input type="number" placeholder="请输入收件人手机号（必填）" maxlength="11" value="{{receiverPhone}}" bindinput="onReceiverPhone" />
+        </view>
+      </view>
+      <view class="input-group">
+        <text class="input-label">送达地址</text>
+        <view class="input-wrap addr-wrap" bindtap="chooseReceiverLocation">
+          <text class="input-icon">📍</text>
+          <input placeholder="点击选择送达地址" value="{{receiverAddress}}" disabled />
+          <text class="addr-arrow">›</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="divider-line"></view>
+
+    <!-- 物品信息 -->
+    <view class="form-section">
+      <view class="section-title">📦 物品信息</view>
+      <!-- 出发时间 -->
+      <view class="input-group">
+        <text class="input-label">🕐 出发日期</text>
+        <view class="input-wrap">
+          <picker mode="date" value="{{departureDate}}" start="{{today}}" bindchange="onDateChange">
+            <view class="picker-value">{{departureDate || '请选择出发日期'}}<text class="addr-arrow">›</text></view>
+          </picker>
+        </view>
+      </view>
+      <view class="input-group">
+        <text class="input-label">🕐 出发时间</text>
+        <view class="input-wrap">
+          <picker mode="time" value="{{departureTime}}" bindchange="onTimeChange">
+            <view class="picker-value">{{departureTime || '请选择出发时间'}}<text class="addr-arrow">›</text></view>
+          </picker>
+        </view>
+      </view>
+      <view class="input-group">
+        <text class="input-label">预计重量（kg）</text>
+        <view class="input-wrap">
+          <input type="digit" placeholder="请输入预计重量" value="{{weight}}" bindinput="onWeight" />
+        </view>
+      </view>
+      <view class="input-group">
+        <text class="input-label">期望价格（元）</text>
+        <view class="input-wrap">
+          <input type="digit" placeholder="请输入期望价格" value="{{expectedPrice}}" bindinput="onPrice" />
+        </view>
+      </view>
+      <view class="input-group">
+        <text class="input-label">备注说明</text>
+        <view class="textarea-wrap">
+          <textarea placeholder="请输入备注说明（可选）" value="{{remark}}" bindinput="onRemark" maxlength="200" auto-height />
+        </view>
+      </view>
+
+      <!-- 物品照片 -->
+      <view class="photo-section">
+        <text class="photo-label">物品照片<text class="required-star">*</text></text>
+        <view class="photo-grid">
+          <block wx:for="{{photos}}" wx:key="index">
+            <view class="photo-item" catchtap="previewPhoto" data-index="{{index}}">
+              <image src="{{item}}" mode="aspectFill" class="photo-img"/>
+              <view class="photo-del" catchtap="delPhoto" data-index="{{index}}">✕</view>
+            </view>
+          </block>
+          <view class="photo-add" bindtap="takePhoto" wx:if="{{photos.length < 6}}">
+            <text class="photo-icon">📷</text>
+            <text class="photo-text">{{photos.length === 0 ? '添加照片（必填）' : '继续添加'}}</text>
+          </view>
+        </view>
+        <text class="photo-tip">请上传至少1张货物照片，方便司机确认</text>
+      </view>
+    </view>
+
+    <!-- 地图预览 -->
+    <view class="map-card" wx:if="{{senderLocation && receiverLocation}}">
+      <map
+        class="route-map"
+        latitude="{{centerLatitude}}"
+        longitude="{{centerLongitude}}"
+        scale="10"
+        show-location
+        markers="{{mapMarkers}}"
+      ></map>
+    </view>
+
+    <!-- 提交按钮 -->
+    <button class="btn-publish" bindtap="onSubmit" loading="{{loading}}">
+      <text wx:if="{{!loading}}">📦 发布寄件请求</text>
+      <text wx:if="{{loading}}">发布中...</text>
+    </button>
+  </view>
+</view>

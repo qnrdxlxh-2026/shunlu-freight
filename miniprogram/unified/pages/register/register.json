@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "注册",
+  "usingComponents": {
+    "custom-tab-bar": "/custom-tab-bar/index"
+  }
+}

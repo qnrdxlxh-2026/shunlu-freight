@@ -1,0 +1,41 @@
+<!-- pages/login/login.wxml -->
+<view class="login-page">
+  <view class="login-header">
+    <text class="logo">🚛 顺路货运</text>
+    <text class="role-tag" wx:if="{{roleName}}">{{roleName}}登录</text>
+  </view>
+
+  <!-- 微信一键登录（主推） -->
+  <button class="wx-login-btn" bindtap="onWxLogin" disabled="{{loading}}">
+    <text class="wx-icon">微信</text>
+    <text class="wx-text">微信一键登录</text>
+  </button>
+
+  <!-- 分割线 -->
+  <view class="divider">
+    <view class="divider-line"></view>
+    <text class="divider-text">或使用手机号登录</text>
+    <view class="divider-line"></view>
+  </view>
+
+  <!-- 手机号密码登录 -->
+  <view class="login-form">
+    <view class="form-item">
+      <text class="form-icon">📱</text>
+      <input class="form-input" type="number" maxlength="11" placeholder="请输入手机号" value="{{phone}}" bindinput="onPhoneInput" />
+    </view>
+    <view class="form-item">
+      <text class="form-icon">🔒</text>
+      <input class="form-input" type="text" password placeholder="请输入密码" value="{{password}}" bindinput="onPasswordInput" />
+    </view>
+  </view>
+
+  <button class="login-btn" bindtap="onLogin" disabled="{{loading}}" loading="{{loading}}">
+    登录
+  </button>
+
+  <view class="login-footer">
+    <text class="link" bindtap="goRegister">没有账号？去注册</text>
+    <text class="link back" bindtap="goBack">返回选择身份</text>
+  </view>
+</view>

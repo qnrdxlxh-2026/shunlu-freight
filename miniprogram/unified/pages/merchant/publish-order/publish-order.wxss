@@ -1,0 +1,285 @@
+/* 发布货源页面样式 */
+.container { background: #f5f6fa; min-height: 100vh; }
+
+.form { padding: 30rpx; }
+
+/* 标题 */
+.form-title {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #222;
+  text-align: center;
+  margin-bottom: 30rpx;
+  padding: 20rpx 0;
+}
+
+/* 表单分组 */
+.form-section {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+}
+
+.section-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 24rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+/* 表单项 */
+.form-item {
+  display: flex;
+  align-items: center;
+  background: #fafafa;
+  border-radius: 14rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 16rpx;
+  min-height: 80rpx;
+}
+.form-item:last-child { margin-bottom: 0; }
+
+.form-item .label {
+  font-size: 28rpx;
+  color: #555;
+  width: 190rpx;
+  flex-shrink: 0;
+}
+.form-item input,
+.form-item textarea {
+  flex: 1;
+  font-size: 28rpx;
+  color: #222;
+  background: transparent;
+}
+
+/* 可点击行 */
+.tap-item { cursor: pointer; }
+.tap-item:active { background: #f0f0f0; }
+
+/* 地址行 */
+.addr-row {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.addr-text { flex: 1; font-size: 28rpx; color: #222; }
+.addr-text.placeholder { color: #aaa; }
+.addr-text.has-value { color: #1890ff; font-weight: 500; }
+.addr-arrow { font-size: 36rpx; color: #ccc; }
+
+/* 运费行 */
+.freight-actions {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex-shrink: 0;
+  margin-left: 16rpx;
+}
+.tip-text {
+  font-size: 24rpx;
+  color: #1890ff;
+  background: #e6f4ff;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+  white-space: nowrap;
+}
+.tip-use {
+  font-size: 24rpx;
+  color: #fff;
+  background: #1890ff;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+  white-space: nowrap;
+}
+
+/* 运费规则链接 */
+.freight-rule-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16rpx;
+}
+.freight-rule-link {
+  font-size: 24rpx;
+  color: #52c41a;
+  background: #f6ffed;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+}
+
+/* 选择器 */
+.picker-value {
+  flex: 1;
+  font-size: 28rpx;
+  color: #222;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.picker-value:empty::before,
+.picker-value[data-empty]::before {
+  content: attr(data-placeholder);
+  color: #aaa;
+}
+.picker-arrow {
+  font-size: 36rpx;
+  color: #ccc;
+  margin-left: 8rpx;
+}
+
+/* 照片上传 */
+.photo-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+  margin-top: 16rpx;
+}
+.photo-item {
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  position: relative;
+}
+.photo-img { width: 100%; height: 100%; }
+.photo-del {
+  position: absolute;
+  top: 0; right: 0;
+  width: 44rpx; height: 44rpx;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  font-size: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom-left-radius: 8rpx;
+}
+.photo-add {
+  width: 200rpx;
+  height: 200rpx;
+  background: #f5f5f5;
+  border: 2rpx dashed #ddd;
+  border-radius: 16rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+}
+.photo-icon { font-size: 60rpx; }
+.photo-text { font-size: 24rpx; color: #999; }
+.photo-tip { font-size: 22rpx; color: #999; margin-top: 12rpx; }
+
+/* 发布按钮 */
+.btn-publish {
+  width: 100%;
+  height: 96rpx;
+  background: linear-gradient(135deg, #1890ff, #52c41a);
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 600;
+  border-radius: 48rpx;
+  margin-top: 40rpx;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 24rpx rgba(24, 144, 255, 0.3);
+}
+.btn-publish[disabled] { background: #ccc; box-shadow: none; }
+
+/* ===== 运费说明弹窗 ===== */
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 900;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+.modal-mask.show {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.freight-modal {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 32rpx 32rpx 0 0;
+  z-index: 901;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.freight-modal.show {
+  transform: translateY(0);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx 40rpx 24rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  border-radius: 32rpx 32rpx 0 0;
+}
+.modal-title { font-size: 32rpx; font-weight: 700; color: #222; }
+.modal-close { font-size: 36rpx; color: #999; padding: 8rpx; }
+
+.modal-body { padding: 32rpx 40rpx 60rpx; }
+
+.rule-block {
+  background: #f8f9fa;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+}
+.rule-title { font-size: 28rpx; font-weight: 600; color: #333; margin-bottom: 16rpx; }
+.rule-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 26rpx;
+  color: #555;
+  line-height: 2;
+}
+.rule-row .green { color: #52c41a; font-weight: 600; }
+.rule-detail { color: #888; font-size: 24rpx; flex-direction: column; }
+
+.rule-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+  font-size: 30rpx;
+}
+.total-price {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #ff6b00;
+}
+.btn-use-price {
+  width: 100%;
+  height: 88rpx;
+  background: linear-gradient(135deg, #ff6b00, #ff9500);
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: 600;
+  border-radius: 44rpx;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

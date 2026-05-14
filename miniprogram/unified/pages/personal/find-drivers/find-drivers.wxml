@@ -1,0 +1,57 @@
+<view class="container">
+  <!-- 筛选栏 -->
+  <view class="filter-bar">
+    <view class="filter-item {{filterType === 'all' ? 'active' : ''}}" bindtap="onFilter" data-type="all">全部</view>
+    <view class="filter-item {{filterType === 'truck' ? 'active' : ''}}" bindtap="onFilter" data-type="truck">货车</view>
+    <view class="filter-item {{filterType === 'car' ? 'active' : ''}}" bindtap="onFilter" data-type="car">私家车</view>
+  </view>
+
+  <!-- 地图区域 -->
+  <view class="map-container">
+    <map
+      id="driversMap"
+      latitude="{{mapCenter.lat}}"
+      longitude="{{mapCenter.lng}}"
+      scale="12"
+      show-location
+      markers="{{markers}}"
+      bindtap="onMapTap"
+    ></map>
+  </view>
+
+  <!-- 司机列表 -->
+  <view class="driver-list">
+    <view class="list-header">
+      <text class="list-title">附近司机</text>
+      <text class="list-count">{{drivers.length}} 位</text>
+    </view>
+    <view wx:if="{{drivers.length > 0}}">
+      <view class="driver-item" wx:for="{{drivers}}" wx:key="id" bindtap="onDriverTap" data-driver="{{item}}">
+        <view class="driver-info">
+          <image class="driver-avatar" src="{{item.avatar || '/assets/avatar-default.png'}}" mode="aspectFill"></image>
+          <view class="driver-detail">
+            <view class="driver-top">
+              <text class="driver-name">{{item.name}}</text>
+              <view class="driver-badge badge-{{item.type}}">{{item.typeText}}</view>
+            </view>
+            <text class="driver-route">{{item.startAddress}} → {{item.endAddress}}</text>
+            <view class="driver-meta">
+              <text class="meta-item">🕐 {{item.departureTime}}</text>
+              <text class="meta-item">📦 {{item.remainingSpace}}</text>
+            </view>
+          </view>
+        </view>
+        <view class="driver-action">
+          <text class="action-price">¥{{item.price}}</text>
+          <view class="action-btns">
+            <text class="btn-chat" bindtap="onChat" data-id="{{item.id}}">💬 聊</text>
+            <text class="btn-order" bindtap="onOrder" data-id="{{item.id}}">立即下单</text>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view wx:else class="empty-list">
+      <text>暂无附近司机</text>
+    </view>
+  </view>
+</view>

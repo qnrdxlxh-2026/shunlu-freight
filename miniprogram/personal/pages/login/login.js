@@ -26,13 +26,22 @@ Page({
     this.setData({ loading: true });
     try {
       const res = await api.login({ phone, password });
-      const { token, userInfo } = res.data;
+      console.log('登录成功，res=', JSON.stringify(res));
+      const { token, userInfo } = res.data || {};
+      console.log('token=', token ? '有值(' + token.slice(0, 20) + ')' : '空');
+      console.log('userInfo=', JSON.stringify(userInfo));
+      if (!token || !userInfo) {
+        wx.showToast({ title: '登录返回数据异常', icon: 'none' });
+        return;
+      }
       wx.setStorageSync('token', token);
       wx.setStorageSync('userInfo', userInfo);
       app.globalData.token = token;
       app.globalData.userInfo = userInfo;
+      console.log('准备跳转首页，当前globalData.token=', app.globalData.token);
       wx.switchTab({ url: '/pages/home/home' });
     } catch (e) {
+      console.error('登录失败 e=', e.message, e);
       wx.showToast({ title: e.message || '登录失败', icon: 'none' });
     } finally {
       this.setData({ loading: false });

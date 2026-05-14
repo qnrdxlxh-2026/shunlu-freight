@@ -1,0 +1,158 @@
+.container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 24rpx;
+}
+
+.form-card {
+  background-color: #fff;
+  border-radius: 24rpx;
+  padding: 30rpx;
+}
+
+.form-section {
+  margin-bottom: 10rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 24rpx;
+}
+
+.input-group {
+  margin-bottom: 24rpx;
+}
+
+.input-label {
+  display: block;
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 14rpx;
+}
+
+.input-wrap {
+  display: flex;
+  align-items: center;
+  background-color: #f7f7f7;
+  border-radius: 44rpx;
+  padding: 0 30rpx;
+  height: 88rpx;
+}
+
+.input-icon {
+  font-size: 32rpx;
+  margin-right: 16rpx;
+}
+
+.input-wrap input {
+  flex: 1;
+  height: 88rpx;
+  font-size: 28rpx;
+}
+
+.textarea-wrap {
+  background-color: #f7f7f7;
+  border-radius: 20rpx;
+  padding: 24rpx 30rpx;
+}
+
+.textarea-wrap textarea {
+  width: 100%;
+  font-size: 28rpx;
+  min-height: 160rpx;
+}
+
+.divider-line {
+  height: 1rpx;
+  background-color: #f0f0f0;
+  margin: 20rpx 0;
+}
+
+/* ===== 地址行 ===== */
+.addr-wrap { flex: 1; justify-content: flex-start; }
+.addr-arrow { color: #ccc; font-size: 32rpx; margin-left: 8rpx; }
+
+/* ===== 物品照片 ===== */
+.photo-section {
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+.photo-label {
+  display: block;
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 16rpx;
+}
+.photo-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+.photo-item {
+  position: relative;
+  width: 190rpx;
+  height: 190rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+.photo-img { width: 100%; height: 100%; }
+.photo-del {
+  position: absolute;
+  top: 0; right: 0;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  width: 40rpx; height: 40rpx;
+  border-radius: 0 12rpx 0 12rpx;
+  font-size: 24rpx;
+  display: flex; align-items: center; justify-content: center;
+}
+.photo-add {
+  width: 190rpx; height: 190rpx;
+  border: 2rpx dashed #ddd;
+  border-radius: 12rpx;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: #fafafa;
+}
+.photo-icon { font-size: 48rpx; margin-bottom: 8rpx; }
+.photo-text { font-size: 24rpx; color: #999; }
+.photo-tip { font-size: 24rpx; color: #bbb; margin-top: 12rpx; display: block; }
+
+.map-card {
+  border-radius: 20rpx;
+  overflow: hidden;
+  margin: 20rpx 0;
+}
+
+.route-map {
+  width: 100%;
+  height: 300rpx;
+}
+
+.btn-publish {
+  background-color: #722ed1;
+  color: #fff;
+  border-radius: 44rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: 600;
+  border: none;
+  margin-top: 30rpx;
+  letter-spacing: 4rpx;
+}
+
+.btn-publish::after { border: none; }
+.btn-publish:active { opacity: 0.85; }
+.btn-publish[disabled] { background-color: #d9d9d9; }
+
+/* 必填标记红色星号 */
+.required-star {
+  color: #f5222d;
+  font-size: 28rpx;
+  margin-left: 4rpx;
+}

@@ -10,7 +10,9 @@ Page({
   },
 
   async onShow() {
+    console.log('home onShow, globalData.token=', app.globalData.token ? '有' : '无', 'storage.token=', wx.getStorageSync('token') ? '有' : '无');
     const userInfo = app.globalData.userInfo || wx.getStorageSync('userInfo') || {};
+    console.log('userInfo=', JSON.stringify(userInfo));
     this.setData({ userInfo });
     await this.loadData();
   },
@@ -18,13 +20,15 @@ Page({
   async loadData() {
     try {
       const [userRes, ordersRes] = await Promise.all([
-        api.getUserInfo().catch(() => ({ data: {} })),
-        api.getPersonalOrders().catch(() => ({ data: { list: [] } }))
+        api.getUserInfo(),
+        api.getPersonalOrders()
       ]);
 
-      const orders = ordersRes.data.list || [];
+      const orders = Array.isArray(ordersRes.data) ? ordersRes.data
+        : (ordersRes.data && Array.isArray(ordersRes.data.list)) ? ordersRes.data.list : [];
       const statusCount = (arr, status) => arr.filter(o => o.status === status).length;
 
+      console.log('loadData成功 userRes=', JSON.stringify(userRes.data), 'ordersRes=', JSON.stringify(ordersRes.data));
       this.setData({
         userInfo: userRes.data || app.globalData.userInfo || {},
         stats: {
@@ -39,6 +43,12 @@ Page({
         }))
       });
     } catch (e) {
+      if (e.message === '未登录') {
+        wx.removeStorageSync('token');
+        wx.removeStorageSync('userInfo');
+        wx.redirectTo({ url: '/pages/login/login' });
+        return;
+      }
       console.error('loadData error', e);
     }
   },

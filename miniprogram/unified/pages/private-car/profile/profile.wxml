@@ -1,0 +1,141 @@
+<view class="profile-container">
+  <!-- 用户信息 -->
+  <view class="user-card">
+    <image class="avatar" src="{{avatarUrl}}" bindtap="chooseAvatar"></image>
+    <view class="user-info">
+      <text class="name">{{userInfo.real_name || '未设置'}}</text>
+      <text class="phone">{{userInfo.phone}}</text>
+      <text class="car-info">🚗 {{driverInfo.vehicle_plate || '未绑定车牌'}}</text>
+      <text class="avatar-tip" style="font-size: 12px; color: #1890ff;">点击头像更换</text>
+    </view>
+  </view>
+
+  <!-- 今日限制 -->
+  <view class="limit-card">
+    <view class="limit-header">
+      <text class="limit-title">今日接单限制</text>
+      <text class="limit-tip">私家车每日限接2单</text>
+    </view>
+    <view class="limit-progress">
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{todayOrders / 2 * 100}}%"></view>
+      </view>
+      <text class="progress-text">{{todayOrders}}/2 单</text>
+    </view>
+  </view>
+
+  <!-- 证件审核状态卡片 -->
+  <view class="cert-card" bindtap="openDriverModal">
+    <view class="cert-left">
+      <text class="cert-icon">📋</text>
+      <view class="cert-info">
+        <text class="cert-title">证件审核</text>
+        <text class="cert-status approved" wx:if="{{auditStatus === 'approved'}}">✅ 已通过</text>
+        <text class="cert-status pending" wx:elif="{{auditStatus === 'pending'}}">⏳ 审核中</text>
+        <text class="cert-status rejected" wx:elif="{{auditStatus === 'rejected'}}">❌ 未通过 - {{rejectReason}}</text>
+        <text class="cert-status" wx:else>⚠️ 未提交，请完善资料</text>
+      </view>
+    </view>
+    <text class="cert-arrow">›</text>
+  </view>
+
+  <!-- 功能菜单 -->
+  <view class="menu-list">
+    <view class="menu-item" bindtap="goOrders">
+      <text class="menu-icon">📋</text>
+      <text class="menu-text">我的订单</text>
+      <text class="menu-arrow">></text>
+    </view>
+    <view class="menu-item" bindtap="goWallet">
+      <text class="menu-icon">💰</text>
+      <text class="menu-text">我的收入</text>
+      <text class="menu-arrow">></text>
+    </view>
+    <view class="menu-item" bindtap="showRules">
+      <text class="menu-icon">📖</text>
+      <text class="menu-text">接单规则</text>
+      <text class="menu-arrow">></text>
+    </view>
+  </view>
+
+  <!-- 私家车主规则说明 -->
+  <view class="rules-card">
+    <view class="rules-title">私家车主接单规则</view>
+    <view class="rules-item">• 单票限重：≤20kg</view>
+    <view class="rules-item">• 货值限额：≤2000元</view>
+    <view class="rules-item">• 每日限接：2单</view>
+    <view class="rules-item">• 县城内运费：10元/单</view>
+    <view class="rules-item">• 跨城运费：起步10元+里程加价</view>
+    <view class="rules-item">• 平台抽成：10%</view>
+  </view>
+
+  <!-- 退出登录 -->
+  <button class="btn-logout" bindtap="logout">退出登录</button>
+
+  <!-- 证件信息弹窗 -->
+  <view class="modal-mask" wx:if="{{showDriverModal}}" bindtap="closeDriverModal"></view>
+  <view class="modal-content" wx:if="{{showDriverModal}}">
+    <view class="modal-header">
+      <text class="modal-title">证件信息</text>
+      <text class="modal-close" bindtap="closeDriverModal">✕</text>
+    </view>
+    <scroll-view scroll-y class="modal-body">
+      <view class="cert-section-title">🪪 驾驶证</view>
+      <view class="photo-grid-2col">
+        <view class="photo-upload-card">
+          <image wx:if="{{tempLicenseFront}}" class="photo-preview" src="{{tempLicenseFront}}" mode="aspectFill"></image>
+          <view wx:else class="photo-placeholder" bindtap="choosePhoto" data-field="tempLicenseFront">
+            <text class="photo-plus">+</text>
+            <text class="photo-label">正面</text>
+          </view>
+          <text wx:if="{{tempLicenseFront}}" class="photo-card-label">驾驶证正面</text>
+          <text wx:if="{{tempLicenseFront}}" class="photo-del-btn" bindtap="removePhoto" data-field="tempLicenseFront">×</text>
+        </view>
+        <view class="photo-upload-card">
+          <image wx:if="{{tempLicenseBack}}" class="photo-preview" src="{{tempLicenseBack}}" mode="aspectFill"></image>
+          <view wx:else class="photo-placeholder" bindtap="choosePhoto" data-field="tempLicenseBack">
+            <text class="photo-plus">+</text>
+            <text class="photo-label">反面</text>
+          </view>
+          <text wx:if="{{tempLicenseBack}}" class="photo-card-label">驾驶证反面</text>
+          <text wx:if="{{tempLicenseBack}}" class="photo-del-btn" bindtap="removePhoto" data-field="tempLicenseBack">×</text>
+        </view>
+      </view>
+      <view class="cert-section-title">🚗 行驶证</view>
+      <view class="photo-grid-2col">
+        <view class="photo-upload-card">
+          <image wx:if="{{tempVehicleFront}}" class="photo-preview" src="{{tempVehicleFront}}" mode="aspectFill"></image>
+          <view wx:else class="photo-placeholder" bindtap="choosePhoto" data-field="tempVehicleFront">
+            <text class="photo-plus">+</text>
+            <text class="photo-label">正面</text>
+          </view>
+          <text wx:if="{{tempVehicleFront}}" class="photo-card-label">行驶证正面</text>
+          <text wx:if="{{tempVehicleFront}}" class="photo-del-btn" bindtap="removePhoto" data-field="tempVehicleFront">×</text>
+        </view>
+        <view class="photo-upload-card">
+          <image wx:if="{{tempVehicleBack}}" class="photo-preview" src="{{tempVehicleBack}}" mode="aspectFill"></image>
+          <view wx:else class="photo-placeholder" bindtap="choosePhoto" data-field="tempVehicleBack">
+            <text class="photo-plus">+</text>
+            <text class="photo-label">反面</text>
+          </view>
+          <text wx:if="{{tempVehicleBack}}" class="photo-card-label">行驶证反面</text>
+          <text wx:if="{{tempVehicleBack}}" class="photo-del-btn" bindtap="removePhoto" data-field="tempVehicleBack">×</text>
+        </view>
+      </view>
+      <view class="cert-section-title">📸 车辆照片（选填）</view>
+      <view class="photo-grid">
+        <view class="photo-item" wx:for="{{tempVehiclePhotos}}" wx:key="*this">
+          <image class="photo-thumb" src="{{item}}" mode="aspectFill"></image>
+          <text class="photo-del" bindtap="delVehiclePhoto" data-index="{{index}}">×</text>
+        </view>
+        <view class="photo-add" bindtap="chooseVehiclePhoto" wx:if="{{tempVehiclePhotos.length < 3}}">
+          <text class="photo-add-icon">+</text>
+        </view>
+      </view>
+    </scroll-view>
+    <view class="modal-footer">
+      <button class="modal-btn cancel" bindtap="closeDriverModal">取消</button>
+      <button class="modal-btn confirm" bindtap="submitAudit">提交审核</button>
+    </view>
+  </view>
+</view>

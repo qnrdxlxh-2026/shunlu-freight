@@ -1,0 +1,83 @@
+<view class="publish-page">
+  <view class="form-section">
+    <view class="section-title">🛻 行程信息</view>
+
+    <view class="form-item" bindtap="chooseStart">
+      <text class="label">出发地</text>
+      <view class="value {{form.start_addr ? '' : 'placeholder'}}">
+        {{form.start_addr || '点击地图选址'}}
+      </view>
+      <text class="arrow">›</text>
+    </view>
+
+    <view class="form-item" bindtap="chooseEnd">
+      <text class="label">目的地</text>
+      <view class="value {{form.end_addr ? '' : 'placeholder'}}">
+        {{form.end_addr || '点击地图选址'}}
+      </view>
+      <text class="arrow">›</text>
+    </view>
+
+    <view class="form-item">
+      <text class="label">出发时间</text>
+      <picker mode="time" value="{{form.departure_time}}" bindchange="bindTimeChange">
+        <view class="value {{form.departure_time ? '' : 'placeholder'}}">
+          {{form.departure_time || '选择时间'}}
+        </view>
+      </picker>
+      <text class="arrow">›</text>
+    </view>
+
+    <view class="form-item">
+      <text class="label">剩余空间(kg)</text>
+      <input class="input" type="digit" placeholder="可装载重量"
+        value="{{form.space}}" data-field="space" bindinput="bindInput"/>
+    </view>
+  </view>
+
+  <view class="form-section">
+    <view class="section-title">🚗 车辆信息</view>
+
+    <view class="form-item">
+      <text class="label">车牌号</text>
+      <input class="input" placeholder="请输入车牌号（如：川V12345）"
+        value="{{form.license_plate}}"
+        bindinput="onLicensePlateInput"
+        maxlength="10"
+        style="text-transform:uppercase;"/>
+    </view>
+
+    <view class="form-item" style="flex-direction:column; align-items:flex-start;">
+      <text class="label" style="margin-bottom:16rpx;">车辆照片</text>
+      <view class="photo-grid">
+        <block wx:for="{{vehiclePhotos}}" wx:key="index">
+          <view class="photo-item" catchtap="previewVehiclePhoto" data-index="{{index}}">
+            <image src="{{item}}" mode="aspectFill" class="photo-img"/>
+            <view class="photo-del" catchtap="delVehiclePhoto" data-index="{{index}}">✕</view>
+          </view>
+        </block>
+        <view class="photo-add" bindtap="takeVehiclePhoto" wx:if="{{vehiclePhotos.length < 3}}">
+          <text class="photo-icon">🚗</text>
+          <text class="photo-text">添加照片</text>
+        </view>
+      </view>
+      <text class="photo-tip">上传车辆照片，方便货主识别（选填）</text>
+    </view>
+  </view>
+
+  <view class="form-section">
+    <view class="section-title">📋 其他信息</view>
+
+    <view class="form-item" style="align-items:flex-start;">
+      <text class="label" style="padding-top:8rpx;">备注说明</text>
+      <textarea class="textarea-input" placeholder="备注信息（选填）"
+        value="{{form.remark}}" data-field="remark" bindinput="bindInput"
+        maxlength="200" auto-height/>
+    </view>
+  </view>
+
+  <button class="submit-btn" bindtap="submit" disabled="{{loading}}">
+    <text wx:if="{{!loading}}">🚚 发布行程</text>
+    <text wx:if="{{loading}}">发布中...</text>
+  </button>
+</view>

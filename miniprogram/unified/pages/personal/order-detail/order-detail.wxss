@@ -1,0 +1,66 @@
+.detail-page { padding: 24rpx; background: #f5f5f5; min-height: 100vh; }
+
+.status-bar { padding: 32rpx; border-radius: 16rpx; margin-bottom: 24rpx; text-align: center; }
+.status-bar.badge-orange { background: linear-gradient(135deg, #fa8c16, #d46b08); }
+.status-bar.badge-blue { background: linear-gradient(135deg, #1890ff, #096dd9); }
+.status-bar.badge-green { background: linear-gradient(135deg, #52c41a, #389e0d); }
+.status-text { color: #fff; font-size: 36rpx; font-weight: 600; }
+
+/* 取货码/送达码卡片 */
+.code-card { border-radius: 16rpx; padding: 32rpx 24rpx; margin-bottom: 24rpx; text-align: center; border: 2rpx solid; }
+.code-card.pickup-card { border-color: #fa8c16; background: linear-gradient(135deg, #fff8f0, #fff); }
+.code-card.delivery-card { border-color: #52c41a; background: linear-gradient(135deg, #f6fff0, #fff); }
+.code-label { font-size: 26rpx; color: #999; margin-bottom: 12rpx; }
+.code-number { font-size: 64rpx; font-weight: 700; letter-spacing: 8rpx; margin-bottom: 8rpx; }
+.pickup-card .code-number { color: #fa8c16; }
+.delivery-card .code-number { color: #52c41a; }
+.code-hint { font-size: 24rpx; color: #aaa; }
+
+.route-section { background: #fff; border-radius: 16rpx; padding: 32rpx; margin-bottom: 24rpx; }
+.route-item { display: flex; align-items: flex-start; }
+.dot { width: 24rpx; height: 24rpx; border-radius: 50%; margin-right: 16rpx; margin-top: 6rpx; }
+.dot.green { background: #52c41a; }
+.dot.red { background: #f5222d; }
+.addr { flex: 1; font-size: 28rpx; color: #333; }
+.route-line { width: 4rpx; height: 40rpx; background: #e8e8e8; margin-left: 10rpx; }
+
+.info-section { background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 24rpx; }
+.info-item { display: flex; justify-content: space-between; padding: 16rpx 0; border-bottom: 1rpx solid #f0f0f0; }
+.info-item:last-child { border-bottom: none; }
+.label { font-size: 28rpx; color: #666; }
+.value { font-size: 28rpx; color: #333; }
+.value.price { color: #f5222d; font-weight: 600; }
+
+.driver-section { margin-bottom: 24rpx; }
+.driver-card { background: #fff; border-radius: 16rpx; padding: 24rpx; }
+.driver-label { font-size: 28rpx; color: #666; margin-bottom: 12rpx; }
+.driver-info { display: flex; justify-content: space-between; align-items: center; }
+.driver-phone { font-size: 32rpx; font-weight: 600; color: #333; }
+.driver-btns { display: flex; gap: 16rpx; }
+.btn-call, .btn-chat { font-size: 26rpx; border-radius: 8rpx; padding: 12rpx 20rpx; }
+.btn-call { background: #e6f7ff; color: #1890ff; }
+.btn-chat { background: #f5f5f5; color: #666; }
+
+.action-section { margin-top: 32rpx; }
+.pay-btn, .confirm-btn { background: #722ed1; color: #fff; border-radius: 50rpx; padding: 28rpx 0; font-size: 32rpx; font-weight: 500; }
+.confirm-btn { background: #52c41a; }
+
+/* 评分区域 */
+.rating-section { margin: 24rpx 0; }
+.rating-card { background: #fff; border-radius: 16rpx; padding: 32rpx; }
+.rated-card { background: #f9f9f9; }
+.rating-title { font-size: 32rpx; font-weight: 600; color: #333; margin-bottom: 8rpx; }
+.rating-hint { font-size: 24rpx; color: #999; margin-bottom: 24rpx; }
+.rating-dimension { display: flex; align-items: center; justify-content: space-between; padding: 16rpx 0; border-bottom: 1rpx solid #f5f5f5; }
+.rating-dimension:last-of-type { border-bottom: none; }
+.dim-label { font-size: 28rpx; color: #333; }
+.stars-row { display: flex; gap: 8rpx; }
+.star { font-size: 36rpx; color: #ddd; }
+.star-on { color: #faad14; }
+.comment-wrap { margin-top: 24rpx; position: relative; }
+.comment-input { width: 100%; height: 120rpx; border: 1rpx solid #e8e8e8; border-radius: 12rpx; padding: 16rpx; font-size: 26rpx; box-sizing: border-box; }
+.char-count { text-align: right; font-size: 22rpx; color: #bbb; margin-top: 8rpx; }
+.submit-rating-btn { margin-top: 24rpx; background: linear-gradient(135deg, #1890ff, #40a9ff); color: #fff; border: none; border-radius: 50rpx; padding: 20rpx 0; font-size: 30rpx; }
+.submit-rating-btn::after { border: none; }
+.rated-comment { font-size: 26rpx; color: #666; margin-top: 16rpx; padding: 16rpx; background: #f5f5f5; border-radius: 8rpx; }
+.rated-badge { margin-top: 16rpx; text-align: center; font-size: 24rpx; color: #52c41a; }

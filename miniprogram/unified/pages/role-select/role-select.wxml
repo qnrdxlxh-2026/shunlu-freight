@@ -1,0 +1,60 @@
+<!-- pages/role-select/role-select.wxml -->
+<view class="role-select-page">
+  <!-- 头部 -->
+  <view class="header">
+    <text class="logo-text">🚛 顺路货运</text>
+    <text class="subtitle">选择您的身份开始使用</text>
+  </view>
+
+  <!-- 角色卡片 -->
+  <view class="role-cards">
+    <!-- 商家 -->
+    <view class="role-card merchant" bindtap="selectRole" data-role="1">
+      <view class="role-icon">📦</view>
+      <view class="role-info">
+        <text class="role-name">我是商家</text>
+        <text class="role-desc">发布货源、管理订单</text>
+      </view>
+      <text class="role-arrow">›</text>
+    </view>
+
+    <!-- 货车司机 -->
+    <view class="role-card driver" bindtap="selectRole" data-role="2">
+      <view class="role-icon">🚛</view>
+      <view class="role-info">
+        <text class="role-name">我是货车司机</text>
+        <text class="role-desc">接单配送、收入管理</text>
+      </view>
+      <text class="role-arrow">›</text>
+    </view>
+
+    <!-- 私家车 -->
+    <view class="role-card private-car" bindtap="selectRole" data-role="3">
+      <view class="role-icon">🚗</view>
+      <view class="role-info">
+        <text class="role-name">我是私家车主</text>
+        <text class="role-desc">顺路接单、补贴油费</text>
+      </view>
+      <text class="role-arrow">›</text>
+    </view>
+
+    <!-- 个人 -->
+    <view class="role-card personal" bindtap="selectRole" data-role="5">
+      <view class="role-icon">👤</view>
+      <view class="role-info">
+        <text class="role-name">我是个人用户</text>
+        <text class="role-desc">发货寄件、查找司机</text>
+      </view>
+      <text class="role-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 已登录提示 -->
+  <view class="login-tip" wx:if="{{hasLogin}}">
+    <text class="tip-text">已登录，可直接选择身份进入</text>
+    <text class="switch-btn" bindtap="switchAccount">切换账号</text>
+  </view>
+  <view class="login-tip" wx:else>
+    <text class="tip-text">选择身份后将跳转登录</text>
+  </view>
+</view>

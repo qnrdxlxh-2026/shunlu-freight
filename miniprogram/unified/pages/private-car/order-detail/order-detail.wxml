@@ -1,0 +1,83 @@
+<!--pages/order-detail/order-detail.wxml-->
+<view class="detail-container">
+  <!-- 状态卡片 -->
+  <view class="status-card status-{{order.status}}">
+    <text class="status-text">{{statusText[order.status]}}</text>
+    <text class="status-tip" wx:if="{{order.status === 2}}">请前往取货地点取货</text>
+    <text class="status-tip" wx:if="{{order.status === 3}}">配送中，请按时送达</text>
+  </view>
+
+  <!-- 路线信息 -->
+  <view class="route-card">
+    <view class="route-section">
+      <view class="route-point">
+        <view class="point-icon start">起</view>
+        <view class="point-info">
+          <text class="point-label">取货地点</text>
+          <text class="point-address">{{order.pickup_address}}</text>
+          <text class="point-contact">{{order.pickup_contact}} {{order.pickup_phone}}</text>
+        </view>
+      </view>
+      <view class="route-line"></view>
+      <view class="route-point">
+        <view class="point-icon end">终</view>
+        <view class="point-info">
+          <text class="point-label">送达地点</text>
+          <text class="point-address">{{order.delivery_address}}</text>
+          <text class="point-contact">{{order.delivery_contact}} {{order.delivery_phone}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 货物信息 -->
+  <view class="info-card">
+    <view class="card-title">货物信息</view>
+    <view class="info-row">
+      <text class="info-label">货物名称</text>
+      <text class="info-value">{{order.goods_name || '小件货物'}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">重量</text>
+      <text class="info-value">{{order.weight}}kg</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">货值</text>
+      <text class="info-value">¥{{order.goods_value}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">备注</text>
+      <text class="info-value">{{order.remark || '无'}}</text>
+    </view>
+  </view>
+
+  <!-- 费用信息 -->
+  <view class="info-card">
+    <view class="card-title">费用明细</view>
+    <view class="info-row">
+      <text class="info-label">运费</text>
+      <text class="info-value price">¥{{order.price}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">平台抽成(10%)</text>
+      <text class="info-value">-¥{{order.platform_fee}}</text>
+    </view>
+    <view class="info-row highlight">
+      <text class="info-label">您的收入</text>
+      <text class="info-value price">¥{{order.driver_amount}}</text>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-bar">
+    <button wx:if="{{order.status === 2}}" class="btn-primary" bindtap="confirmPickup">确认取货</button>
+    <button wx:if="{{order.status === 3}}" class="btn-primary" bindtap="confirmDeliver">确认送达</button>
+    
+    <view class="action-row" wx:if="{{order.status >= 2 && order.status <= 3}}">
+      <button class="btn-outline" bindtap="makeCall" data-phone="{{order.pickup_phone}}">联系发货人</button>
+      <button class="btn-outline" bindtap="makeCall" data-phone="{{order.delivery_phone}}">联系收货人</button>
+    </view>
+    
+    <button class="btn-nav" bindtap="openNavigation">导航前往</button>
+  </view>
+</view>

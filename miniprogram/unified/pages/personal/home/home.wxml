@@ -1,0 +1,87 @@
+<view class="container">
+  <!-- 用户信息卡片 -->
+  <view class="user-card">
+    <view class="user-info">
+      <image class="avatar" src="{{userInfo.avatar || '/assets/avatar-default.png'}}" mode="aspectFill"></image>
+      <view class="user-detail">
+        <text class="nickname">{{userInfo.nickname || userInfo.name || '用户'}}</text>
+        <text class="user-role">个人用户</text>
+      </view>
+    </view>
+    <view class="user-stats">
+      <view class="stat-item" bindtap="goOrders" data-status="pending">
+        <text class="stat-num">{{stats.pending}}</text>
+        <text class="stat-label">待发货</text>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item" bindtap="goOrders" data-status="transit">
+        <text class="stat-num">{{stats.transit}}</text>
+        <text class="stat-label">运输中</text>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item" bindtap="goOrders" data-status="done">
+        <text class="stat-num">{{stats.done}}</text>
+        <text class="stat-label">已签收</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 快捷功能入口 -->
+  <view class="quick-actions">
+    <view class="action-item" bindtap="goSendPackage">
+      <view class="action-icon bg-purple">
+        <text>📦</text>
+      </view>
+      <text class="action-text">寄快递</text>
+    </view>
+    <view class="action-item" bindtap="goFindDrivers">
+      <view class="action-icon bg-blue">
+        <text>🚗</text>
+      </view>
+      <text class="action-text">找司机</text>
+    </view>
+    <view class="action-item" bindtap="goMyPackages">
+      <view class="action-icon bg-green">
+        <text>📋</text>
+      </view>
+      <text class="action-text">我的包裹</text>
+    </view>
+    <view class="action-item" bindtap="goWallet">
+      <view class="action-icon bg-orange">
+        <text>💰</text>
+      </view>
+      <text class="action-text">我的钱包</text>
+    </view>
+  </view>
+
+  <!-- 最新订单 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">最新订单</text>
+      <text class="section-more" bindtap="goOrders">查看全部 ></text>
+    </view>
+    <view wx:if="{{latestOrders.length > 0}}">
+      <view class="order-item" wx:for="{{latestOrders}}" wx:key="id" bindtap="goOrderDetail" data-id="{{item.id}}">
+        <view class="order-header">
+          <text class="order-no">订单号：{{item.orderNo}}</text>
+          <text class="order-status status-{{item.status}}">{{item.statusText}}</text>
+        </view>
+        <view class="order-route">
+          <text class="route-dot start"></text>
+          <text class="route-text">{{item.startAddress}}</text>
+        </view>
+        <view class="order-route">
+          <text class="route-dot end"></text>
+          <text class="route-text">{{item.endAddress}}</text>
+        </view>
+        <view class="order-footer">
+          <text class="order-price">¥{{item.price}}</text>
+          <text class="order-time">{{item.createTime}}</text>
+        </view>
+      </view>
+    </view>
+    <view wx:else class="empty-order">
+      <text>暂无订单，去发布寄件请求吧～</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,134 @@
+/* pages/login/login.wxss */
+.login-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding: 0 40rpx;
+}
+
+.login-header {
+  padding-top: 120rpx;
+  text-align: center;
+  margin-bottom: 60rpx;
+}
+
+.logo {
+  display: block;
+  font-size: 52rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.role-tag {
+  display: inline-block;
+  background: rgba(24,144,255,0.1);
+  color: #1890ff;
+  padding: 8rpx 24rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+}
+
+/* 微信一键登录按钮 */
+.wx-login-btn {
+  width: 100%;
+  height: 96rpx;
+  line-height: 96rpx;
+  background: #07c160;
+  color: #fff;
+  font-size: 34rpx;
+  border-radius: 12rpx;
+  border: none;
+  margin-bottom: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+}
+
+.wx-login-btn::after { border: none; }
+.wx-login-btn[disabled] { opacity: 0.6; }
+
+.wx-icon {
+  font-size: 36rpx;
+  font-weight: bold;
+}
+
+.wx-text {
+  font-size: 34rpx;
+}
+
+/* 分割线 */
+.divider {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1rpx;
+  background: #e0e0e0;
+}
+
+.divider-text {
+  padding: 0 20rpx;
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* 手机号登录表单 */
+.login-form {
+  margin-bottom: 40rpx;
+}
+
+.form-item {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 0 24rpx;
+  height: 96rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
+}
+
+.form-icon {
+  font-size: 36rpx;
+  margin-right: 16rpx;
+}
+
+.form-input {
+  flex: 1;
+  height: 96rpx;
+  font-size: 30rpx;
+}
+
+.login-btn {
+  width: 100%;
+  height: 96rpx;
+  line-height: 96rpx;
+  background: #1890ff;
+  color: #fff;
+  font-size: 34rpx;
+  border-radius: 12rpx;
+  border: none;
+  margin-bottom: 30rpx;
+}
+
+.login-btn::after { border: none; }
+.login-btn[disabled] { opacity: 0.6; }
+
+.login-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 10rpx;
+}
+
+.link {
+  font-size: 26rpx;
+  color: #1890ff;
+}
+
+.back {
+  color: #999;
+}

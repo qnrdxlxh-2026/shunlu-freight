@@ -11,6 +11,10 @@ Page({
   },
 
   onShow() {
+    if (!app.globalData.token && !wx.getStorageSync('token')) {
+      wx.redirectTo({ url: '/pages/login/login' });
+      return;
+    }
     this.loadOrders();
   },
 
@@ -26,7 +30,11 @@ Page({
     this.setData({ loading: true });
     try {
       const res = await app.get('/api/personal/orders');
-      let orders = (res && res.data) || [];
+      let orders = [];
+      if (res && res.data) {
+        // 兼容两种格式：{ list: [] } 或直接是 []
+        orders = Array.isArray(res.data) ? res.data : (res.data.list || []);
+      }
       orders = orders.map(o => ({
         ...o,
         statusText: getOrderStatusText(o.status),
@@ -35,6 +43,12 @@ Page({
       }));
       this.setData({ orders, loading: false });
     } catch (err) {
+      if (err.message === '未登录') {
+        wx.removeStorageSync('token');
+        wx.removeStorageSync('userInfo');
+        wx.redirectTo({ url: '/pages/login/login' });
+        return;
+      }
       wx.showToast({ title: err.message || '加载失败', icon: 'none' });
       this.setData({ loading: false });
     }

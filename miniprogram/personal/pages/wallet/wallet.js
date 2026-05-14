@@ -11,26 +11,36 @@ Page({
   },
 
   onShow() {
+    if (!app.globalData.token && !wx.getStorageSync('token')) {
+      wx.redirectTo({ url: '/pages/login/login' });
+      return;
+    }
     this.loadWallet();
   },
 
   async loadWallet() {
     try {
       const [walletRes, recordsRes] = await Promise.all([
-        app.get('/api/wallet/info').catch(() => ({ data: { balance: 0 } })),
-        app.get('/api/wallet/records').catch(() => ({ data: [] }))
+        app.get('/api/wallet/info'),
+        app.get('/api/wallet/records')
       ]);
-      const wallet = walletRes.data || {};
+      const wallet = (walletRes && walletRes.data) || {};
       this.setData({
         wallet: {
           ...wallet,
           frozen_amount: wallet.frozen_amount || 0,
           withdrawable: wallet.withdrawable || wallet.balance || 0
         },
-        records: recordsRes.data || []
+        records: (recordsRes && recordsRes.data) || []
       });
     } catch (err) {
-      wx.showToast({ title: err.message || '加载失败', icon: 'none' });
+      if (err.message === '未登录') {
+        wx.removeStorageSync('token');
+        wx.removeStorageSync('userInfo');
+        wx.redirectTo({ url: '/pages/login/login' });
+        return;
+      }
+      this.setData({ wallet: { balance: 0, frozen_amount: 0, withdrawable: 0 }, records: [] });
     }
   },
 

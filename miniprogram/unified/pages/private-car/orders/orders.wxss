@@ -1,0 +1,160 @@
+/* pages/orders/orders.wxss */
+.orders-container {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding-bottom: 120rpx;
+}
+
+.tabs {
+  display: flex;
+  background: #fff;
+  padding: 20rpx 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  font-size: 28rpx;
+  color: #666;
+  padding: 16rpx 0;
+  position: relative;
+}
+
+.tab-item.active {
+  color: #1890ff;
+  font-weight: bold;
+}
+
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48rpx;
+  height: 4rpx;
+  background: #1890ff;
+  border-radius: 2rpx;
+}
+
+.order-list {
+  padding: 20rpx;
+}
+
+.order-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06);
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.order-no {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.order-status {
+  font-size: 24rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+}
+
+.status-1 { background: #e6f7ff; color: #1890ff; }
+.status-2 { background: #fff7e6; color: #fa8c16; }
+.status-3 { background: #f6ffed; color: #52c41a; }
+.status-4 { background: #f0f0f0; color: #999; }
+.status-5 { background: #fff1f0; color: #f5222d; }
+
+.order-route {
+  padding: 16rpx 0;
+  border-top: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.route-item {
+  display: flex;
+  align-items: flex-start;
+}
+
+.route-label {
+  font-size: 24rpx;
+  color: #1890ff;
+  width: 80rpx;
+  margin-right: 16rpx;
+}
+
+.route-address {
+  font-size: 28rpx;
+  color: #333;
+  flex: 1;
+}
+
+.route-arrow {
+  display: block;
+  text-align: center;
+  color: #1890ff;
+  font-size: 32rpx;
+  margin: 8rpx 0 8rpx 96rpx;
+}
+
+.order-info {
+  display: flex;
+  gap: 30rpx;
+  padding: 16rpx 0;
+}
+
+.info-text {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.order-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16rpx;
+}
+
+.order-time {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.order-actions {
+  display: flex;
+  gap: 16rpx;
+}
+
+.btn-action {
+  font-size: 26rpx;
+  padding: 12rpx 32rpx;
+  border-radius: 30rpx;
+  background: #f0f0f0;
+  color: #666;
+}
+
+.btn-action.btn-primary {
+  background: #1890ff;
+  color: #fff;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 100rpx 0;
+}
+
+.empty-text {
+  color: #999;
+  font-size: 28rpx;
+}

@@ -1,0 +1,26 @@
+.orders-page { padding: 0 32rpx; background: #f5f5f5; min-height: 100vh; }
+
+.tabs { display: flex; background: #fff; padding: 20rpx 0; position: sticky; top: 0; z-index: 10; }
+.tab { flex: 1; text-align: center; padding: 16rpx 0; font-size: 28rpx; color: #666; border-bottom: 4rpx solid transparent; }
+.tab.active { color: #722ed1; border-bottom-color: #722ed1; font-weight: 600; }
+
+.order-list { padding: 20rpx 0; }
+.order-item { background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 20rpx; }
+
+.order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
+.order-no { font-size: 24rpx; color: #999; }
+.status { font-size: 24rpx; padding: 4rpx 12rpx; border-radius: 8rpx; }
+.status.badge-orange { background: #fff7e6; color: #fa8c16; }
+.status.badge-blue { background: #e6f7ff; color: #1890ff; }
+.status.badge-green { background: #f6ffed; color: #52c41a; }
+
+.order-route { display: flex; align-items: center; margin: 16rpx 0; font-size: 28rpx; }
+.from, .to { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.arrow { color: #722ed1; margin: 0 16rpx; }
+
+.order-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 16rpx; }
+.time { font-size: 24rpx; color: #999; }
+.price { font-size: 32rpx; color: #722ed1; font-weight: 600; }
+
+.empty { text-align: center; padding: 100rpx 0; color: #999; }
+.loading { text-align: center; padding: 100rpx 0; color: #999; }

@@ -1,0 +1,73 @@
+<!-- pages/register/register.wxml -->
+<view class="register-page role-{{roleName ? (role===1?'merchant':role===2?'driver':role===3?'private-car':'personal') : ''}}">
+  <view class="reg-header">
+    <text class="logo">🚛 顺路货运</text>
+    <text class="role-tag" wx:if="{{roleName}}">注册{{roleName}}账号</text>
+    <view class="wx-badge" wx:if="{{openid}}">
+      <text class="wx-badge-icon">微信</text>
+      <text class="wx-badge-text">快速注册</text>
+    </view>
+  </view>
+
+  <view class="reg-form">
+    <!-- 手机号 -->
+    <view class="form-item">
+      <text class="form-icon">📱</text>
+      <input class="form-input" type="number" maxlength="11" placeholder="手机号" value="{{phone}}" bindinput="onInput" data-field="phone" />
+    </view>
+
+    <!-- 姓名 -->
+    <view class="form-item">
+      <text class="form-icon">👤</text>
+      <input class="form-input" placeholder="真实姓名" value="{{real_name}}" bindinput="onInput" data-field="real_name" />
+    </view>
+
+    <!-- 身份证 -->
+    <view class="form-item">
+      <text class="form-icon">🪪</text>
+      <input class="form-input" type="idcard" maxlength="18" placeholder="身份证号" value="{{id_card}}" bindinput="onIdCardInput" />
+    </view>
+
+    <!-- 营业执照（商家选填） -->
+    <view class="form-item photo-item" wx:if="{{role === 1}}">
+      <text class="form-icon">🏪</text>
+      <view class="photo-section">
+        <text class="photo-label">营业执照（选填）</text>
+        <view class="photo-upload-wrap">
+          <view class="photo-add-btn" bindtap="chooseBusinessLicense">
+            <text class="photo-add-icon">+</text>
+            <text class="photo-add-text">上传执照</text>
+          </view>
+          <view class="photo-preview" wx:if="{{business_license}}">
+            <image class="photo-img" src="{{business_license}}" mode="aspectFill" />
+            <text class="photo-del" bindtap="delBusinessLicense">×</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 密码 -->
+    <view class="form-item">
+      <text class="form-icon">🔒</text>
+      <input class="form-input" type="text" password placeholder="设置密码（6位以上）" value="{{password}}" bindinput="onInput" data-field="password" />
+    </view>
+    <view class="form-item">
+      <text class="form-icon">🔒</text>
+      <input class="form-input" type="text" password placeholder="确认密码" value="{{confirmPassword}}" bindinput="onInput" data-field="confirmPassword" />
+    </view>
+  </view>
+
+  <!-- 司机提示 -->
+  <view class="reg-tip" wx:if="{{role === 2 || role === 3}}">
+    <text class="tip-title">📌 温馨提示</text>
+    <text class="tip-text">注册成功后，请在个人中心补充驾驶证和车辆信息，完善后即可接单。</text>
+  </view>
+
+  <button class="reg-btn" bindtap="onRegister" disabled="{{loading}}" loading="{{loading}}">
+    立即注册
+  </button>
+
+  <view class="reg-footer">
+    <text class="link" bindtap="goLogin">已有账号？去登录</text>
+  </view>
+</view>

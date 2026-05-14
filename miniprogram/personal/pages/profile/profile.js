@@ -21,6 +21,10 @@ Page({
   },
 
   onShow() {
+    if (!app.globalData.token && !wx.getStorageSync('token')) {
+      wx.redirectTo({ url: '/pages/login/login' });
+      return;
+    }
     this.loadUserInfo();
     const savedNames = wx.getStorageSync('personal_menu_names');
     if (savedNames) this.setData({ menuNames: savedNames });
@@ -31,10 +35,16 @@ Page({
   async loadUserInfo() {
     try {
       const res = await app.get('/api/user/info');
-      const info = res.data;
+      const info = (res && res.data) || {};
       this.setData({ userInfo: info });
       app.globalData.userInfo = res.data;
     } catch (err) {
+      if (err.message === '未登录') {
+        wx.removeStorageSync('token');
+        wx.removeStorageSync('userInfo');
+        wx.redirectTo({ url: '/pages/login/login' });
+        return;
+      }
       console.log('获取用户信息失败', err);
     }
   },

@@ -104,6 +104,7 @@
   padding: 6rpx 12rpx; margin: -6rpx -12rpx;
 }
 .menu-hint { font-size: 22rpx; color: #999; margin-right: 8rpx; }
+.menu-text-val { font-size: 28rpx; color: #333; }
 .arrow    { color: #ccc; font-size: 32rpx; }
 
 /* 退出登录 */

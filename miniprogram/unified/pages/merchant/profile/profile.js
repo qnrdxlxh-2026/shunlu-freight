@@ -112,6 +112,8 @@ Page({
   goWallet() { wx.reLaunch({ url: '/pages/merchant/wallet/wallet' }); },
   goAuth() { wx.showModal({ title: '实名认证', content: '请前往微信实名认证页面完成认证。', confirmText: '知道了', showCancel: false }); },
   goSettings() { wx.showModal({ title: '账号设置', content: '账号设置功能即将上线，请耐心等待。', confirmText: '好的', showCancel: false }); },
+  goUserAgreement() { wx.navigateTo({ url: '/pages/agreement/user-agreement/user-agreement' }); },
+  goPrivacyPolicy() { wx.navigateTo({ url: '/pages/agreement/privacy-policy/privacy-policy' }); },
   goMessages() { wx.navigateTo({ url: '/pages/merchant/messages/messages' }); },
   goAbout() {
     wx.showModal({

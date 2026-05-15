@@ -32,7 +32,7 @@
 
     <!-- 送达码区域（取货后显示） -->
     <!-- 送达码区域（司机已送达后显示） -->
-    <view class="qr-section qr-delivery" wx:if="{{order.status == 5}}">
+    <view class="qr-section qr-delivery" wx:if="{{order.status == 4}}">
       <view class="qr-title">📦 送达码</view>
       <view class="qr-desc">货物送达后，收方扫码确认收货</view>
       <view class="pickup-code-box">

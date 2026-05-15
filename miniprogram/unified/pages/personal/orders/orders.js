@@ -33,7 +33,9 @@ Page({
   },
 
   changeTab(e) {
-    this.setData({ tabIndex: e.currentTarget.dataset.index });
+    const tabIndex = e.currentTarget.dataset.index;
+    this.setData({ tabIndex });
+    this.loadOrders();
   },
 
   async loadOrders() {
@@ -51,6 +53,10 @@ Page({
         statusClass: getOrderStatusClass(o.status),
         amount: formatAmount(o.price)
       }));
+      // 按tab过滤：0全部, 1待支付(0), 2待取货(2), 3运输中(3), 4已签收(5), 5已取消(6)
+      const statusMap = [null, 0, 2, 3, 5, 6];
+      const filterStatus = statusMap[this.data.tabIndex];
+      if (filterStatus !== null) orders = orders.filter(o => o.status === filterStatus);
       this.setData({ orders, loading: false });
     } catch (err) {
       if (err.message === '未登录') {

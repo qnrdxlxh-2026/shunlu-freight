@@ -109,6 +109,8 @@ Page({
   goWallet() { wx.reLaunch({ url: '/pages/personal/wallet/wallet' }); },
   goMessages() { wx.navigateTo({ url: '/pages/messages/messages' }); },
 
+  goUserAgreement() { wx.navigateTo({ url: '/pages/agreement/user-agreement/user-agreement' }); },
+  goPrivacyPolicy() { wx.navigateTo({ url: '/pages/agreement/privacy-policy/privacy-policy' }); },
   goAbout() {
     wx.showModal({
       title: '关于顺路货运',

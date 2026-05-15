@@ -189,6 +189,8 @@ Page({
   goOrders() { wx.reLaunch({ url: '/pages/private-car/orders/orders' }); },
   goWallet() { wx.reLaunch({ url: '/pages/private-car/wallet/wallet' }); },
 
+  goUserAgreement() { wx.navigateTo({ url: '/pages/agreement/user-agreement/user-agreement' }); },
+  goPrivacyPolicy() { wx.navigateTo({ url: '/pages/agreement/privacy-policy/privacy-policy' }); },
   showRules() {
     wx.showModal({
       title: '私家车主接单规则',

@@ -93,6 +93,20 @@
       </view>
       <text class="arrow">›</text>
     </view>
+    <view class="menu-item" bindtap="goUserAgreement">
+      <view class="menu-icon-wrap blue">📄</view>
+      <view class="menu-text-wrap">
+        <text class="menu-text-val">用户服务协议</text>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goPrivacyPolicy">
+      <view class="menu-icon-wrap teal">🔒</view>
+      <view class="menu-text-wrap">
+        <text class="menu-text-val">隐私政策</text>
+      </view>
+      <text class="arrow">›</text>
+    </view>
     <view class="menu-item" bindtap="goMessages">
       <view class="menu-icon-wrap pink">💬</view>
       <view class="menu-text-wrap">

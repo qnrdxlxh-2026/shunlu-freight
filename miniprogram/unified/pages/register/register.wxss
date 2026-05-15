@@ -74,6 +74,28 @@
   color: #1890ff;
 }
 
+/* 服务协议与隐私政策勾选 */
+.agreement-row {
+  margin-top: 20rpx;
+  padding: 0 10rpx;
+}
+
+.agreement-label {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 24rpx;
+}
+
+.agreement-text {
+  color: #999;
+}
+
+
+.agreement-link {
+  color: #1890ff;
+}
+
 /* 照片上传 */
 .photo-item {
   align-items: flex-start;

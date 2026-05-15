@@ -13,8 +13,10 @@
     "cors": "^2.8.6",
     "formidable": "^3.5.4",
     "jsonwebtoken": "^9.0.3",
-    "localtunnel": "^2.0.2",
     "qrcode": "^1.5.4",
     "uuid": "^14.0.0"
+  },
+  "devDependencies": {
+    "localtunnel": "^2.0.2"
   }
 }

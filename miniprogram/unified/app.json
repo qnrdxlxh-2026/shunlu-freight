@@ -3,6 +3,8 @@
     "pages/role-select/role-select",
     "pages/login/login",
     "pages/register/register",
+    "pages/agreement/user-agreement",
+    "pages/agreement/privacy-policy",
     "pages/merchant/home/home",
     "pages/merchant/publish-order/publish-order",
     "pages/merchant/orders/orders",
@@ -78,5 +80,7 @@
       "desc": "用于选择地址和导航"
     }
   },
-  "requiredPrivateInfos": ["chooseLocation"]
+  "requiredPrivateInfos": [
+    "chooseLocation"
+  ]
 }

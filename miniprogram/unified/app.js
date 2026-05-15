@@ -1,4 +1,4 @@
-const BASE_URL = 'http://192.168.2.3:3458';
+const BASE_URL = 'https://a9e7a56b7a55fa.lhr.life';
 
 App({
   globalData: {

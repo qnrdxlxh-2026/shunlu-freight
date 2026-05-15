@@ -70,4 +70,18 @@
   <view class="reg-footer">
     <text class="link" bindtap="goLogin">已有账号？去登录</text>
   </view>
+
+
+  <!-- 服务协议与隐私政策 -->
+  <view class="agreement-row">
+    <checkbox-group bindchange="onAgreementChange">
+      <label class="agreement-label">
+        <checkbox value="agreed" color="#1890ff" style="transform:scale(0.8)"/>
+        <text class="agreement-text">我已阅读并同意</text>
+        <text class="agreement-link" bindtap="openUserAgreement">《用户服务协议》</text>
+        <text class="agreement-text">和</text>
+        <text class="agreement-link" bindtap="openPrivacyPolicy">《隐私政策》</text>
+      </label>
+    </checkbox-group>
+  </view>
 </view>

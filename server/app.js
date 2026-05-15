@@ -1554,6 +1554,7 @@ async function handleApi(req, res, pathname, method) {
     const order = db.orders.find(o => o.id === parseInt(order_id));
     if (!order) return sendJson(res, { code: 400, msg: '订单不存在' }, 400);
     if (order.status !== 4) return sendJson(res, { code: 400, msg: '当前状态不可签收' }, 400);
+    order.status = 5; // 已签收
     order.confirm_time = new Date().toISOString();
     createSettlement(order, db);
     saveDB(db);
@@ -1723,7 +1724,7 @@ async function handleApi(req, res, pathname, method) {
     if (!order_id || !driver_id) return sendJson(res, { code: 400, msg: '缺少订单ID或司机ID' }, 400);
     const order = db.orders.find(o => o.id === parseInt(order_id));
     if (!order) return sendJson(res, { code: 400, msg: '订单不存在' }, 400);
-    if (order.status !== 6) return sendJson(res, { code: 400, msg: '仅已完成订单可评价' }, 400);
+    if (order.status !== 5) return sendJson(res, { code: 400, msg: '仅已完成订单可评价' }, 400);
     // 检查是否已评价
     if (db.ratings && db.ratings.find(r => r.order_id === parseInt(order_id) && r.user_id === user.userId)) {
       return sendJson(res, { code: 400, msg: '您已评价过此订单' }, 400);
@@ -1756,20 +1757,22 @@ async function handleApi(req, res, pathname, method) {
     if (total === 0) {
       return sendJson(res, { code: 0, data: { total: 0, avg: 0, timeliness: 0, punctuality: 0, fulfillment: 0, attitude: 0, ratings: [] } });
     }
-    const avg = (a, b) => (a + b) / 2;
     const stats = driverRatings.reduce((s, r) => ({
-      timeliness: avg(s.timeliness, r.timeliness),
-      punctuality: avg(s.punctuality, r.punctuality),
-      fulfillment: avg(s.fulfillment, r.fulfillment),
-      attitude: avg(s.attitude, r.attitude)
+      timeliness: s.timeliness + r.timeliness,
+      punctuality: s.punctuality + r.punctuality,
+      fulfillment: s.fulfillment + r.fulfillment,
+      attitude: s.attitude + r.attitude
     }), { timeliness: 0, punctuality: 0, fulfillment: 0, attitude: 0 });
-    const overallAvg = (stats.timeliness + stats.punctuality + stats.fulfillment + stats.attitude) / 4;
+    const div = (v) => Math.round(v / total * 10) / 10;
+    const timeliness = div(stats.timeliness), punctuality = div(stats.punctuality),
+          fulfillment = div(stats.fulfillment), attitude = div(stats.attitude);
+    const overallAvg = Math.round((timeliness + punctuality + fulfillment + attitude) / 4 * 10) / 10;
     // 最近20条评价
     const recent = driverRatings.slice(-20).reverse().map(r => ({
       timeliness: r.timeliness, punctuality: r.punctuality, fulfillment: r.fulfillment, attitude: r.attitude,
       comment: r.comment, create_time: r.create_time
     }));
-    return sendJson(res, { code: 0, data: { total, avg: Math.round(overallAvg * 10) / 10, ...stats, ratings: recent } });
+    return sendJson(res, { code: 0, data: { total, avg: overallAvg, timeliness, punctuality, fulfillment, attitude, ratings: recent } });
   }
 
   // ========== 司机证件审核 ==========

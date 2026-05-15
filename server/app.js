@@ -1940,11 +1940,11 @@ const server = http.createServer(async (req, res) => {
   sendJson(res, { code: 404, msg: 'Not Found' }, 404);
 });
 
-const PORT = 3458;
+const PORT = process.env.PORT || 3458;
 // 监听 IPv4 所有接口，微信模拟器用 IPv4 访问
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚚 顺路货运撮合平台启动成功！`);
   console.log(`   后台地址: http://localhost:${PORT}`);
   console.log(`   API文档:  http://localhost:${PORT}/api-docs`);
-  console.log(`   局域网IP: http://192.168.2.3:${PORT}\n`);
+  if (PORT === 3458) console.log(`   局域网IP: http://192.168.2.3:${PORT}\n`);
 });

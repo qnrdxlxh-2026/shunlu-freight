@@ -19,7 +19,9 @@ Page({
     roleName: '',
     openid: '',
     business_license: '',
-    loading: false
+    loading: false,
+    agreeAgreement: false,
+    agreementReadHint: '',
   },
 
   onLoad(options) {
@@ -58,9 +60,32 @@ Page({
     this.setData({ business_license: '' });
   },
 
-  async onRegister() {
-    const { phone, password, confirmPassword, real_name, id_card, role, openid, business_license } = this.data;
+  // 检查协议是否已阅读
+  checkAgreementRead() {
+    const userRead = wx.getStorageSync('agreement_user_read');
+    const privacyRead = wx.getStorageSync('agreement_privacy_read');
+    if (!userRead) {
+      this.setData({ agreementReadHint: '请先阅读并同意《用户服务协议》' });
+      return false;
+    }
+    if (!privacyRead) {
+      this.setData({ agreementReadHint: '请先阅读并同意《隐私政策》' });
+      return false;
+    }
+    this.setData({ agreementReadHint: '' });
+    return true;
+  },
 
+  async onRegister() {
+    // 检查协议是否已阅读
+    if (!this.checkAgreementRead()) {
+      wx.showToast({ title: this.data.agreementReadHint, icon: 'none' });
+      return;
+    }
+
+    const { phone, password, confirmPassword, real_name, id_card, role, openid, business_license, agreeAgreement } = this.data;
+
+    if (!agreeAgreement) return wx.showToast({ title: '请先勾选同意协议', icon: 'none' });
     if (!phone) return wx.showToast({ title: '请输入手机号', icon: 'none' });
     if (!/^1[3-9]\d{9}$/.test(phone)) return wx.showToast({ title: '手机号格式错误', icon: 'none' });
     if (!real_name) return wx.showToast({ title: '请输入真实姓名', icon: 'none' });
@@ -123,5 +148,15 @@ Page({
   goLogin() {
     const role = this.data.role ? `?role=${this.data.role}` : '';
     wx.reLaunch({ url: `/pages/login/login${role}` });
-  }
+  },
+
+  onAgreementChange(e) {
+    this.setData({ agreeAgreement: e.detail.value.includes('agreed') });
+  },
+  openUserAgreement() {
+    wx.navigateTo({ url: '/pages/agreement/user-agreement' });
+  },
+  openPrivacyPolicy() {
+    wx.navigateTo({ url: '/pages/agreement/privacy-policy' });
+  },
 });

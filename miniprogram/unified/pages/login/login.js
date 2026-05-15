@@ -7,7 +7,9 @@ Page({
     password: '',
     loading: false,
     role: null,
-    roleName: ''
+    roleName: '',
+    agreeAgreement: false,
+    agreementReadHint: '', // 提示哪个协议未读
   },
 
   onLoad(options) {
@@ -31,8 +33,46 @@ Page({
     this.setData({ password: e.detail.value });
   },
 
+  onAgreementChange(e) {
+    this.setData({ agreeAgreement: e.detail.value.includes('agreed') });
+  },
+
+  // 检查协议是否已阅读
+  checkAgreementRead() {
+    const userRead = wx.getStorageSync('agreement_user_read');
+    const privacyRead = wx.getStorageSync('agreement_privacy_read');
+    if (!userRead) {
+      this.setData({ agreementReadHint: '请先阅读并同意《用户服务协议》' });
+      return false;
+    }
+    if (!privacyRead) {
+      this.setData({ agreementReadHint: '请先阅读并同意《隐私政策》' });
+      return false;
+    }
+    this.setData({ agreementReadHint: '' });
+    return true;
+  },
+
+  openUserAgreement() {
+    wx.navigateTo({ url: '/pages/agreement/user-agreement' });
+  },
+
+  openPrivacyPolicy() {
+    wx.navigateTo({ url: '/pages/agreement/privacy-policy' });
+  },
+
   // ===== 微信一键登录 =====
   onWxLogin() {
+    // 检查协议是否已阅读
+    if (!this.checkAgreementRead()) {
+      wx.showToast({ title: this.data.agreementReadHint, icon: 'none' });
+      return;
+    }
+    if (!this.data.agreeAgreement) {
+      wx.showToast({ title: '请先勾选同意协议', icon: 'none' });
+      return;
+    }
+
     this.setData({ loading: true });
     wx.login({
       success: (loginRes) => {
@@ -71,7 +111,14 @@ Page({
 
   // ===== 手机号密码登录（带调试） =====
   onLogin() {
-    const { phone, password, role } = this.data;
+    // 检查协议是否已阅读
+    if (!this.checkAgreementRead()) {
+      wx.showToast({ title: this.data.agreementReadHint, icon: 'none' });
+      return;
+    }
+
+    const { phone, password, role, agreeAgreement } = this.data;
+    if (!agreeAgreement) return wx.showToast({ title: '请先勾选同意协议', icon: 'none' });
     console.log('[LOGIN] phone:', phone, 'pwd length:', password ? password.length : 0, 'role:', role);
     if (!phone) return wx.showToast({ title: '请输入手机号', icon: 'none' });
     if (!/^1[3-9]\d{9}$/.test(phone)) return wx.showToast({ title: '手机号格式错误', icon: 'none' });

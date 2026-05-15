@@ -1,0 +1,74 @@
+<!-- 用户服务协议 -->
+<view class="container">
+  <view class="header">
+    <text class="title">用户服务协议</text>
+    <text class="subtitle">顺路货运小程序</text>
+    <text class="date">更新日期：2026年5月15日</text>
+  </view>
+
+  <view class="content">
+    <view class="section">
+      <text class="section-title">一、服务说明</text>
+      <text class="p">顺路货运小程序（以下简称"本平台"）由顺路货运运营方提供，旨在为用户提供同城及跨城货物运输信息撮合服务。本平台本身不提供运输服务，运输服务由注册司机/车主提供。</text>
+    </view>
+
+    <view class="section">
+      <text class="section-title">二、用户注册</text>
+      <text class="p">1. 用户注册时需提供真实、准确的手机号码，并设置登录密码。</text>
+      <text class="p">2. 商家用户需提供真实商户信息，司机/车主需提供真实身份信息及驾驶证、行驶证等证件。</text>
+      <text class="p">3. 用户应妥善保管账号信息，因保管不善导致的损失由用户自行承担。</text>
+    </view>
+
+    <view class="section">
+      <text class="section-title">三、服务规则</text>
+      <text class="p">1. 发单用户应如实填写货物信息（品名、重量、价值、起止地址等），不得夹带违禁品。</text>
+      <text class="p">2. 平台对货物价值超过2000元的订单有限制（私家车限制接单），请知悉并理解。</text>
+      <text class="p">3. 私家车每日接单上限为2单，货车司机不限单量。</text>
+      <text class="p">4. 订单创建后，需在规定时间内完成支付，取货码/送达码仅限当事方查看。</text>
+      <text class="p">5. 收货人在确认货物完好后点击"确认签收"，签收后自动触发结算。</text>
+    </view>
+
+    <view class="section">
+      <text class="section-title">四、费用与结算</text>
+      <text class="p">1. 平台向司机/车主收取一定比例的佣金（默认6%-12%，按区域政策执行）。</text>
+      <text class="p">2. 运费按里程、货物重量等综合计算，县城内或满500元订单免运费。</text>
+      <text class="p">3. 提现申请需经平台审核，通过后1-3个工作日内到账。</text>
+    </view>
+
+    <view class="section">
+      <text class="section-title">五、取消与申诉</text>
+      <text class="p">1. 司机接单后10分钟内可免费取消；10-20分钟收取5元；20分钟以上收取10元。</text>
+      <text class="p">2. 订单配送中，收货人可发起申诉，由平台客服介入处理。</text>
+      <text class="p">3. 恶意差评、虚假订单等行为，平台有权冻结账号。</text>
+    </view>
+
+    <view class="section">
+      <text class="section-title">六、免责声明</text>
+      <text class="p">1. 本平台仅提供信息撮合，对运输过程中的货物损失、交通事故等不承担连带责任。</text>
+      <text class="p">2. 用户发布违禁品、虚假信息等导致的一切法律责任，由发布者自行承担。</text>
+      <text class="p">3. 因不可抗力（自然灾害、政策变动等）导致的服务中断，平台不承担责任。</text>
+    </view>
+
+    <view class="section">
+      <text class="section-title">七、协议修订</text>
+      <text class="p">平台有权随时修订本协议，修订内容提前7日在小程序内公示，公示期满后生效。用户继续使用服务视为同意修订后的协议。</text>
+    </view>
+
+    <view class="section">
+      <text class="section-title">八、联系我们</text>
+      <text class="p">如对本协议有任何疑问，请联系客服：400-XXX-XXXX（运营方联系方式）。</text>
+    </view>
+  </view>
+
+  <!-- 底部同意按钮 -->
+  <view class="bottom-bar">
+    <view class="countdown-hint" wx:if="{{!canAgree}}">
+      <text>请阅读协议 ({{countdown}}秒)</text>
+    </view>
+    <button class="agree-btn {{canAgree ? 'active' : 'disabled'}}" bindtap="onAgree">
+      {{agreed ? '已同意' : '我已阅读并同意'}}
+    </button>
+  </view>
+
+  <view class="bottom-safe"></view>
+</view>

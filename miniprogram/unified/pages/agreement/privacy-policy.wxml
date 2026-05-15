@@ -1,0 +1,82 @@
+<!-- 隐私政策 -->
+<view class="container">
+  <view class="header">
+    <text class="title">隐私政策</text>
+    <text class="subtitle">顺路货运小程序</text>
+    <text class="date">更新日期：2026年5月15日</text>
+  </view>
+
+  <view class="content">
+    <view class="section">
+      <text class="section-title">一、信息收集</text>
+      <text class="p">1. 【注册信息】您需提供手机号码进行注册，这是小程序运行的基础功能所必需。</text>
+      <text class="p">2. 【身份认证】商家用户需提供商户信息；司机/车主需提供真实姓名、手机号、驾驶证、行驶证等证件，用于身份认证和接单资质审核。</text>
+      <text class="p">3. 【订单信息】发单时需填写发货人/收货人姓名、电话、货物品名、重量、起止地址等信息。</text>
+      <text class="p">4. 【位置信息】司机在配送过程中可能获取位置信息，用于订单追踪和轨迹记录。</text>
+      <text class="p">5. 【设备信息】为保障账号安全，我们会收集设备型号、操作系统版本等基本信息。</text>
+    </view>
+
+    <view class="section">
+      <text class="section-title">二、信息使用目的</text>
+      <text class="p">1. 提供用户注册、登录服务；</text>
+      <text class="p">2. 匹配运输需求与承运司机；</text>
+      <text class="p">3. 生成取货码/送达码用于货物交接验证；</text>
+      <text class="p">4. 订单状态推送和物流信息展示；</text>
+      <text class="p">5. 结算运费、生成结算单、处理提现；</text>
+      <text class="p">6. 投诉处理、纠纷调解；</text>
+      <text class="p">7. 满足法律法规和政府监管要求。</text>
+    </view>
+
+    <view class="section">
+      <text class="section-title">三、信息存储</text>
+      <text class="p">您的个人信息存储于中华人民共和国境内。手机号码、订单数据、证件照片等将在您注销账号后保留一定期限（根据法律法规要求），随后予以删除或匿名化处理。</text>
+    </view>
+
+    <view class="section">
+      <text class="section-title">四、信息共享</text>
+      <text class="p">1. 订单匹配时，承运司机将看到发货人/收货人的姓名和电话（仅用于联系取货/送货）。</text>
+      <text class="p">2. 司机认证信息（驾驶证号、车牌号）将在接单时展示给发货人。</text>
+      <text class="p">3. 除上述情形外，我们不会将您的个人信息提供给无关第三方。如需对外共享，将事先取得您的明确授权。</text>
+    </view>
+
+    <view class="section">
+      <text class="section-title">五、用户权利</text>
+      <text class="p">1. 【查阅权】您可随时在小程序"我的"→"个人资料"中查阅您的账号信息。</text>
+      <text class="p">2. 【更正权】如发现信息有误，可进入个人资料页面进行修改。</text>
+      <text class="p">3. 【注销权】您可联系客服申请注销账号，我们将依据法律法规在法定期限内处理。</text>
+      <text class="p">4. 【撤回授权】您可在系统设置中关闭部分授权，但可能导致相关功能无法使用。</text>
+    </view>
+
+    <view class="section">
+      <text class="section-title">六、安全保障</text>
+      <text class="p">我们采用加密存储、访问控制等安全措施保护您的个人信息。但互联网传输存在固有风险，我们无法保证100%的安全，请理解并知晓。</text>
+    </view>
+
+    <view class="section">
+      <text class="section-title">七、未成年人保护</text>
+      <text class="p">本小程序面向18周岁以上的用户。未满18周岁者请在监护人陪同下使用，监护人对被监护人的行为承担一切责任。</text>
+    </view>
+
+    <view class="section">
+      <text class="section-title">八、联系我们</text>
+      <text class="p">如对隐私政策有任何疑问或投诉，请联系：400-XXX-XXXX。</text>
+    </view>
+
+    <view class="section">
+      <text class="section-title">九、变更通知</text>
+      <text class="p">我们可能适时修订本政策。修订后，我们将在小程序显著位置公示，公示期满后生效。继续使用服务即表示您同意修订后的政策。</text>
+    </view>
+  </view>
+
+  <!-- 底部同意按钮 -->
+  <view class="bottom-bar">
+    <view class="countdown-hint" wx:if="{{!canAgree}}">
+      <text>请阅读协议 ({{countdown}}秒)</text>
+    </view>
+    <button class="agree-btn {{canAgree ? 'active' : 'disabled'}}" bindtap="onAgree">
+      {{agreed ? '已同意' : '我已阅读并同意'}}
+    </button>
+  </view>
+
+  <view class="bottom-safe"></view>
+</view>

@@ -1,0 +1,16 @@
+{
+  "name": "shunlu-freight-server",
+  "version": "1.0.0",
+  "description": "顺路货运撮合平台后端",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.3",
+    "formidable": "^3.5.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

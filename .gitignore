@@ -21,3 +21,4 @@ npm-debug.log*
 
 # 微信小程序编译产物
 miniprogram/*/dist/
+database.sqlite

@@ -60,6 +60,19 @@ function initDB() {
       settlements: [],     // 结算单
       nextIds: { user: 1, merchant_auth: 1, driver_auth: 1, goods: 1, route: 1, order: 1, wallet: 1, photo: 1, message: 1, transaction: 1, blacklist: 1, complaint: 1, call_log: 1, settlement: 1 }
     };
+    // 种子用户（审核人员可用这些账号登录）
+    const hashedPwd = '92b4477eab43adc555c9aea7b959684845d750e5946705a9c00b4137b2a5f15d'; // 123456
+    emptyDB.users = [
+      { id: 1, phone: '13800001111', password: hashedPwd, role: 1, nickname: '测试商家', avatar: '', status: 1, create_time: new Date().toISOString() },
+      { id: 2, phone: '13900000002', password: hashedPwd, role: 2, nickname: '测试司机', avatar: '', status: 1, create_time: new Date().toISOString() },
+      { id: 3, phone: '13900000003', password: hashedPwd, role: 3, nickname: '测试私家车', avatar: '', status: 1, create_time: new Date().toISOString() },
+      { id: 4, phone: '13900000001', password: hashedPwd, role: 5, nickname: '测试个人', avatar: '', status: 1, create_time: new Date().toISOString() },
+      { id: 5, phone: 'admin', password: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', role: 4, nickname: '管理员', avatar: '', status: 1, create_time: new Date().toISOString() },
+    ];
+    emptyDB.nextIds.user = 6;
+    // 钱包
+    emptyDB.wallets = emptyDB.users.map(u => ({ id: u.id, user_id: u.id, balance: 0, frozen: 0, create_time: new Date().toISOString() }));
+    emptyDB.nextIds.wallet = 6;
     fs.writeFileSync(DB_FILE, JSON.stringify(emptyDB, null, 2));
   }
   return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));

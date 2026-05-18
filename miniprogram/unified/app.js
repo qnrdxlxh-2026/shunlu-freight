@@ -1,4 +1,4 @@
-const BASE_URL = 'https://a9e7a56b7a55fa.lhr.life';
+const BASE_URL = 'https://www.huoshunlu.com';
 
 App({
   globalData: {

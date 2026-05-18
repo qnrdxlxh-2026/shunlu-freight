@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:3458';
+const BASE_URL = 'http://139.155.145.226';
 
 App({
   globalData: {

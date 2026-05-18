@@ -1896,6 +1896,291 @@ async function handleApi(req, res, pathname, method) {
     return sendJson(res, { code: 0, data: list });
   }
 
+  // ========== 佣金 & 司机模式 & GPS API (V1.2新增) ==========
+
+  // 获取当前用户佣金信息
+  if (pathname === '/api/commission/info' && method === 'GET') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const commissionEngine = require('./utils/commissionEngine');
+    const currentUser = db.users.find(u => u.id === user.userId);
+    if (!currentUser) return sendJson(res, { code: 404, msg: '用户不存在' }, 404);
+    const commissionInfo = commissionEngine.getUserCommissionRate(currentUser, db);
+    const graceInfo = commissionEngine.getUserGracePeriodInfo(currentUser, db);
+    const rulesSummary = commissionEngine.getCommissionRulesSummary(db);
+    return sendJson(res, { code: 0, data: {
+      commission_rate: commissionInfo.commissionRate,
+      rate_source: commissionInfo.source,
+      rate_description: commissionInfo.description,
+      grace_period: graceInfo,
+      commission_rules: rulesSummary,
+      platform_mode: commissionEngine.getCommissionModeDesc(db)
+    }});
+  }
+
+  // ========== 司机模式 API ==========
+  // GET /api/driver/mode - 获取当前模式
+  if (pathname === '/api/driver/mode' && method === 'GET') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const commissionEngine = require('./utils/commissionEngine');
+    const mode = commissionEngine.getDriverMode(user.userId, db);
+    const modeName = mode === 0 ? '直达模式' : '顺路模式';
+    return sendJson(res, { code: 0, data: {
+      mode: mode,
+      mode_name: modeName,
+      description: mode === 0 
+        ? '仅接收起点到终点的完整订单，不接受中途货源' 
+        : '可接收沿途顺路货源，中途可装卸货'
+    }});
+  }
+
+  // PUT /api/driver/mode - 切换模式
+  if (pathname === '/api/driver/mode' && method === 'PUT') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    if (user.role !== 2 && user.role !== 3) return sendJson(res, { code: 403, msg: '仅司机可操作' }, 403);
+    const body = await parseBody(req);
+    const modeInt = parseInt(body.mode);
+    if (modeInt !== 0 && modeInt !== 1) return sendJson(res, { code: 400, msg: '模式值错误，0=直达 1=顺路' }, 400);
+    const commissionEngine = require('./utils/commissionEngine');
+    commissionEngine.setDriverMode(user.userId, modeInt, db);
+    return sendJson(res, { code: 0, msg: '模式切换成功', data: { mode: modeInt, mode_name: modeInt === 0 ? '直达模式' : '顺路模式' }});
+  }
+
+  // ========== 拒单 API ==========
+  // GET /api/driver/rejection-quota - 检查拒单配额
+  if (pathname === '/api/driver/rejection-quota' && method === 'GET') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const urlParams = new URL(req.url, 'http://localhost');
+    const routeId = parseInt(urlParams.searchParams.get('route_id')) || 0;
+    const commissionEngine = require('./utils/commissionEngine');
+    const quota = commissionEngine.checkRejectionQuota(user.userId, routeId, db);
+    return sendJson(res, { code: 0, data: quota });
+  }
+
+  // POST /api/driver/reject - 执行拒单
+  if (pathname === '/api/driver/reject' && method === 'POST') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    if (user.role !== 2 && user.role !== 3) return sendJson(res, { code: 403, msg: '仅司机可操作' }, 403);
+    const { order_id, route_id } = await parseBody(req);
+    const orderId = parseInt(order_id);
+    const routeId = parseInt(route_id) || 0;
+    const commissionEngine = require('./utils/commissionEngine');
+    const quota = commissionEngine.checkRejectionQuota(user.userId, routeId, db);
+    if (!quota.canReject) return sendJson(res, { code: 400, msg: quota.reason || '当前模式不允许拒单' }, 400);
+    commissionEngine.recordRejection(user.userId, routeId, orderId, db);
+    const order = db.orders.find(o => o.id === orderId);
+    if (order) {
+      order.status = 6;
+      order.cancel_time = new Date().toISOString();
+      order.cancel_type = 'driver_reject';
+      order.reject_count = (order.reject_count || 0) + 1;
+    }
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: quota.willDeductScore ? `拒单成功，将扣除${quota.scoreDeduction}分评分` : '拒单成功（本次免费）', data: {
+      reject_used: quota.rejectUsed + 1,
+      reject_left: Math.max(0, 1 - quota.rejectUsed - 1),
+      will_deduct_score: quota.willDeductScore,
+      score_deduction: quota.scoreDeduction || 0
+    }});
+  }
+
+  // ========== GPS 位置 API ==========
+  // POST /api/driver/location - 上报GPS位置
+  if (pathname === '/api/driver/location' && method === 'POST') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    if (user.role !== 2 && user.role !== 3) return sendJson(res, { code: 403, msg: '仅司机可操作' }, 403);
+    const { lat, lng, address, speed, direction } = await parseBody(req);
+    if (!lat || !lng) return sendJson(res, { code: 400, msg: '经纬度不能为空' }, 400);
+    const commissionEngine = require('./utils/commissionEngine');
+    commissionEngine.updateDriverLocation(user.userId, parseFloat(lat), parseFloat(lng), address || '', db);
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '位置更新成功', data: { lat: parseFloat(lat), lng: parseFloat(lng), timestamp: new Date().toISOString() }});
+  }
+
+  // GET /api/driver/track - 获取轨迹
+  if (pathname === '/api/driver/track' && method === 'GET') {
+    if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
+    const urlParams = new URL(req.url, 'http://localhost');
+    const hours = parseInt(urlParams.searchParams.get('hours')) || 24;
+    const commissionEngine = require('./utils/commissionEngine');
+    const track = commissionEngine.getDriverTrack(user.userId, hours, db);
+    return sendJson(res, { code: 0, data: { points: track, count: track.length }});
+  }
+
+  // GET /api/driver/location/:id - 获取指定司机位置
+  if (pathname.startsWith('/api/driver/location/') && method === 'GET') {
+    const driverId = parseInt(pathname.split('/')[4]);
+    const location = db.driver_locations?.find(l => l.driver_id === driverId);
+    return sendJson(res, { code: 0, data: location ? { lat: location.lat, lng: location.lng, address: location.address || '', updated_at: location.updated_at } : null });
+  }
+
+  // ========== 后台佣金管理 API (V1.2新增) ==========
+  // GET /api/admin/commission/config - 获取平台佣金配置
+  if (pathname === '/api/admin/commission/config' && method === 'GET') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员可操作' }, 401);
+    const config = db.platform_config || {};
+    const commissionEngine = require('./utils/commissionEngine');
+    return sendJson(res, { code: 0, data: {
+      ...config,
+      mode_description: commissionEngine.getCommissionModeDesc(db)
+    }});
+  }
+
+  // PUT /api/admin/commission/config - 更新佣金配置
+  if (pathname === '/api/admin/commission/config' && method === 'PUT') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员可操作' }, 401);
+    const body = await parseBody(req);
+    if (!db.platform_config) db.platform_config = {};
+    // 允许更新的字段
+    const updatableFields = ['commission_mode', 'step_commission_enabled', 'global_free_commission', 'default_truck_commission', 'default_private_commission', 'updated_by'];
+    updatableFields.forEach(field => {
+      if (body[field] !== undefined) db.platform_config[field] = body[field];
+    });
+    db.platform_config.updated_at = new Date().toISOString();
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '佣金配置已更新', data: db.platform_config });
+  }
+
+  // GET /api/admin/commission/tiers - 获取阶梯佣金规则
+  if (pathname === '/api/admin/commission/tiers' && method === 'GET') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员可操作' }, 401);
+    const tiers = db.commission_tiers || [];
+    return sendJson(res, { code: 0, data: tiers.sort((a, b) => a.order - b.order) });
+  }
+
+  // PUT /api/admin/commission/tiers - 更新阶梯佣金规则
+  if (pathname === '/api/admin/commission/tiers' && method === 'PUT') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员可操作' }, 401);
+    const body = await parseBody(req);
+    if (!db.commission_tiers) db.commission_tiers = [];
+    // 更新指定规则
+    if (body.id) {
+      const tier = db.commission_tiers.find(t => t.id === body.id);
+      if (tier) {
+        ['months_from', 'months_to', 'commission_rate', 'status', 'remark'].forEach(field => {
+          if (body[field] !== undefined) tier[field] = body[field];
+        });
+      }
+    } else {
+      // 新增规则
+      db.commission_tiers.push({
+        id: db.nextIds.commission_tier++,
+        name: body.name || '自定义规则',
+        months_from: body.months_from || 0,
+        months_to: body.months_to || 3,
+        commission_rate: body.commission_rate || 0,
+        status: body.status || 1,
+        remark: body.remark || '',
+        order: body.order || db.commission_tiers.length + 1
+      });
+    }
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '阶梯规则已更新', data: db.commission_tiers });
+  }
+
+  // GET /api/admin/commission/users - 获取用户佣金列表
+  if (pathname === '/api/admin/commission/users' && method === 'GET') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员可操作' }, 401);
+    const urlParams = new URL(req.url, 'http://localhost');
+    const page = parseInt(urlParams.searchParams.get('page')) || 1;
+    const pageSize = parseInt(urlParams.searchParams.get('pageSize')) || 20;
+    const roleFilter = urlParams.searchParams.get('role');
+    // 获取所有司机/私家车用户
+    let users = db.users.filter(u => u.role === 2 || u.role === 3);
+    if (roleFilter) users = users.filter(u => u.role === parseInt(roleFilter));
+    // 添加佣金信息
+    const commissionEngine = require('./utils/commissionEngine');
+    const result = users.map(u => {
+      const info = commissionEngine.getUserCommissionRate(u, db);
+      const grace = commissionEngine.getUserGracePeriodInfo(u, db);
+      return {
+        id: u.id,
+        phone: u.phone,
+        real_name: u.real_name || '',
+        role: u.role,
+        role_name: u.role === 2 ? '货车司机' : '私家车',
+        register_time: u.register_time || u.create_time,
+        commission_rate: info.commissionRate,
+        rate_source: info.source,
+        rate_description: info.description,
+        grace_info: grace,
+        score: u.score || 5.0
+      };
+    });
+    const total = result.length;
+    const paged = result.slice((page - 1) * pageSize, page * pageSize);
+    return sendJson(res, { code: 0, data: { list: paged, total, page, pageSize }});
+  }
+
+  // POST /api/admin/commission/users/:id/override - 单用户佣金覆盖
+  if (pathname.startsWith('/api/admin/commission/users/') && pathname.endsWith('/override') && method === 'POST') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员可操作' }, 401);
+    const targetId = parseInt(pathname.split('/')[5]);
+    const body = await parseBody(req);
+    if (!db.user_commission_overrides) db.user_commission_overrides = [];
+    // 检查是否已有覆盖
+    const existing = db.user_commission_overrides.find(o => o.user_id === targetId);
+    if (existing) {
+      existing.commission_rate = body.commission_rate !== undefined ? body.commission_rate : existing.commission_rate;
+      existing.status = body.status !== undefined ? body.status : existing.status;
+      existing.remark = body.remark || existing.remark;
+      existing.updated_by = user.userId;
+      existing.updated_at = new Date().toISOString();
+    } else {
+      db.user_commission_overrides.push({
+        id: db.nextIds.user_override++,
+        user_id: targetId,
+        commission_rate: body.commission_rate !== undefined ? body.commission_rate : 0,
+        status: body.status !== undefined ? body.status : 1,
+        remark: body.remark || '',
+        created_by: user.userId,
+        created_at: new Date().toISOString(),
+        updated_by: user.userId,
+        updated_at: new Date().toISOString()
+      });
+    }
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '佣金覆盖设置成功' });
+  }
+
+  // ========== 后台司机模式管理 ==========
+  // GET /api/admin/drivers/modes - 获取所有司机模式状态
+  if (pathname === '/api/admin/drivers/modes' && method === 'GET') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员可操作' }, 401);
+    const urlParams = new URL(req.url, 'http://localhost');
+    const page = parseInt(urlParams.searchParams.get('page')) || 1;
+    const pageSize = parseInt(urlParams.searchParams.get('pageSize')) || 50;
+    let drivers = db.users.filter(u => u.role === 2 || u.role === 3);
+    const commissionEngine = require('./utils/commissionEngine');
+    const result = drivers.map(d => {
+      const mode = commissionEngine.getDriverMode(d.id, db);
+      return { id: d.id, phone: d.phone, real_name: d.real_name || '', role: d.role, mode, mode_name: mode === 0 ? '直达模式' : '顺路模式', score: d.score || 5.0 };
+    });
+    const total = result.length;
+    const paged = result.slice((page - 1) * pageSize, page * pageSize);
+    return sendJson(res, { code: 0, data: { list: paged, total }});
+  }
+
+  // ========== 司机评分管理 ==========
+  // GET /api/admin/drivers/scores - 获取所有司机评分
+  if (pathname === '/api/admin/drivers/scores' && method === 'GET') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员可操作' }, 401);
+    const urlParams = new URL(req.url, 'http://localhost');
+    const page = parseInt(urlParams.searchParams.get('page')) || 1;
+    const pageSize = parseInt(urlParams.searchParams.get('pageSize')) || 50;
+    let drivers = db.users.filter(u => u.role === 2 || u.role === 3);
+    const result = drivers.map(d => {
+      const ratings = db.ratings?.filter(r => r.driver_id === d.id) || [];
+      const avgScore = ratings.length > 0 
+        ? Math.round(ratings.reduce((s, r) => s + (r.timeliness + r.punctuality + r.fulfillment + r.attitude) / 4, 0) / ratings.length * 10) / 10
+        : 5.0;
+      return { id: d.id, phone: d.phone, real_name: d.real_name || '', role: d.role, avg_score: avgScore, rating_count: ratings.length };
+    });
+    result.sort((a, b) => b.avg_score - a.avg_score);
+    const total = result.length;
+    const paged = result.slice((page - 1) * pageSize, page * pageSize);
+    return sendJson(res, { code: 0, data: { list: paged, total }});
+  }
+
   // 404
   sendJson(res, { code: 404, msg: '接口不存在' }, 404);
 }

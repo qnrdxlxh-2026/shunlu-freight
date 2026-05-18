@@ -179,7 +179,8 @@
         <button class="tab-btn" onclick="switchTab('blacklist', event)">⛔ 黑名单</button>
         <button class="tab-btn" onclick="switchTab('complaints', event)">📋 投诉管理</button>
         <button class="tab-btn" onclick="switchTab('messages', event)">💬 通讯记录</button>
-        <button class="tab-btn" onclick="switchTab('config', event)">⚙️ 佣金配置</button>
+        <button class="tab-btn" onclick="window.open('commission.html','_blank')">💰 佣金管控</button>
+        <button class="tab-btn" onclick="switchTab('driverMode', event)">🚛 司机模式</button>
         <button class="tab-btn" onclick="switchTab('test', event)">🧪 接口测试</button>
       </div>
       
@@ -296,6 +297,7 @@ async function switchTab(tab, evt) {
     else if (tab === 'complaints') await renderComplaints(content);
     else if (tab === 'messages') await renderMessages(content);
     else if (tab === 'config') await renderConfig(content);
+    else if (tab === 'driverMode') await renderDriverMode(content);
     else if (tab === 'test') await renderTest(content);
     else content.innerHTML = '<div class="loading">未知页面</div>';
   } catch (e) { content.innerHTML = '<div class="loading" style="color:#e74c3c">加载失败: ' + e.message + '</div>'; }
@@ -628,6 +630,59 @@ function viewCallDetail(id) {
     <div class="form-row"><div class="form-group"><label>虚拟号</label><input value="${m.virtual_no||'-'}" readonly style="color:#e67e22;font-family:monospace"></div><div class="form-group"><label>订单</label><input value="${m.order_no||'-'}" readonly></div></div>
     <div class="form-group"><label>时间</label><input value="${m.create_time||''}" readonly></div>`;
   openModal('📞 通话详情', body, `<button class="btn btn-outline" onclick="closeModal()">关闭</button>`);
+}
+
+// ===== Tab: 司机模式管理 (V1.2新增) =====
+async function renderDriverMode(el) {
+  const [driversRes, modesRes] = await Promise.all([
+    api('/admin/user-list'),
+    api('/admin/drivers/modes?pageSize=1000')
+  ]);
+  const modes = modesRes.data?.list || [];
+  const allDrivers = (driversRes.data || []).filter(u => u.role === 2 || u.role === 3);
+  
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">🚛</span>司机运行模式管理</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:16px">
+        <div class="stat-card blue"><div class="stat-value">${modes.filter(m=>m.mode===0).length}</div><div class="stat-label">直达模式</div></div>
+        <div class="stat-card green"><div class="stat-value">${modes.filter(m=>m.mode===1).length}</div><div class="stat-label">顺路模式</div></div>
+        <div class="stat-card orange"><div class="stat-value">${allDrivers.length}</div><div class="stat-label">司机总数</div></div>
+      </div>
+      <table><thead><tr><th>ID</th><th>手机号</th><th>姓名</th><th>角色</th><th>当前模式</th><th>评分</th><th>操作</th></tr></thead>
+      <tbody id="driverModesTbody"></tbody></table>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title"><span class="icon">📖</span>模式说明</div></div>
+      <table><thead><tr><th>模式</th><th>说明</th><th>拒单规则</th></tr></thead><tbody>
+        <tr><td><span class="badge badge-blue">直达模式</span></td><td>只接收起点→终点的完整订单</td><td>不占拒单次数，不扣分</td></tr>
+        <tr><td><span class="badge badge-green">顺路模式</span></td><td>全域同向匹配，可中途装卸货</td><td>每趟1次免费，超额扣0.5分/次</td></tr>
+      </tbody></table>
+    </div>`;
+  renderDriverModeRows(modes);
+}
+
+function renderDriverModeRows(modes) {
+  const tbody = document.getElementById('driverModesTbody');
+  if (!modes.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="icon">🚛</div><p>暂无司机数据</p></td></tr>'; return; }
+  tbody.innerHTML = modes.map(m => `<tr>
+    <td><b>#${m.id}</b></td><td>${m.phone||'-'}</td><td>${m.real_name||'-'}</td>
+    <td><span class="role-badge role-${m.role}">${m.role===2?'货车':'私家车'}</span></td>
+    <td><span class="badge ${m.mode===0?'badge-blue':'badge-green'}">${m.mode_name||'-'}</span></td>
+    <td>${m.score||5.0}分</td>
+    <td><button class="btn btn-outline btn-sm" onclick="toggleDriverMode(${m.id},${m.mode})">切换模式</button></td>
+  </tr>`).join('');
+}
+
+async function toggleDriverMode(driverId, currentMode) {
+  const newMode = currentMode === 0 ? 1 : 0;
+  const modeName = newMode === 0 ? '直达模式' : '顺路模式';
+  if (!confirm('确定切换为【' + modeName + '】？')) return;
+  const res = await api('/admin/drivers/' + driverId + '/mode', 'PUT', { mode: newMode });
+  if (res.code === 0) { showToast('success', '模式切换成功'); switchTab('driverMode'); }
+  else showToast('error', res.msg || '切换失败');
 }
 
 // ===== Tab: 佣金配置 =====

@@ -156,3 +156,44 @@
   font-size: 28rpx;
   margin-left: 4rpx;
 }
+
+/* ===== 中途装卸点 ===== */
+.waypoint-tip {
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 16rpx;
+}
+.waypoint-item {
+  background: #f8f9fa;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+  border: 1rpx solid #e8e8e8;
+}
+.waypoint-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+.waypoint-index {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #722ed1;
+}
+.waypoint-remove {
+  font-size: 24rpx;
+  color: #ff4d4f;
+  padding: 4rpx 16rpx;
+}
+.add-waypoint-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80rpx;
+  border: 2rpx dashed #722ed1;
+  border-radius: 16rpx;
+  color: #722ed1;
+  font-size: 28rpx;
+  margin-top: 8rpx;
+}

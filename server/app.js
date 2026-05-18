@@ -462,7 +462,7 @@ async function handleApi(req, res, pathname, method) {
   // ========== 商家相关 ==========
   if (pathname === '/api/merchant/publish-goods' && method === 'POST') {
     if (!user || user.role !== 1) return sendJson(res, { code: 401, msg: '仅商家可发布' }, 401);
-    const { start_addr, end_addr, weight, price, goods_value, remark, sender_name, sender_phone, receiver_name, receiver_phone, photo_urls, departure_time } = await parseBody(req);
+    const { start_addr, end_addr, weight, price, goods_value, remark, sender_name, sender_phone, receiver_name, receiver_phone, photo_urls, departure_time, waypoints } = await parseBody(req);
     
     const goodsId = db.nextIds.goods++;
     db.goods.push({
@@ -479,6 +479,7 @@ async function handleApi(req, res, pathname, method) {
       receiver_phone: receiver_phone || '',
       photo_urls: photo_urls || [],
       departure_time: departure_time || '',
+      waypoints: waypoints || [],  // 中途装卸点
       status: 1, // 待接单
       create_time: new Date().toISOString()
     });
@@ -550,7 +551,10 @@ async function handleApi(req, res, pathname, method) {
   if (pathname === '/api/driver/match-goods' && method === 'GET') {
     if (!user || (user.role !== 2 && user.role !== 3)) return sendJson(res, { code: 401, msg: '未授权' }, 401);
     const pendingGoods = db.goods.filter(g => g.status === 1);
-    const result = smartMatch.matchGoodsForDriver(user, pendingGoods, db.routes, db.orders);
+    // 获取司机模式
+    const driverModeRecord = db.driver_modes.find(d => d.driver_id === user.userId);
+    const driverMode = driverModeRecord ? driverModeRecord.mode : 0; // 默认直达模式
+    const result = smartMatch.matchGoodsForDriver(user, pendingGoods, db.routes, db.orders, driverMode);
     return sendJson(res, { code: 0, data: result, total: result.length });
   }
 
@@ -567,6 +571,11 @@ async function handleApi(req, res, pathname, method) {
     const { goods_id } = await parseBody(req);
     const goods = db.goods.find(g => g.id === parseInt(goods_id));
     if (!goods || goods.status !== 1) return sendJson(res, { code: 400, msg: '货源不可用' }, 400);
+    
+    // 载重限制检查（所有订单）
+    if (goods.weight > 4500) {
+      return sendJson(res, { code: 400, msg: '订单载重不得超过4.5吨（当前' + goods.weight + 'kg）' }, 400);
+    }
     
     // 私家车约束检查
     if (user.role === 3) {
@@ -1090,7 +1099,10 @@ async function handleApi(req, res, pathname, method) {
   if (pathname === '/api/match/nearby-goods' && method === 'GET') {
     if (!user) return sendJson(res, { code: 401, msg: '未登录' }, 401);
     const pendingGoods = db.goods.filter(g => g.status === 1);
-    const result = smartMatch.matchGoodsForDriver(user, pendingGoods, db.routes, db.orders);
+    // 获取司机模式
+    const driverModeRecord = db.driver_modes.find(d => d.driver_id === user.userId);
+    const driverMode = driverModeRecord ? driverModeRecord.mode : 0; // 默认直达模式
+    const result = smartMatch.matchGoodsForDriver(user, pendingGoods, db.routes, db.orders, driverMode);
     return sendJson(res, { code: 0, data: result, total: result.length });
   }
   
@@ -1152,7 +1164,10 @@ async function handleApi(req, res, pathname, method) {
       // 查看某个货源对当前司机的匹配详情
       const g = db.goods.find(x => x.id === parseInt(goods_id));
       if (!g) return sendJson(res, { code: 400, msg: '货源不存在' }, 400);
-      const result = smartMatch.matchGoodsForDriver(user, [g], db.routes, db.orders);
+      // 获取司机模式
+      const driverModeRecord = db.driver_modes.find(d => d.driver_id === user.userId);
+      const driverMode = driverModeRecord ? driverModeRecord.mode : 0; // 默认直达模式
+      const result = smartMatch.matchGoodsForDriver(user, [g], db.routes, db.orders, driverMode);
       return sendJson(res, { code: 0, data: result[0] || null });
     }
     
@@ -1412,7 +1427,7 @@ async function handleApi(req, res, pathname, method) {
   // ========== 个人端 ==========
   if (pathname === '/api/personal/publish-goods' && method === 'POST') {
     if (!user || user.role !== 5) return sendJson(res, { code: 401, msg: '仅个人用户可发布' }, 401);
-    const { start_addr, end_addr, weight, price, goods_value, remark, sender_name, sender_phone, receiver_name, receiver_phone, departure_time } = await parseBody(req);
+    const { start_addr, end_addr, weight, price, goods_value, remark, sender_name, sender_phone, receiver_name, receiver_phone, departure_time, waypoints } = await parseBody(req);
     const goodsId = db.nextIds.goods++;
     db.goods.push({
       id: goodsId, personal_id: user.userId, merchant_id: null,
@@ -1421,6 +1436,7 @@ async function handleApi(req, res, pathname, method) {
       sender_name, sender_phone, receiver_name, receiver_phone,
       departure_time: departure_time || '',
       photo_urls: [],
+      waypoints: waypoints || [],  // 中途装卸点
       status: 1, create_time: new Date().toISOString()
     });
     saveDB(db);
@@ -2158,6 +2174,19 @@ async function handleApi(req, res, pathname, method) {
     const total = result.length;
     const paged = result.slice((page - 1) * pageSize, page * pageSize);
     return sendJson(res, { code: 0, data: { list: paged, total }});
+  }
+
+  // PUT /api/admin/drivers/:id/mode - 管理员设置司机模式
+  if (pathname.startsWith('/api/admin/drivers/') && pathname.endsWith('/mode') && method === 'PUT') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员可操作' }, 401);
+    const driverId = parseInt(pathname.split('/')[4]);
+    const body = await parseBody(req);
+    const modeInt = parseInt(body.mode);
+    if (modeInt !== 0 && modeInt !== 1) return sendJson(res, { code: 400, msg: '模式值错误' }, 400);
+    const commissionEngine = require('./utils/commissionEngine');
+    commissionEngine.setDriverMode(driverId, modeInt, db);
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '模式设置成功', data: { mode: modeInt, mode_name: modeInt === 0 ? '直达模式' : '顺路模式' }});
   }
 
   // ========== 司机评分管理 ==========

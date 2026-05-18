@@ -56,6 +56,22 @@ function haversineDistance(lat1, lng1, lat2, lng2) {
 }
 
 /**
+ * 估算路线的高速比例(简化版)
+ * 基于距离和区域类型估算
+ * > 200km或城市间路线 → 高速比例高
+ * ≤ 100km或县乡内路线 → 高速比例低
+ */
+function estimateHighwayPercentage(startAddr, endAddr, distance) {
+  if (!distance || distance <= 0) return 0;
+  
+  // 简化逻辑：基于距离估算
+  // 实际应该调用地图API获取路线详情，这里用距离近似
+  if (distance > 200) return 80;  // 长距离，大部分是高速
+  if (distance > 100) return 50;  // 中等距离，一半高速
+  return 20;  // 短距离，小部分高速
+}
+
+/**
  * 从地址字符串中识别区域
  * 返回 { name, lat, lng, level } 或 null
  */
@@ -334,7 +350,7 @@ function extractCity(addr) {
  * @param {Array} orders - 所有订单(用于统计司机历史)
  * @returns {Array} 匹配排序后的货源列表,带matchInfo
  */
-function matchGoodsForDriver(user, goods, routes, orders) {
+function matchGoodsForDriver(user, goods, routes, orders, driverMode = 0) {
   const driverRole = user.role; // 2=货车, 3=私家车
   const userId = user.userId || user.id; // 兼容不同调用方式
   const driverRoutes = routes.filter(r => r.driver_id === userId && r.status === 1);
@@ -419,6 +435,15 @@ function matchGoodsForDriver(user, goods, routes, orders) {
     };
   });
 
+  // 顺路模式: 过滤掉高速比例>70%的货源
+  if (driverMode === 1) {
+    results = results.filter(r => {
+      const dist = haversineDistance(r.start_lat, r.start_lng, r.end_lat, r.end_lng);
+      const hwPercent = estimateHighwayPercentage(r.start_addr, r.end_addr, dist);
+      return hwPercent <= 70; // 高速比例≤70%才显示
+    });
+  }
+  
   // 过滤掉0分的,按总分降序排
   return results
     .filter(r => r.matchScore > 0)

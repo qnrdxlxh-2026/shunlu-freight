@@ -61,6 +61,10 @@ App({
     return this.request(url, 'POST', data);
   },
 
+  put(url, data) {
+    return this.request(url, 'PUT', data);
+  },
+
   uploadFile(url, filePath, name = 'file') {
     return new Promise((resolve, reject) => {
       wx.uploadFile({

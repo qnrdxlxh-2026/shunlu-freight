@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>顺路货运 - 佣金管控面板</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; }
+    
+    /* 头部 */
+    .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: white; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; height: 60px; }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-logo { font-size: 24px; }
+    .header-title { font-size: 18px; font-weight: 600; }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .user-info { font-size: 13px; opacity: 0.85; }
+    .btn-back { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; text-decoration: none; }
+    .btn-back:hover { background: rgba(255,255,255,0.25); }
+    
+    .container { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
+    
+    /* 模式切换卡片 */
+    .mode-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .mode-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 2px solid transparent; cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden; }
+    .mode-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .mode-card.active { border-color: #1a1a2e; background: linear-gradient(135deg, #f8f9ff 0%, #fff 100%); }
+    .mode-card .mode-icon { font-size: 32px; margin-bottom: 12px; }
+    .mode-card .mode-name { font-size: 16px; font-weight: 600; color: #1a1a2e; margin-bottom: 8px; }
+    .mode-card .mode-desc { font-size: 12px; color: #888; line-height: 1.6; }
+    .mode-card .mode-badge { position: absolute; top: 12px; right: 12px; background: #1a1a2e; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .mode-card.active .mode-badge { background: #27ae60; }
+    
+    /* 通用卡片 */
+    .card { background: white; border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #f0f0f0; }
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f5f5f5; }
+    .card-title { font-size: 15px; font-weight: 600; color: #1a1a2e; display: flex; align-items: center; gap: 8px; }
+    .card-title .icon { font-size: 18px; }
+    
+    /* 阶梯规则表格 */
+    .tier-table { width: 100%; border-collapse: collapse; }
+    .tier-table th { background: #f8f9fa; padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #eee; }
+    .tier-table td { padding: 12px; font-size: 13px; color: #333; border-bottom: 1px solid #f5f5f5; }
+    .tier-table tr:hover td { background: #fafafa; }
+    .tier-table input { width: 80px; padding: 6px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; }
+    
+    /* 按钮 */
+    .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+    .btn-sm { padding: 5px 12px; font-size: 12px; }
+    .btn-primary { background: #1a1a2e; color: white; }
+    .btn-primary:hover { background: #2d2d4a; }
+    .btn-success { background: #27ae60; color: white; }
+    .btn-success:hover { background: #219a52; }
+    .btn-danger { background: #e74c3c; color: white; }
+    .btn-danger:hover { background: #c0392b; }
+    .btn-outline { background: white; color: #666; border: 1px solid #ddd; }
+    .btn-outline:hover { border-color: #1a1a2e; color: #1a1a2e; }
+    
+    /* 开关 */
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 24px; }
+    .switch-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+    input:checked + .switch-slider { background-color: #27ae60; }
+    input:checked + .switch-slider:before { transform: translateX(20px); }
+    
+    /* 用户覆盖表格 */
+    .user-table { width: 100%; border-collapse: collapse; }
+    .user-table th { background: #f8f9fa; padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #eee; }
+    .user-table td { padding: 10px 12px; font-size: 13px; color: #333; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+    .user-table tr:hover td { background: #fafafa; }
+    
+    /* 标签 */
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+    .badge-green { background: #d4edda; color: #155724; }
+    .badge-red { background: #f8d7da; color: #721c24; }
+    .badge-yellow { background: #fff3cd; color: #856404; }
+    .badge-blue { background: #d1ecf1; color: #0c5460; }
+    .role-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .role-2 { background: #e3f2fd; color: #1565c0; }
+    .role-3 { background: #e8f5e9; color: #2e7d32; }
+    
+    /* 模态框 */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+    .modal-overlay.show { display: flex; justify-content: center; align-items: center; }
+    .modal { background: white; border-radius: 14px; width: 500px; max-width: 95vw; max-height: 85vh; overflow: hidden; display: flex; flex-direction: column; }
+    .modal-header { padding: 18px 24px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+    .modal-title { font-size: 16px; font-weight: 600; color: #1a1a2e; }
+    .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #999; padding: 0; line-height: 1; }
+    .modal-close:hover { color: #333; }
+    .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+    .modal-footer { padding: 14px 24px; border-top: 1px solid #eee; display: flex; gap: 10px; justify-content: flex-end; }
+    
+    /* 表单 */
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 500; color: #333; margin-bottom: 6px; }
+    .form-group input, .form-group select { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; transition: border-color 0.2s; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #1a1a2e; }
+    .form-hint { font-size: 11px; color: #999; margin-top: 4px; }
+    
+    /* Toast提示 */
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 2000; }
+    .toast { padding: 12px 20px; border-radius: 8px; color: white; font-size: 13px; margin-bottom: 10px; animation: slideIn 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .toast-success { background: #27ae60; }
+    .toast-error { background: #e74c3c; }
+    @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    
+    .loading { text-align: center; padding: 40px; color: #999; font-size: 14px; }
+    .empty-state { text-align: center; padding: 40px 20px; color: #999; }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+    
+    /* 统计卡片 */
+    .stats-mini { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .stat-mini { background: linear-gradient(135deg, #f8f9ff 0%, #fff 100%); border-radius: 10px; padding: 14px 16px; border: 1px solid #e8e8f0; }
+    .stat-mini .stat-label { font-size: 11px; color: #888; margin-bottom: 6px; }
+    .stat-mini .stat-value { font-size: 22px; font-weight: 700; color: #1a1a2e; }
+    .stat-mini .stat-desc { font-size: 10px; color: #aaa; margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+  <!-- 头部 -->
+  <div class="header">
+    <div class="header-left">
+      <a href="index.html" class="btn-back">← 返回后台</a>
+      <span class="header-logo">💰</span>
+      <span class="header-title">佣金管控面板</span>
+    </div>
+    <div class="header-right">
+      <span class="user-info" id="userInfo">加载中...</span>
+    </div>
+  </div>
+
+  <div class="container">
+    
+    <!-- 模式切换 -->
+    <div class="mode-cards" id="modeCards">
+      <div class="mode-card" onclick="switchMode(0)" id="mode0">
+        <div class="mode-badge">推荐</div>
+        <div class="mode-icon">📊</div>
+        <div class="mode-name">三段阶梯模式</div>
+        <div class="mode-desc">新用户1-3月免佣<br>4-6月5% → 7月后10%</div>
+      </div>
+      <div class="mode-card" onclick="switchMode(1)" id="mode1">
+        <div class="mode-icon">🆓</div>
+        <div class="mode-name">全网免佣模式</div>
+        <div class="mode-desc">全平台所有订单<br>0佣金（限时活动）</div>
+      </div>
+      <div class="mode-card" onclick="switchMode(2)" id="mode2">
+        <div class="mode-icon">⚡</div>
+        <div class="mode-name">固定佣金模式</div>
+        <div class="mode-desc">统一收取5%佣金<br>简单透明</div>
+      </div>
+      <div class="mode-card" onclick="switchMode(3)" id="mode3">
+        <div class="mode-icon">📈</div>
+        <div class="mode-name">标准佣金模式</div>
+        <div class="mode-desc">恢复标准10%佣金<br>平台常规模式</div>
+      </div>
+    </div>
+
+    <!-- 统计概览 -->
+    <div class="stats-mini" id="statsMini">
+      <div class="stat-mini">
+        <div class="stat-label">当前模式</div>
+        <div class="stat-value" id="statMode">-</div>
+        <div class="stat-desc" id="statModeDesc">加载中...</div>
+      </div>
+      <div class="stat-mini">
+        <div class="stat-label">阶梯规则</div>
+        <div class="stat-value" id="statTiers">-</div>
+        <div class="stat-desc">生效中</div>
+      </div>
+      <div class="stat-mini">
+        <div class="stat-label">用户覆盖</div>
+        <div class="stat-value" id="statOverrides">0</div>
+        <div class="stat-desc">精准设置</div>
+      </div>
+      <div class="stat-mini">
+        <div class="stat-label">全网免佣</div>
+        <div class="stat-value" id="statGlobalFree">关闭</div>
+        <div class="stat-desc">全局开关</div>
+      </div>
+    </div>
+
+    <!-- 全局配置 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">⚙️</span>全局配置</div>
+        <label class="switch">
+          <input type="checkbox" id="globalFreeSwitch" onchange="toggleGlobalFree(this.checked)">
+          <span class="switch-slider"></span>
+        </label>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="form-group">
+          <label>默认货车佣金率 (%)</label>
+          <input type="number" id="defaultTruckRate" min="0" max="100" step="0.1" onchange="updateConfig()">
+          <div class="form-hint">回车或失焦自动保存</div>
+        </div>
+        <div class="form-group">
+          <label>默认私家车佣金率 (%)</label>
+          <input type="number" id="defaultPrivateRate" min="0" max="100" step="0.1" onchange="updateConfig()">
+          <div class="form-hint">回车或失焦自动保存</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 阶梯规则管理 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">📊</span>阶梯佣金规则</div>
+        <button class="btn btn-primary btn-sm" onclick="showAddTierModal()">+ 新增规则</button>
+      </div>
+      <table class="tier-table" id="tierTable">
+        <thead>
+          <tr>
+            <th>阶段名称</th>
+            <th>月份范围</th>
+            <th>佣金率(%)</th>
+            <th>状态</th>
+            <th>备注</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="tierTbody">
+          <tr><td colspan="6" class="loading">加载中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 用户佣金覆盖 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">👥</span>用户佣金覆盖（精准设置）</div>
+        <button class="btn btn-primary btn-sm" onclick="showAddOverrideModal()">+ 新增覆盖</button>
+      </div>
+      <div style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
+        <select id="overrideRoleFilter" onchange="loadOverrides()" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; background: white;">
+          <option value="">全部角色</option>
+          <option value="2">货车司机</option>
+          <option value="3">私家车</option>
+        </select>
+        <input placeholder="搜索手机号/姓名..." id="overrideSearch" oninput="filterOverrides()" style="flex: 1; min-width: 180px; padding: 8px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px;">
+      </div>
+      <table class="user-table" id="overrideTable">
+        <thead>
+          <tr>
+            <th>用户ID</th>
+            <th>手机号</th>
+            <th>姓名</th>
+            <th>角色</th>
+            <th>覆盖佣金率(%)</th>
+            <th>状态</th>
+            <th>备注</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="overrideTbody">
+          <tr><td colspan="8" class="loading">加载中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- 模态框：新增/编辑阶梯规则 -->
+  <div class="modal-overlay" id="tierModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="tierModalTitle">新增阶梯规则</div>
+        <button class="modal-close" onclick="closeModal('tierModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="tierId">
+        <div class="form-group">
+          <label>阶段名称</label>
+          <input type="text" id="tierName" placeholder="例如：新手免佣期">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label>起始月份</label>
+            <input type="number" id="tierFrom" min="0" max="999" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>结束月份</label>
+            <input type="number" id="tierTo" min="0" max="999" placeholder="3">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>佣金率 (%)</label>
+          <input type="number" id="tierRate" min="0" max="100" step="0.1" placeholder="0">
+          <div class="form-hint">0 = 免佣，10 = 10%佣金</div>
+        </div>
+        <div class="form-group">
+          <label>备注说明</label>
+          <textarea id="tierRemark" rows="3" placeholder="例如：注册后1-3个月，全额免佣" style="width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; resize: vertical;"></textarea>
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="tierStatus" checked> 启用此规则
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('tierModal')">取消</button>
+        <button class="btn btn-primary" onclick="saveTier()">保存规则</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模态框：新增用户覆盖 -->
+  <div class="modal-overlay" id="overrideModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="overrideModalTitle">新增用户佣金覆盖</div>
+        <button class="modal-close" onclick="closeModal('overrideModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="overrideId">
+        <div class="form-group">
+          <label>用户ID 或 手机号</label>
+          <input type="text" id="overrideUserQuery" placeholder="输入用户ID或手机号搜索">
+          <div class="form-hint">输入后将自动搜索用户</div>
+        </div>
+        <div id="userSearchResult" style="display: none; background: #f8f9fa; border-radius: 8px; padding: 12px; margin-bottom: 16px;"></div>
+        <div class="form-group">
+          <label>覆盖佣金率 (%)</label>
+          <input type="number" id="overrideRate" min="0" max="100" step="0.1" placeholder="0 = 免佣">
+          <div class="form-hint">设置此用户的专属佣金率，优先级最高</div>
+        </div>
+        <div class="form-group">
+          <label>备注</label>
+          <input type="text" id="overrideRemark" placeholder="例如：VIP用户，长期免佣">
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="overrideStatus" checked> 启用此覆盖
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('overrideModal')">取消</button>
+        <button class="btn btn-primary" onclick="saveOverride()">保存覆盖</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast容器 -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    const API_BASE = '/api';
+    let config = {};
+    let tiers = [];
+    let overrides = [];
+    
+    // ===== API调用封装 =====
+    async function api(path, method = 'GET', body = null) {
+      const opts = { method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('adminToken') || '') } };
+      if (body) opts.body = JSON.stringify(body);
+      const res = await fetch(API_BASE + path, opts);
+      return res.json();
+    }
+    
+    // ===== Toast提示 =====
+    function showToast(type, msg) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast toast-' + type;
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+    
+    // ===== 模态框 =====
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+    
+    // ===== 加载配置 =====
+    async function loadConfig() {
+      const res = await api('/admin/commission/config');
+      if (res.code === 0) {
+        config = res.data;
+        // 更新UI
+        document.getElementById('globalFreeSwitch').checked = config.global_free_commission || false;
+        document.getElementById('defaultTruckRate').value = config.default_truck_commission || 10;
+        document.getElementById('defaultPrivateRate').value = config.default_private_commission || 10;
+        document.getElementById('statGlobalFree').textContent = config.global_free_commission ? '开启' : '关闭';
+        // 高亮当前模式
+        for (let i = 0; i <= 3; i++) {
+          const card = document.getElementById('mode' + i);
+          if (i === config.commission_mode) card.classList.add('active');
+          else card.classList.remove('active');
+        }
+        document.getElementById('statMode').textContent = ['阶梯','免佣','固定5%','标准10%'][config.commission_mode] || '-';
+        document.getElementById('statModeDesc').textContent = config.global_free_commission ? '全网免佣中' : '模式' + (config.commission_mode + 1);
+      }
+    }
+    
+    // ===== 切换模式 =====
+    async function switchMode(mode) {
+      if (!confirm(`确定切换到【${['三段阶梯','全网免佣','固定5%','标准10%'][mode]}】模式？`)) return;
+      const res = await api('/admin/commission/config', 'PUT', { commission_mode: mode });
+      if (res.code === 0) {
+        showToast('success', '模式切换成功');
+        loadConfig();
+      } else {
+        showToast('error', res.msg || '操作失败');
+      }
+    }
+    
+    // ===== 全局免佣开关 =====
+    async function toggleGlobalFree(enabled) {
+      const res = await api('/admin/commission/config', 'PUT', { global_free_commission: enabled });
+      if (res.code === 0) {
+        showToast('success', enabled ? '全网免佣已开启' : '全网免佣已关闭');
+        loadConfig();
+      } else {
+        showToast('error', res.msg || '操作失败');
+        document.getElementById('globalFreeSwitch').checked = !enabled;
+      }
+    }
+    
+    // ===== 更新配置 =====
+    async function updateConfig() {
+      const data = {
+        default_truck_commission: parseFloat(document.getElementById('defaultTruckRate').value) || 10,
+        default_private_commission: parseFloat(document.getElementById('defaultPrivateRate').value) || 10
+      };
+      const res = await api('/admin/commission/config', 'PUT', data);
+      if (res.code === 0) {
+        showToast('success', '配置已更新');
+      } else {
+        showToast('error', res.msg || '保存失败');
+      }
+    }
+    
+    // ===== 加载阶梯规则 =====
+    async function loadTiers() {
+      const res = await api('/admin/commission/tiers');
+      if (res.code === 0) {
+        tiers = res.data || [];
+        renderTiers();
+        document.getElementById('statTiers').textContent = tiers.filter(t => t.status === 1).length;
+      }
+    }
+    
+    function renderTiers() {
+      const tbody = document.getElementById('tierTbody');
+      if (!tiers.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="icon">📊</div><p>暂无阶梯规则，点击"新增规则"创建</p></td></tr>';
+        return;
+      }
+      tiers.sort((a, b) => a.order - b.order);
+      tbody.innerHTML = tiers.map(t => `<tr>
+        <td><b>${t.name || '-'}</b></td>
+        <td>第${t.months_from + 1}-${t.months_to}月</td>
+        <td><b style="color: ${t.commission_rate === 0 ? '#27ae60' : '#1a1a2e'}">${t.commission_rate}%</b></td>
+        <td><span class="badge ${t.status === 1 ? 'badge-green' : 'badge-red'}">${t.status === 1 ? '启用' : '禁用'}</span></td>
+        <td class="td-secondary">${t.remark || '-'}</td>
+        <td><div class="action-group">
+          <button class="btn btn-outline btn-sm" onclick="editTier(${t.id})">编辑</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteTier(${t.id})">删除</button>
+        </div></td>
+      </tr>`).join('');
+    }
+    
+    // ===== 新增/编辑阶梯规则 =====
+    function showAddTierModal() {
+      document.getElementById('tierId').value = '';
+      document.getElementById('tierName').value = '';
+      document.getElementById('tierFrom').value = '';
+      document.getElementById('tierTo').value = '';
+      document.getElementById('tierRate').value = '';
+      document.getElementById('tierRemark').value = '';
+      document.getElementById('tierStatus').checked = true;
+      document.getElementById('tierModalTitle').textContent = '新增阶梯规则';
+      openModal('tierModal');
+    }
+    
+    function editTier(id) {
+      const t = tiers.find(x => x.id === id);
+      if (!t) return;
+      document.getElementById('tierId').value = t.id;
+      document.getElementById('tierName').value = t.name || '';
+      document.getElementById('tierFrom').value = t.months_from || 0;
+      document.getElementById('tierTo').value = t.months_to || 3;
+      document.getElementById('tierRate').value = t.commission_rate || 0;
+      document.getElementById('tierRemark').value = t.remark || '';
+      document.getElementById('tierStatus').checked = t.status === 1;
+      document.getElementById('tierModalTitle').textContent = '编辑阶梯规则';
+      openModal('tierModal');
+    }
+    
+    async function saveTier() {
+      const id = document.getElementById('tierId').value;
+      const data = {
+        name: document.getElementById('tierName').value,
+        months_from: parseInt(document.getElementById('tierFrom').value) || 0,
+        months_to: parseInt(document.getElementById('tierTo').value) || 3,
+        commission_rate: parseFloat(document.getElementById('tierRate').value) || 0,
+        remark: document.getElementById('tierRemark').value,
+        status: document.getElementById('tierStatus').checked ? 1 : 0
+      };
+      if (!data.name) return showToast('error', '请输入阶段名称');
+      const res = await api('/admin/commission/tiers', 'PUT', { ...data, id: id || undefined });
+      if (res.code === 0) {
+        showToast('success', '规则保存成功');
+        closeModal('tierModal');
+        loadTiers();
+      } else {
+        showToast('error', res.msg || '保存失败');
+      }
+    }
+    
+    async function deleteTier(id) {
+      if (!confirm('确定删除此阶梯规则？')) return;
+      const res = await api('/admin/commission/tiers', 'PUT', { id, status: -1 });
+      if (res.code === 0) {
+        showToast('success', '规则已删除');
+        loadTiers();
+      } else {
+        showToast('error', res.msg || '删除失败');
+      }
+    }
+    
+    // ===== 用户覆盖管理 =====
+    async function loadOverrides() {
+      // 从后台获取所有司机用户
+      const res = await api('/admin/commission/users?pageSize=1000');
+      if (res.code === 0) {
+        overrides = res.data.list || [];
+        renderOverrides();
+        document.getElementById('statOverrides').textContent = overrides.filter(o => o.rate_source === 'override').length;
+      }
+    }
+    
+    function renderOverrides() {
+      const tbody = document.getElementById('overrideTbody');
+      if (!overrides.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="icon">👥</div><p>暂无用户佣金覆盖，点击"新增覆盖"创建</p></td></tr>';
+        return;
+      }
+      const roleFilter = document.getElementById('overrideRoleFilter').value;
+      let list = overrides;
+      if (roleFilter) list = list.filter(u => String(u.role) === roleFilter);
+      const q = (document.getElementById('overrideSearch').value || '').toLowerCase();
+      if (q) list = list.filter(u => (u.phone && u.phone.includes(q)) || (u.real_name && u.real_name.toLowerCase().includes(q)));
+      
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="icon">🔍</div><p>无匹配用户</p></td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = list.map(u => `<tr>
+        <td><b>#${u.id}</b></td>
+        <td>${u.phone || '-'}</td>
+        <td>${u.real_name || '-'}</td>
+        <td><span class="role-badge role-${u.role}">${u.role === 2 ? '货车司机' : '私家车'}</span></td>
+        <td><b style="color: ${u.commission_rate === 0 ? '#27ae60' : '#1a1a2e'}">${u.commission_rate}%</b><br><small style="color:#aaa">来源：${{'default':'默认','tier':'阶梯','override':'覆盖','global_free':'免佣'}[u.rate_source]||'-'}</small></td>
+        <td><span class="badge ${u.grace_period && u.grace_period.inGracePeriod ? 'badge-green' : 'badge-blue'}">${u.grace_period && u.grace_period.inGracePeriod ? '免佣期' : '标准'}</span></td>
+        <td class="td-secondary">${u.rate_description || '-'}</td>
+        <td><button class="btn btn-outline btn-sm" onclick="showEditOverrideModal(${u.id})">设置佣金</button></td>
+      </tr>`).join('');
+    }
+    
+    function filterOverrides() { renderOverrides(); }
+    
+    function showAddOverrideModal() {
+      document.getElementById('overrideId').value = '';
+      document.getElementById('overrideUserQuery').value = '';
+      document.getElementById('userSearchResult').style.display = 'none';
+      document.getElementById('overrideRate').value = '';
+      document.getElementById('overrideRemark').value = '';
+      document.getElementById('overrideStatus').checked = true;
+      document.getElementById('overrideModalTitle').textContent = '新增用户佣金覆盖';
+      openModal('overrideModal');
+    }
+    
+    function showEditOverrideModal(userId) {
+      document.getElementById('overrideId').value = userId;
+      document.getElementById('overrideUserQuery').value = userId;
+      document.getElementById('userSearchResult').style.display = 'none';
+      document.getElementById('overrideModalTitle').textContent = '编辑用户佣金覆盖';
+      openModal('overrideModal');
+    }
+    
+    async function saveOverride() {
+      const userId = document.getElementById('overrideId').value || document.getElementById('overrideUserQuery').value;
+      const rate = parseFloat(document.getElementById('overrideRate').value);
+      if (!userId) return showToast('error', '请输入用户ID或手机号');
+      if (isNaN(rate) || rate < 0 || rate > 100) return showToast('error', '请输入0-100之间的佣金率');
+      
+      const res = await api('/admin/commission/users/' + userId + '/override', 'POST', {
+        commission_rate: rate,
+        remark: document.getElementById('overrideRemark').value,
+        status: document.getElementById('overrideStatus').checked ? 1 : 0
+      });
+      
+      if (res.code === 0) {
+        showToast('success', '用户佣金覆盖设置成功');
+        closeModal('overrideModal');
+        loadOverrides();
+      } else {
+        showToast('error', res.msg || '设置失败');
+      }
+    }
+    
+    // ===== 初始化 =====
+    async function init() {
+      const token = localStorage.getItem('adminToken');
+      if (!token) { showToast('error', '请先登录'); setTimeout(() => location.href = 'index.html', 1500); return; }
+      
+      try {
+        const userRes = await api('/user/info');
+        if (userRes.code === 0) {
+          document.getElementById('userInfo').textContent = userRes.data.phone || '管理员';
+        }
+      } catch (e) {
+        showToast('error', '登录已过期，请重新登录');
+        setTimeout(() => location.href = 'index.html', 1500);
+        return;
+      }
+      
+      await loadConfig();
+      await loadTiers();
+      await loadOverrides();
+    }
+    
+    init();
+  </script>
+</body>
+</html>

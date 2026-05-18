@@ -64,6 +64,10 @@
 
   <!-- 操作区域 -->
   <view class="action-section">
+    <!-- GPS功能（配送中显示） -->
+    <button class="gps-btn" wx:if="{{order.status >= 2 && order.status <= 4}}" bindtap="reportLocation">📍 上报位置</button>
+    <button class="track-btn" wx:if="{{order.status >= 2 && order.status <= 4}}" bindtap="viewDriverTrack">🗺️ 查看轨迹</button>
+
     <!-- 已接单 → 确认取货 -->
     <button class="pickup-btn" wx:if="{{order.status == 2}}" bindtap="confirmPickup">确认取货</button>
 

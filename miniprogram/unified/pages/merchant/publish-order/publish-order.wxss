@@ -175,6 +175,47 @@
 .photo-text { font-size: 24rpx; color: #999; }
 .photo-tip { font-size: 22rpx; color: #999; margin-top: 12rpx; }
 
+/* ===== 中途装卸点 ===== */
+.waypoint-tip {
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 20rpx;
+}
+.waypoint-item {
+  background: #f8f9fa;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+  border: 1rpx solid #e8e8e8;
+}
+.waypoint-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+.waypoint-index {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #1890ff;
+}
+.waypoint-remove {
+  font-size: 24rpx;
+  color: #ff4d4f;
+  padding: 4rpx 16rpx;
+}
+.add-waypoint-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80rpx;
+  border: 2rpx dashed #1890ff;
+  border-radius: 16rpx;
+  color: #1890ff;
+  font-size: 28rpx;
+  margin-top: 8rpx;
+}
+
 /* 发布按钮 */
 .btn-publish {
   width: 100%;

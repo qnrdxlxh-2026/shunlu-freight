@@ -9,6 +9,7 @@ Page({
     weight: '', expectedPrice: '', remark: '',
     departureDate: '', departureTime: '', today: '',
     photos: [],
+    waypoints: [],
     mapMarkers: [],
     centerLatitude: 30.5728, centerLongitude: 104.0668,
     loading: false
@@ -30,6 +31,42 @@ Page({
   onWeight(e) { this.setData({ weight: e.detail.value }); },
   onPrice(e) { this.setData({ expectedPrice: e.detail.value }); },
   onRemark(e) { this.setData({ remark: e.detail.value }); },
+
+  // ===== 中途装卸点 =====
+  addWaypoint() {
+    const waypoints = [...this.data.waypoints, { address: '', lat: '', lng: '', contact_name: '', contact_phone: '' }];
+    this.setData({ waypoints });
+  },
+  removeWaypoint(e) {
+    const idx = e.currentTarget.dataset.index;
+    const waypoints = [...this.data.waypoints];
+    waypoints.splice(idx, 1);
+    this.setData({ waypoints });
+  },
+  chooseWaypointLocation(e) {
+    const idx = e.currentTarget.dataset.index;
+    wx.chooseLocation({
+      type: 'gcj02',
+      success: res => {
+        const waypoints = [...this.data.waypoints];
+        waypoints[idx] = { ...waypoints[idx], address: res.address || res.name, lat: res.latitude, lng: res.longitude };
+        this.setData({ waypoints });
+      },
+      fail: () => wx.showToast({ title: '请开启位置权限', icon: 'none' })
+    });
+  },
+  onWaypointNameInput(e) {
+    const idx = e.currentTarget.dataset.index;
+    const waypoints = [...this.data.waypoints];
+    waypoints[idx] = { ...waypoints[idx], contact_name: e.detail.value };
+    this.setData({ waypoints });
+  },
+  onWaypointPhoneInput(e) {
+    const idx = e.currentTarget.dataset.index;
+    const waypoints = [...this.data.waypoints];
+    waypoints[idx] = { ...waypoints[idx], contact_phone: e.detail.value };
+    this.setData({ waypoints });
+  },
 
   chooseSenderLocation() {
     wx.chooseLocation({
@@ -150,6 +187,14 @@ Page({
       departure_time: this.data.departureDate && this.data.departureTime
         ? `${this.data.departureDate} ${this.data.departureTime}`
         : '',
+      waypoints: this.data.waypoints.map((wp, i) => ({
+        sort: i + 1,
+        address: wp.address || '',
+        lat: wp.lat || '',
+        lng: wp.lng || '',
+        contact_name: wp.contact_name || '',
+        contact_phone: wp.contact_phone || '',
+      })).filter(wp => wp.address),
     };
 
     // 上传物品照片

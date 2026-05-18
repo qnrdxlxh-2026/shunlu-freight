@@ -47,6 +47,38 @@
     <text class="arrow">›</text>
   </view>
 
+  <!-- 司机模式切换卡片 (V1.2新增) -->
+  <view class="cert-card" bindtap="toggleDriverMode">
+    <view class="cert-left">
+      <text class="cert-icon">{{driverMode === 0 ? '🎯' : '🛤️'}}</text>
+      <view class="cert-info">
+        <text class="cert-title">运行模式</text>
+        <text class="cert-status" style="color:#27ae60" wx:if="{{driverMode === 0}}">🎯 直达模式 - 仅完整订单</text>
+        <text class="cert-status" style="color:#0f3460" wx:else>🛤️ 顺路模式 - 可中途接单</text>
+      </view>
+    </view>
+    <view class="mode-switch-badge" style="background:{{driverMode === 0 ? '#0f3460' : '#27ae60'}}">
+      {{driverMode === 0 ? '直达' : '顺路'}}
+    </view>
+  </view>
+
+  <!-- 佣金信息卡片 (V1.2新增) -->
+  <view class="cert-card" bindtap="showCommissionDetail">
+    <view class="cert-left">
+      <text class="cert-icon">💰</text>
+      <view class="cert-info">
+        <text class="cert-title">我的佣金</text>
+        <text class="cert-status" wx:if="{{gracePeriod.inGracePeriod}}" style="color:#27ae60">
+          🎉 免佣期 - 还剩{{gracePeriod.remainingDays || 0}}天
+        </text>
+        <text class="cert-status" wx:else style="color:#e67e22">
+          佣金率：{{commissionRate}}%
+        </text>
+      </view>
+    </view>
+    <text class="arrow">›</text>
+  </view>
+
   <!-- 核心功能 -->
   <view class="menu-section">
     <view class="menu-title-row">

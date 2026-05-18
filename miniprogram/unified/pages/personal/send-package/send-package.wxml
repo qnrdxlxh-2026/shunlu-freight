@@ -54,6 +54,45 @@
 
     <view class="divider-line"></view>
 
+    <!-- 中途装卸点 -->
+    <view class="form-section">
+      <view class="section-title">🛤️ 中途装卸点（选填）</view>
+      <view class="waypoint-tip">添加沿途装卸点，司机可中途装卸货</view>
+      <block wx:for="{{waypoints}}" wx:key="index">
+        <view class="waypoint-item">
+          <view class="waypoint-header">
+            <text class="waypoint-index">装卸点 {{index + 1}}</text>
+            <text class="waypoint-remove" bindtap="removeWaypoint" data-index="{{index}}">删除</text>
+          </view>
+          <view class="input-group">
+            <text class="input-label">装卸地址</text>
+            <view class="input-wrap addr-wrap" bindtap="chooseWaypointLocation" data-index="{{index}}">
+              <text class="input-icon">📍</text>
+              <input placeholder="点击选择地址" value="{{item.address}}" disabled />
+              <text class="addr-arrow">›</text>
+            </view>
+          </view>
+          <view class="input-group">
+            <text class="input-label">联系人</text>
+            <view class="input-wrap">
+              <input placeholder="联系人姓名" bindinput="onWaypointNameInput" data-index="{{index}}" value="{{item.contact_name}}" />
+            </view>
+          </view>
+          <view class="input-group">
+            <text class="input-label">联系电话</text>
+            <view class="input-wrap">
+              <input type="number" placeholder="联系人电话" bindinput="onWaypointPhoneInput" data-index="{{index}}" value="{{item.contact_phone}}" />
+            </view>
+          </view>
+        </view>
+      </block>
+      <view class="add-waypoint-btn" bindtap="addWaypoint">
+        <text>+ 添加中途装卸点</text>
+      </view>
+    </view>
+
+    <view class="divider-line"></view>
+
     <!-- 物品信息 -->
     <view class="form-section">
       <view class="section-title">📦 物品信息</view>

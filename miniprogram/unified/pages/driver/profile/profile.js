@@ -24,6 +24,9 @@ Page({
     tempVehicleFront: '',
     tempVehicleBack: '',
     tempVehiclePhotos: [],
+    commissionRate: 0,
+    gracePeriod: {},
+    driverMode: 1,
     menuNames: {
       findGoods: '找货源',
       myRoutes: '我的常跑路线',
@@ -51,6 +54,8 @@ Page({
     this.loadUserInfo();
     this.loadDriverInfo();
     this.loadAuditStatus();
+    this.loadCommissionInfo();
+    this.loadDriverMode();
   },
 
   async loadUserInfo() {
@@ -81,6 +86,67 @@ Page({
         this.setData({ auditStatus: res.data.status || 'none', rejectReason: res.data.reject_reason || '' });
       }
     } catch (e) { console.log('审核状态获取失败'); }
+  },
+
+  // ===== V1.2: 佣金信息 =====
+  async loadCommissionInfo() {
+    try {
+      const res = await app.get('/api/commission/info');
+      if (res.code === 0 && res.data) {
+        this.setData({
+          commissionRate: res.data.commission_rate,
+          gracePeriod: res.data.grace_period || {}
+        });
+      }
+    } catch (e) { console.log('佣金信息获取失败'); }
+  },
+
+  // ===== V1.2: 司机模式 =====
+  async loadDriverMode() {
+    try {
+      const res = await app.get('/api/driver/mode');
+      if (res.code === 0 && res.data) {
+        this.setData({ driverMode: res.data.mode });
+      }
+    } catch (e) { console.log('司机模式获取失败'); }
+  },
+
+  toggleDriverMode() {
+    const current = this.data.driverMode;
+    const next = current === 0 ? 1 : 0;
+    const nextName = next === 0 ? '直达模式' : '顺路模式';
+    wx.showModal({
+      title: '切换运行模式',
+      content: `当前：${current === 0 ? '直达模式' : '顺路模式'}\n切换为：${nextName}\n\n直达=仅完整订单，顺路=可中途接单`,
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            const result = await app.put('/api/driver/mode', { mode: next });
+            if (result.code === 0) {
+              this.setData({ driverMode: next });
+              wx.showToast({ title: '模式切换成功', icon: 'success' });
+            } else {
+              wx.showToast({ title: result.msg || '切换失败', icon: 'none' });
+            }
+          } catch (e) {
+            wx.showToast({ title: '网络错误', icon: 'none' });
+          }
+        }
+      }
+    });
+  },
+
+  showCommissionDetail() {
+    const { commissionRate, gracePeriod } = this.data;
+    const inGrace = gracePeriod.inGracePeriod;
+    wx.showModal({
+      title: '我的佣金详情',
+      content: inGrace
+        ? `🎉 当前处于免佣期\n剩余 ${gracePeriod.remainingDays || 0} 天\n\n免佣期结束后将按阶梯佣金执行`
+        : `当前佣金率：${commissionRate}%\n\n阶梯规则：\n• 注册1-3月：0%（免佣）\n• 注册4-6月：5%\n• 注册7月后：10%`,
+      showCancel: false,
+      confirmText: '知道了'
+    });
   },
 
   onChooseAvatar(e) {

@@ -35,6 +35,8 @@ Page({
     showFreight: false,
     // 状态
     loading: false,
+    // 中途装卸点
+    waypoints: [], // 中途装卸点数组
   },
 
   onLoad() {
@@ -109,6 +111,43 @@ Page({
   onPriceInput(e) { this.setData({ price: e.detail.value }); },
   onValueInput(e) { this.setData({ goods_value: e.detail.value }); },
   onRemarkInput(e) { this.setData({ remark: e.detail.value }); },
+
+  // ===== 中途装卸点相关 =====
+  addWaypoint() {
+    const waypoints = [...this.data.waypoints, { address: '', lat: '', lng: '', contact_name: '', contact_phone: '' }];
+    this.setData({ waypoints });
+  },
+  removeWaypoint(e) {
+    const idx = e.currentTarget.dataset.index;
+    const waypoints = [...this.data.waypoints];
+    waypoints.splice(idx, 1);
+    this.setData({ waypoints });
+  },
+  chooseWaypointLocation(e) {
+    const idx = e.currentTarget.dataset.index;
+    wx.chooseLocation({
+      success: (res) => {
+        const waypoints = [...this.data.waypoints];
+        waypoints[idx] = { ...waypoints[idx], address: res.address || res.name, lat: res.latitude, lng: res.longitude };
+        this.setData({ waypoints });
+      },
+      fail: () => {
+        wx.showToast({ title: '请开启位置权限', icon: 'none' });
+      }
+    });
+  },
+  onWaypointNameInput(e) {
+    const idx = e.currentTarget.dataset.index;
+    const waypoints = [...this.data.waypoints];
+    waypoints[idx] = { ...waypoints[idx], contact_name: e.detail.value };
+    this.setData({ waypoints });
+  },
+  onWaypointPhoneInput(e) {
+    const idx = e.currentTarget.dataset.index;
+    const waypoints = [...this.data.waypoints];
+    waypoints[idx] = { ...waypoints[idx], contact_phone: e.detail.value };
+    this.setData({ waypoints });
+  },
 
   // ===== 自动计算运费 =====
   calculateFreight() {
@@ -204,6 +243,14 @@ Page({
       departure_time: this.data.departureDate && this.data.departureTime
         ? `${this.data.departureDate} ${this.data.departureTime}`
         : '',
+      waypoints: this.data.waypoints.map((wp, i) => ({
+        sort: i + 1,
+        address: wp.address || '',
+        lat: wp.lat || '',
+        lng: wp.lng || '',
+        contact_name: wp.contact_name || '',
+        contact_phone: wp.contact_phone || '',
+      })).filter(wp => wp.address),
     };
 
     // 先上传照片

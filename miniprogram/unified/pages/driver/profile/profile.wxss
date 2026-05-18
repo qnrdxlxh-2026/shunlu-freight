@@ -214,3 +214,12 @@
   z-index: 2; line-height: 40rpx; text-align: center;
 }
 .menu-text-val { font-size: 28rpx; color: #333; }
+
+/* V1.2 司机模式切换样式 */
+.mode-switch-badge {
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+  color: #fff;
+  font-size: 24rpx;
+  font-weight: 600;
+}

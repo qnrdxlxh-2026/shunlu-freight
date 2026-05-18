@@ -138,4 +138,57 @@ Page({
     const phone = this.data.order.receiver_phone;
     if (phone) wx.makePhoneCall({ phoneNumber: String(phone) });
   },
+
+  // ===== Phase 4: GPS定位功能 =====
+  async reportLocation() {
+    wx.showLoading({ title: '获取位置...' });
+    wx.getLocation({
+      type: 'gcj02',
+      success: async (res) => {
+        wx.hideLoading();
+        try {
+          const result = await app.post('/api/driver/location', {
+            order_id: this.data.orderId,
+            lat: res.latitude,
+            lng: res.longitude,
+            address: '',
+            speed: res.speed || 0,
+            heading: res.heading || 0,
+            accuracy: res.accuracy || 0
+          });
+          if (result.code === 0) {
+            wx.showToast({ title: '位置已上报', icon: 'success' });
+          } else {
+            wx.showToast({ title: result.msg || '上报失败', icon: 'none' });
+          }
+        } catch (err) {
+          wx.showToast({ title: '网络错误', icon: 'none' });
+        }
+      },
+      fail: (err) => {
+        wx.hideLoading();
+        wx.showToast({ title: '获取位置失败', icon: 'none' });
+      }
+    });
+  },
+
+  async viewDriverTrack() {
+    try {
+      const res = await app.get('/api/driver/track?order_id=' + this.data.orderId);
+      if (res.code === 0 && res.data && res.data.length > 0) {
+        const track = res.data[0];
+        wx.openLocation({
+          latitude: track.lat,
+          longitude: track.lng,
+          name: '司机位置',
+          address: track.address || '',
+          scale: 15
+        });
+      } else {
+        wx.showToast({ title: '暂无位置信息', icon: 'none' });
+      }
+    } catch (err) {
+      wx.showToast({ title: '查询失败', icon: 'none' });
+    }
+  }
 });

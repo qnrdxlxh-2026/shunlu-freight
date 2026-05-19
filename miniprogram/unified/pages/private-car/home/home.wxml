@@ -13,6 +13,21 @@
     <view class="welcome-text">您好，欢迎回来！</view>
   </view>
 
+  <!-- 运行模式切换 -->
+  <view class="mode-switch-section">
+    <view class="mode-header">
+      <text class="mode-title">🚦 运行模式</text>
+      <view class="mode-toggle">
+        <text class="mode-label {{driverMode === 'direct' ? 'active' : ''}}">直达</text>
+        <switch checked="{{driverMode === 'round-way'}}" bindchange="onModeSwitch" color="#1677ff"/>
+        <text class="mode-label {{driverMode === 'round-way' ? 'active' : ''}}">顺路</text>
+      </view>
+    </view>
+    <view class="mode-desc">
+      {{driverMode === 'direct' ? '📍 今日将只接起点到终点的直达订单' : '🌐 今日可以沿途顺路接单，提高满载率'}}
+    </view>
+  </view>
+
   <!-- 今日统计 -->
   <view class="stats-section">
     <view class="stats-title">今日概览</view>

@@ -71,4 +71,7 @@
   </view>
 
   <view class="bottom-safe"></view>
+  <view class="beian-footer">
+    <navigator url="/pages/agreement/privacy-policy" open-type="switchTab">蜀ICP备2025134383号-2</navigator>
+  </view>
 </view>

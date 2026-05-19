@@ -63,6 +63,57 @@
 }
 .tag-private { background: rgba(255,255,255,0.3); }
 
+/* 运行模式切换 */
+.mode-switch-section {
+  background: #fff;
+  margin: 24rpx;
+  border-radius: 20rpx;
+  padding: 24rpx 28rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.06);
+}
+
+.mode-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.mode-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.mode-label {
+  font-size: 24rpx;
+  color: #999;
+  padding: 4rpx 12rpx;
+  border-radius: 16rpx;
+  transition: all 0.3s;
+}
+
+.mode-label.active {
+  color: #1677ff;
+  font-weight: 600;
+}
+
+.mode-desc {
+  font-size: 22rpx;
+  color: #666;
+  margin-top: 8rpx;
+  padding: 12rpx 16rpx;
+  background: #f0f7ff;
+  border-radius: 12rpx;
+  border-left: 4rpx solid #1677ff;
+}
+
 /* 统计区域 */
 .stats-section {
   background: #fff;

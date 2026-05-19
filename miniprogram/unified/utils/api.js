@@ -127,6 +127,11 @@ function getDriverSettlements(params) {
   return get('/api/driver/settlements', params);
 }
 
+// 切换司机运行模式 → 后端: /api/driver/switch-mode
+function switchDriverMode(mode) {
+  return post('/api/driver/switch-mode', { mode });
+}
+
 // ========== 私家车端API（复用司机端接口） ==========
 function getPrivateCarGoodsList(params) {
   return get('/api/driver/match-goods', params);

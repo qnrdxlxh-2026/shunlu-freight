@@ -119,6 +119,8 @@
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+    .site-footer { text-align: center; padding: 16px; color: #999; font-size: 12px; border-top: 1px solid #e5e5e5; margin-top: 32px; }
+    .site-footer a { color: #999; text-decoration: none; }
   </style>
 </head>
 <body>
@@ -1217,5 +1219,8 @@ async function rejectSettlement(id) {
   } catch (e) { alert('驳回失败: ' + e.message); }
 }
 </script>
+<footer class="site-footer">
+  <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow">蜀ICP备2025134383号-2</a>
+</footer>
 </body>
 </html>

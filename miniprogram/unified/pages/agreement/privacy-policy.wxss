@@ -108,4 +108,5 @@
 
 .bottom-safe {
   height: 60rpx;
-}
+}.beian-footer { text-align: center; padding: 24rpx; font-size: 24rpx; color: #999; }
+.beian-footer navigator { color: #999; display: inline; }

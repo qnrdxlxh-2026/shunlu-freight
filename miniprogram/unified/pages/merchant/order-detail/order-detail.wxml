@@ -179,6 +179,11 @@
       <button class="pay-btn" bindtap="payOrder">💳 立即支付 ¥{{order.price}}</button>
     </view>
 
+    <!-- 联系司机按钮 -->
+    <view class="action-section" wx:if="{{order.status > 0 && order.status < 5 && order.driver_phone}}">
+      <button class="call-btn" bindtap="callDriver">📞 联系司机</button>
+    </view>
+
   </view>
   <view wx:else class="empty">订单不存在</view>
 </view>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>顺路货运 API 测试</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; background: #f5f5f5; }
+    h1 { color: #333; text-align: center; }
+    .section { background: #fff; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .section h2 { margin-top: 0; color: #1677ff; }
+    .form-group { margin: 15px 0; }
+    label { display: block; margin-bottom: 5px; font-weight: 600; color: #666; }
+    input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
+    button { background: #1677ff; color: #fff; border: none; padding: 12px 24px; border-radius: 4px; font-size: 16px; cursor: pointer; margin-top: 10px; }
+    button:hover { background: #0958d9; }
+    .result { margin-top: 20px; padding: 15px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow-y: auto; }
+    .result.success { background: #f6ffed; border: 1px solid #b7eb8f; color: #52c41a; }
+    .result.error { background: #fff2e8; border: 1px solid #ffbb96; color: #fa541c; }
+    .btn-row { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+    .btn-row button { flex: 1; min-width: 100px; }
+    .btn-green { background: #52c41a; }
+    .btn-green:hover { background: #389e0d; }
+    .btn-purple { background: #722ed1; }
+    .btn-purple:hover { background: #531dab; }
+  </style>
+</head>
+<body>
+  <h1>🚚 顺路货运 API 测试</h1>
+
+  <div class="section">
+    <h2>📝 登录测试</h2>
+    <div class="form-group">
+      <label>服务器地址</label>
+      <input type="text" id="baseUrl" value="http://localhost:3458">
+    </div>
+    <div class="form-group">
+      <label>手机号</label>
+      <input type="text" id="phone" value="13900000002" placeholder="请输入手机号">
+    </div>
+    <div class="form-group">
+      <label>密码</label>
+      <input type="password" id="password" value="123456" placeholder="请输入密码">
+    </div>
+    <button onclick="testLogin()">🧪 测试登录</button>
+    <div class="btn-row">
+      <button class="btn-green" onclick="quickLogin('13900000002','123456')">🚛 司机登录</button>
+      <button onclick="quickLogin('13800001111','123456')">🏪 商家登录</button>
+      <button class="btn-purple" onclick="quickLogin('13900000003','123456')">🚗 私家车登录</button>
+    </div>
+    <div id="loginResult"></div>
+  </div>
+
+  <div class="section">
+    <h2>🔧 登录后测试其他 API</h2>
+    <p style="color:#999;font-size:13px;">先登录获取 token，再点下面的按钮</p>
+    <div class="btn-row">
+      <button onclick="testAPI('/api/merchant/goods-list','GET')">📦 货源列表</button>
+      <button onclick="testAPI('/api/driver/orders','GET')">📋 订单列表</button>
+      <button onclick="testAPI('/api/wallet/info','GET')">💰 钱包信息</button>
+    </div>
+    <div id="apiResult"></div>
+  </div>
+
+  <script>
+    function getBaseUrl() {
+      return document.getElementById('baseUrl').value.replace(/\/+$/, '');
+    }
+
+    async function testLogin() {
+      const baseUrl = getBaseUrl();
+      const phone = document.getElementById('phone').value;
+      const password = document.getElementById('password').value;
+      const resultDiv = document.getElementById('loginResult');
+      resultDiv.className = 'result';
+      resultDiv.textContent = '⏳ 请求中...';
+
+      try {
+        const res = await fetch(baseUrl + '/api/user/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone, password })
+        });
+        const data = await res.json();
+        if (data.code === 0) {
+          resultDiv.className = 'result success';
+          resultDiv.textContent = '✅ 登录成功！\n\n' + JSON.stringify(data, null, 2);
+          localStorage.setItem('token', data.data.token);
+          localStorage.setItem('userInfo', JSON.stringify(data.data.userInfo));
+        } else {
+          resultDiv.className = 'result error';
+          resultDiv.textContent = '❌ 登录失败！\n\n' + JSON.stringify(data, null, 2);
+        }
+      } catch (err) {
+        resultDiv.className = 'result error';
+        resultDiv.textContent = '❌ 网络错误！\n\n' + err.message + '\n\n请确认：\n1. 服务器是否启动？（node app.js）\n2. 端口是否正确？（3458）\n3. 服务器地址是否正确？';
+      }
+    }
+
+    function quickLogin(phone, password) {
+      document.getElementById('phone').value = phone;
+      document.getElementById('password').value = password;
+      testLogin();
+    }
+
+    async function testAPI(endpoint, method) {
+      const baseUrl = getBaseUrl();
+      const resultDiv = document.getElementById('apiResult');
+      const token = localStorage.getItem('token');
+      resultDiv.className = 'result';
+      resultDiv.textContent = '⏳ 请求中...';
+
+      try {
+        const res = await fetch(baseUrl + endpoint, {
+          method,
+          headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+        });
+        const data = await res.json();
+        resultDiv.className = 'result success';
+        resultDiv.textContent = '✅ 请求成功！\n\n' + JSON.stringify(data, null, 2);
+      } catch (err) {
+        resultDiv.className = 'result error';
+        resultDiv.textContent = '❌ 请求失败！\n\n' + err.message;
+      }
+    }
+
+    window.onload = function() {
+      console.log('🚚 顺路货运 API 测试页面已加载');
+      console.log('💡 提示：请先确认服务器已启动（node app.js）');
+    };
+  </script>
+</body>
+</html>

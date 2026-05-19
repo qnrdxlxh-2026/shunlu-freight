@@ -1,4 +1,4 @@
-const BASE_URL = 'https://www.huoshunlu.com';
+const BASE_URL = 'http://localhost:3458';  // 本地开发：指向本地服务器
 
 App({
   globalData: {

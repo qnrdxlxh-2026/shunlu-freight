@@ -5,6 +5,7 @@ const { getOrderStatusText, getOrderStatusClass, formatAmount } = require('../..
 Page({
   data: {
     userInfo: null,
+    driverMode: 'direct',  // 运行模式：direct(直达) / round-way(顺路)
     stats: {
       waitPickup: 0,
       delivering: 0,
@@ -54,7 +55,10 @@ Page({
       if (userInfoRes && userInfoRes.data) {
         const info = userInfoRes.data;
         info.avatarTail = info.phone ? info.phone.slice(-4) : '****';
-        this.setData({ userInfo: info });
+        this.setData({ 
+          userInfo: info,
+          driverMode: info.driver_mode || 'direct'  // 设置当前模式
+        });
         app.globalData.userInfo = userInfoRes.data;
       }
 
@@ -87,6 +91,31 @@ Page({
 
   goFindGoods() {
     wx.navigateTo({ url: '/pages/driver/find-goods/find-goods' });
+  },
+
+  goOrders(e) {
+    const status = e.currentTarget.dataset.status;
+    wx.navigateTo({ url: `/pages/driver/orders/orders?status=${status}` });
+  },
+
+  // 切换运行模式
+  async onModeSwitch(e) {
+    const newMode = e.detail.value ? 'round-way' : 'direct';
+    wx.showLoading({ title: '切换中...' });
+    try {
+      const res = await api.switchDriverMode(newMode);
+      if (res && res.code === 0) {
+        this.setData({ driverMode: newMode });
+        wx.showToast({ title: `已切换为${newMode === 'direct' ? '直达' : '顺路'}模式`, icon: 'success' });
+      } else {
+        wx.showToast({ title: res.msg || '切换失败', icon: 'none' });
+      }
+    } catch (err) {
+      console.error('切换模式失败', err);
+      wx.showToast({ title: '网络错误，请重试', icon: 'none' });
+    } finally {
+      wx.hideLoading();
+    }
   },
 
   goScanOrder() {

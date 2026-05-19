@@ -5,6 +5,7 @@ const { getOrderStatusText, getOrderStatusClass, formatAmount } = require('../..
 Page({
   data: {
     userInfo: null,
+    driverMode: 'direct',  // 运行模式：direct(直达) / round-way(顺路)
     stats: {
       waitPickup: 0,
       delivering: 0,
@@ -54,7 +55,10 @@ Page({
       if (userInfoRes && userInfoRes.data) {
         const info = userInfoRes.data;
         info.avatarTail = info.phone ? info.phone.slice(-4) : '****';
-        this.setData({ userInfo: info });
+        this.setData({ 
+          userInfo: info,
+          driverMode: info.driver_mode || 'direct'  // 设置当前模式
+        });
         app.globalData.userInfo = userInfoRes.data;
       }
 

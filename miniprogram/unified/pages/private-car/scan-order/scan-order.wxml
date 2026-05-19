@@ -1,0 +1,25 @@
+<view class="scan-page">
+  <view class="scan-header">
+    <view class="scan-icon">📷</view>
+    <view class="scan-title">扫码接单</view>
+    <view class="scan-desc">扫描商家或个人提供的货源二维码，快速接单</view>
+  </view>
+
+  <!-- 扫码按钮 -->
+  <button class="scan-btn" bindtap="startScan">📷 开始扫码</button>
+
+  <!-- 手动输入 -->
+  <view class="manual-input">
+    <view class="manual-title">或手动输入货源编号</view>
+    <input class="manual-input-field" type="number" placeholder="输入货源编号" bindinput="onInputGoodsId" value="{{goodsId}}" />
+    <button class="manual-btn" bindtap="manualTake">确认接单</button>
+  </view>
+
+  <!-- 私家车接单限制提示 -->
+  <view class="limit-tips">
+    <view class="tip-title">📋 私家车接单限制</view>
+    <view class="tip-item">• 每日限接 2 单</view>
+    <view class="tip-item">• 单票限重 20kg</view>
+    <view class="tip-item">• 单票货值限 2000 元</view>
+  </view>
+</view>

@@ -170,3 +170,20 @@
     </button>
   </view>
 </view>
+
+<!-- 发布成功二维码弹窗 -->
+<view class="qrcode-modal-mask {{showQRCode ? 'show' : ''}}" catchtap=""></view>
+<view class="qrcode-modal {{showQRCode ? 'show' : ''}}">
+  <view class="qrcode-header">
+    <text class="qrcode-title">✅ 发布成功</text>
+  </view>
+  <view class="qrcode-body">
+    <view class="qrcode-tip">司机扫码即可接单</view>
+    <image class="qrcode-img" src="{{qrCodeUrl}}" mode="aspectFit" />
+    <view class="goods-id">货源编号：{{publishedGoodsId}}</view>
+  </view>
+  <view class="qrcode-footer">
+    <button class="btn-save-qrcode" bindtap="saveQRCode">保存二维码</button>
+    <button class="btn-close-qrcode" bindtap="closeQRCode">完成</button>
+  </view>
+</view>

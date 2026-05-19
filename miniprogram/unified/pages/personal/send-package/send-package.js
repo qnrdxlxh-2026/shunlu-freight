@@ -12,7 +12,11 @@ Page({
     waypoints: [],
     mapMarkers: [],
     centerLatitude: 30.5728, centerLongitude: 104.0668,
-    loading: false
+    loading: false,
+    // 发布成功二维码
+    showQRCode: false,
+    publishedGoodsId: null,
+    qrCodeUrl: ''
   },
 
   onLoad() {
@@ -214,12 +218,43 @@ Page({
     photoUpload.then(photoUrls => {
       payload.photo_urls = photoUrls;
       return api.publishGoods(payload);
-    }).then(() => {
-      wx.showToast({ title: '发布成功', icon: 'success' });
-      setTimeout(() => wx.navigateBack(), 1500);
+    }).then(res => {
+      // 发布成功，显示二维码
+      if (res.data && res.data.goods_id) {
+        this.setData({
+          loading: false,
+          showQRCode: true,
+          publishedGoodsId: res.data.goods_id,
+          qrCodeUrl: app.globalData.baseUrl + '/api/goods/' + res.data.goods_id + '/qrcode'
+        });
+      } else {
+        wx.showToast({ title: '发布成功', icon: 'success' });
+        setTimeout(() => wx.navigateBack(), 1500);
+      }
     }).catch(e => {
       wx.showToast({ title: e.message || '发布失败', icon: 'none' });
       this.setData({ loading: false });
+    });
+  },
+
+  // 关闭二维码弹窗
+  closeQRCode() {
+    this.setData({ showQRCode: false });
+    wx.navigateBack();
+  },
+
+  // 保存二维码到相册
+  saveQRCode() {
+    wx.downloadFile({
+      url: this.data.qrCodeUrl,
+      success: (res) => {
+        wx.saveImageToPhotosAlbum({
+          filePath: res.tempFilePath,
+          success: () => wx.showToast({ title: '已保存到相册', icon: 'success' }),
+          fail: () => wx.showToast({ title: '保存失败', icon: 'none' })
+        });
+      },
+      fail: () => wx.showToast({ title: '下载失败', icon: 'none' })
     });
   }
 });

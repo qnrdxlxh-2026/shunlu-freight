@@ -89,6 +89,10 @@ Page({
     wx.navigateTo({ url: '/pages/driver/find-goods/find-goods' });
   },
 
+  goScanOrder() {
+    wx.navigateTo({ url: '/pages/driver/scan-order/scan-order' });
+  },
+
   goMyRoutes() {
     wx.navigateTo({ url: '/pages/driver/my-routes/my-routes' });
   },

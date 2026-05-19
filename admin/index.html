@@ -1068,7 +1068,7 @@ async function renderOrders(el) {
           <select id="orderStatusFilter" onchange="filterOrders()"><option value="">全部状态</option><option value="1">待支付</option><option value="2">待取货</option><option value="3">运输中</option><option value="4">已送达</option><option value="5">已完成</option></select>
         </div>
       </div>
-      <table><thead><tr><th>#</th><th>商家</th><th>司机</th><th>路线</th><th>金额</th><th>佣金</th><th>司机收入</th><th>状态</th><th>时间</th></tr></thead><tbody id="ordersTbody"></tbody></table>
+      <table><thead><tr><th>#</th><th>商家</th><th>司机</th><th>路线</th><th>金额</th><th>佣金</th><th>司机收入</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody id="ordersTbody"></tbody></table>
     </div>`;
   renderOrdersRows(list);
 }
@@ -1084,7 +1084,49 @@ function renderOrdersRows(list) {
     <td><b>¥${o.price||0}</b></td><td class="td-secondary">¥${o.commission_fee||0} (${o.commission_rate||0}%)</td><td class="td-secondary">¥${o.driver_amount||0}</td>
     <td><span class="badge ${statusCls[o.status]||'badge-gray'}">${statusMap[o.status]||'未知'}</span></td>
     <td class="td-secondary">${(o.create_time||'').slice(0,16)}</td>
+    <td><button class="btn btn-sm btn-primary" onclick="showOrderDetail(${o.id})">详情</button></td>
   </tr>`).join('');
+}
+
+// 显示订单详情（含实时位置）
+async function showOrderDetail(orderId) {
+  const order = window._orders.find(o => o.id === orderId);
+  if (!order) return;
+  
+  // 获取司机实时位置
+  let locationHtml = '';
+  if (order.driver_id && order.status >= 2 && order.status <= 4) {
+    try {
+      const locRes = await api(`/driver/location/${order.driver_id}`);
+      if (locRes.code === 0 && locRes.data) {
+        locationHtml = `<div class="location-info">
+          <p><b>📍 司机当前位置</b></p>
+          <p>纬度: ${locRes.data.lat}, 经度: ${locRes.data.lng}</p>
+          <p>更新时间: ${locRes.data.update_time || '-'}</p>
+          <a href="https://uri.amap.com/marker?position=${locRes.data.lng},${locRes.data.lat}" target="_blank" class="btn btn-sm btn-primary">在高德地图查看</a>
+        </div>`;
+      }
+    } catch(e) {}
+  }
+  
+  const statusMap=['','待支付','待取货','运输中','已送达','已完成'];
+  showModal(
+    `<b>订单 #${orderId} 详情</b>`,
+    `<div class="order-detail">
+      <p><b>商家ID:</b> ${order.merchant_id||'-'}</p>
+      <p><b>司机ID:</b> ${order.driver_id||'-'}</p>
+      <p><b>起点:</b> ${order.start_addr||'-'}</p>
+      <p><b>终点:</b> ${order.end_addr||'-'}</p>
+      <p><b>运费:</b> ¥${order.price||0}</p>
+      <p><b>佣金:</b> ¥${order.commission_fee||0} (${order.commission_rate||0}%)</p>
+      <p><b>司机收入:</b> ¥${order.driver_amount||0}</p>
+      <p><b>状态:</b> ${statusMap[order.status]||'未知'}</p>
+      <p><b>创建时间:</b> ${order.create_time||'-'}</p>
+      <p><b>取件码:</b> ${order.pickup_code||'-'}</p>
+      ${locationHtml}
+    </div>`,
+    ''
+  );
 }
 
 function filterOrders() {

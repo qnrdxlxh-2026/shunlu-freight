@@ -89,6 +89,10 @@ Page({
     wx.navigateTo({ url: '/pages/private-car/find-goods/find-goods' });
   },
 
+  goScanOrder() {
+    wx.navigateTo({ url: '/pages/private-car/scan-order/scan-order' });
+  },
+
   goMyRoutes() {
     wx.navigateTo({ url: '/pages/private-car/my-routes/my-routes' });
   },

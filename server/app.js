@@ -11,6 +11,8 @@ const crypto = require('crypto');
 const QRCode = require('qrcode');
 const formidable = require('formidable');
 const smartMatch = require('./smartMatch');
+const { hasPermission, getUserPermissions, checkLimit, requirePermission } = require('./permissionMiddleware');
+const sms = require('./utils/sms');
 
 // 微信小程序配置
 const WX_APPID = 'wx2eeb6db23cb14dca';
@@ -461,10 +463,19 @@ async function handleApi(req, res, pathname, method) {
 
   // ========== 商家相关 ==========
   if (pathname === '/api/merchant/publish-goods' && method === 'POST') {
-    if (!user || user.role !== 1) return sendJson(res, { code: 401, msg: '仅商家可发布' }, 401);
+    if (!user) return sendJson(res, { code: 401, msg: '请先登录' }, 401);
+    if (!hasPermission(user.role, 'goods:publish')) return sendJson(res, { code: 403, msg: '权限不足：无法发布货源' }, 403);
     const { start_addr, end_addr, weight, price, goods_value, remark, sender_name, sender_phone, receiver_name, receiver_phone, photo_urls, departure_time, waypoints } = await parseBody(req);
     
     const goodsId = db.nextIds.goods++;
+    
+    // 为中途装卸点生成二维码和取件码
+    const waypointsWithCodes = (waypoints || []).map((wp, index) => ({
+      ...wp,
+      qr_code: `waypoint:${goodsId}:${index}:${Date.now()}`,
+      pickup_code: Math.floor(100000 + Math.random() * 900000).toString() // 6位随机数字
+    }));
+    
     db.goods.push({
       id: goodsId,
       merchant_id: user.userId,
@@ -479,7 +490,7 @@ async function handleApi(req, res, pathname, method) {
       receiver_phone: receiver_phone || '',
       photo_urls: photo_urls || [],
       departure_time: departure_time || '',
-      waypoints: waypoints || [],  // 中途装卸点
+      waypoints: waypointsWithCodes,  // 中途装卸点（包含二维码和取件码）
       status: 1, // 待接单
       create_time: new Date().toISOString()
     });
@@ -512,6 +523,22 @@ async function handleApi(req, res, pathname, method) {
       if (goods) {
         order.goods = goods;
         order.photo_urls = goods.photo_urls || [];
+        // 中途装卸点（包含二维码和取件码）
+        if (goods.waypoints && goods.waypoints.length > 0) {
+          order.waypoints = goods.waypoints.map((wp, index) => {
+            // 为每个waypoint生成二维码图片
+            let qr_url = '';
+            try {
+              // 注意：这里不能使用await，因为QRCode.toDataURL是异步的
+              // 我们先返回qr_code，前端再调用API获取二维码图片
+              qr_url = wp.qr_code;  // 先返回qr_code内容
+            } catch(e) {}
+            return {
+              ...wp,
+              qr_url: qr_url  // 前端需要调用 /api/goods/:goodsId/waypoint/:index/qrcode 获取图片
+            };
+          });
+        }
       }
     }
     return sendJson(res, { code: 0, data: order });
@@ -519,7 +546,8 @@ async function handleApi(req, res, pathname, method) {
 
   // ========== 司机相关 ==========
   if (pathname === '/api/driver/publish-route' && method === 'POST') {
-    if (!user || (user.role !== 2 && user.role !== 3)) return sendJson(res, { code: 401, msg: '仅司机可发布' }, 401);
+    if (!user) return sendJson(res, { code: 401, msg: '请先登录' }, 401);
+    if (!hasPermission(user.role, 'route:publish')) return sendJson(res, { code: 403, msg: '权限不足：无法发布路线' }, 403);
     const { start_addr, end_addr, departure_time, space, remark, license_plate, vehicle_photos,
            start_lat, start_lng, end_lat, end_lng } = await parseBody(req);
 
@@ -598,6 +626,10 @@ async function handleApi(req, res, pathname, method) {
     const driverAmount = goods.price - commissionFee;
     
     const orderId = db.nextIds.order++;
+    
+    // 生成取件码
+    const pickupCode = generateCode();
+    
     db.orders.push({
       id: orderId,
       goods_id: goods.id,
@@ -607,11 +639,28 @@ async function handleApi(req, res, pathname, method) {
       commission_rate: commissionRate,
       commission_fee: commissionFee,
       driver_amount: driverAmount,
+      pickup_code: pickupCode,  // 取件码
       status: 1, // 待支付
       create_time: new Date().toISOString()
     });
     goods.status = 2; // 已接单
+    goods.pickup_code = pickupCode;
+    
     saveDB(db);
+    
+    // 发送短信给收件人
+    const receiverPhone = goods.receiver_phone || '';
+    if (receiverPhone && receiverPhone.length === 11) {
+      // 异步发送短信，不阻塞返回
+      sms.sendPickupCodeSMS(receiverPhone, pickupCode, orderId.toString())
+        .then(result => {
+          console.log(`[短信] 发送给 ${receiverPhone}:`, result);
+        })
+        .catch(err => {
+          console.log(`[短信] 发送失败:`, err.message);
+        });
+    }
+    
     return sendJson(res, { code: 0, msg: '接单成功', data: { order_id: orderId } });
   }
 
@@ -716,6 +765,73 @@ async function handleApi(req, res, pathname, method) {
         delivery_qr_url: '',
       }});
     }
+  }
+
+  // ========== 中途装卸点二维码 ==========
+  // 获取货源二维码（司机扫码接单）
+  if (pathname.match(/^\/api\/goods\/\d+\/qrcode$/) && method === 'GET') {
+    const goodsId = parseInt(pathname.split('/')[3]);
+    const goods = db.goods.find(g => g.id === goodsId);
+    if (!goods) return sendJson(res, { code: 404, msg: '货物不存在' }, 404);
+    
+    // 生成二维码内容
+    const qrContent = JSON.stringify({ type: 'goods', id: goodsId });
+    try {
+      const qrCode = await QRCode.toDataURL(qrContent);
+      // 返回图片
+      const base64Data = qrCode.replace(/^data:image\/png;base64,/, '');
+      const imgBuffer = Buffer.from(base64Data, 'base64');
+      res.writeHead(200, {
+        'Content-Type': 'image/png',
+        'Content-Length': imgBuffer.length
+      });
+      return res.end(imgBuffer);
+    } catch(e) {
+      return sendJson(res, { code: 500, msg: '生成二维码失败' }, 500);
+    }
+  }
+
+  // 获取中途装卸点二维码
+  if (pathname.startsWith('/api/goods/') && pathname.endsWith('/waypoint/qrcode') && method === 'GET') {
+    const parts = pathname.split('/');
+    const goodsId = parseInt(parts[3]);
+    const index = parseInt(parts[5]);
+    const goods = db.goods.find(g => g.id === goodsId);
+    if (!goods) return sendJson(res, { code: 404, msg: '货物不存在' }, 404);
+    if (!goods.waypoints || !goods.waypoints[index]) return sendJson(res, { code: 404, msg: '装卸点不存在' }, 404);
+    
+    const waypoint = goods.waypoints[index];
+    try {
+      const qrCode = await QRCode.toDataURL(waypoint.qr_code);
+      return sendJson(res, { code: 0, data: {
+        qr_code: waypoint.qr_code,
+        pickup_code: waypoint.pickup_code,
+        qr_url: qrCode
+      }});
+    } catch(e) {
+      return sendJson(res, { code: 0, data: {
+        qr_code: waypoint.qr_code,
+        pickup_code: waypoint.pickup_code,
+        qr_url: ''
+      }});
+    }
+  }
+
+  // 验证中途装卸点取件码
+  if (pathname.startsWith('/api/goods/') && pathname.includes('/waypoint/verify') && method === 'POST') {
+    const parts = pathname.split('/');
+    const goodsId = parseInt(parts[3]);
+    const index = parseInt(parts[5]);
+    const { code } = await parseBody(req);
+    
+    const goods = db.goods.find(g => g.id === goodsId);
+    if (!goods) return sendJson(res, { code: 404, msg: '货物不存在' }, 404);
+    if (!goods.waypoints || !goods.waypoints[index]) return sendJson(res, { code: 404, msg: '装卸点不存在' }, 404);
+    
+    const waypoint = goods.waypoints[index];
+    if (waypoint.pickup_code !== code) return sendJson(res, { code: 400, msg: '取件码错误' }, 400);
+    
+    return sendJson(res, { code: 0, msg: '验证成功', data: { waypoint } });
   }
 
   // 司机扫码确认取货
@@ -847,6 +963,22 @@ async function handleApi(req, res, pathname, method) {
     if (!user || (user.role !== 2 && user.role !== 3)) return sendJson(res, { code: 401, msg: '未授权' }, 401);
     const list = db.orders.filter(o => o.driver_id === user.userId);
     return sendJson(res, { code: 0, data: list });
+  }
+
+  // 司机订单详情
+  if (pathname.startsWith('/api/driver/order/') && method === 'GET') {
+    if (!user || (user.role !== 2 && user.role !== 3)) return sendJson(res, { code: 401, msg: '未授权' }, 401);
+    const orderId = parseInt(pathname.split('/').pop());
+    const order = db.orders.find(o => o.id === orderId && o.driver_id === user.userId);
+    if (!order) return sendJson(res, { code: 404, msg: '订单不存在' }, 404);
+    // 附加waypoints数据
+    if (order.goods_id) {
+      const goods = db.goods.find(g => g.id === order.goods_id);
+      if (goods) {
+        order.waypoints = goods.waypoints || [];  // 中途装卸点（包含二维码和取件码）
+      }
+    }
+    return sendJson(res, { code: 0, data: order });
   }
 
   // 司机/私家车主统计数据
@@ -2208,6 +2340,128 @@ async function handleApi(req, res, pathname, method) {
     const total = result.length;
     const paged = result.slice((page - 1) * pageSize, page * pageSize);
     return sendJson(res, { code: 0, data: { list: paged, total }});
+  }
+
+  // ========== 优先派单API ==========
+  // GET /api/dispatch/prioritize - 获取优先派单司机列表
+  if (pathname === '/api/dispatch/prioritize' && method === 'GET') {
+    const urlParams = new URL(req.url, 'http://localhost');
+    const goodsId = parseInt(urlParams.searchParams.get('goodsId'));
+    if (!goodsId) return sendJson(res, { code: 400, msg: '缺少goodsId参数' }, 400);
+
+    const goods = db.goods.find(g => g.id === goodsId);
+    if (!goods) return sendJson(res, { code: 404, msg: '货源不存在' }, 404);
+    if (goods.status !== 1) return sendJson(res, { code: 400, msg: '该货源不可接单' }, 400);
+
+    // 获取所有匹配司机
+    const matchedDrivers = smartMatch.matchDriversForGoods({ id: goods.publish_user_id }, goods, db.routes, db.users, db.orders || []);
+
+    // 应用优先派单逻辑(取前10个匹配司机)
+    const limit = parseInt(urlParams.searchParams.get('limit')) || 5;
+    const prioritized = smartMatch.prioritizeDrivers(matchedDrivers.slice(0, 10), db.users, db.orders || [], limit);
+
+    return sendJson(res, {
+      code: 0,
+      data: {
+        goodsId,
+        total: prioritized.length,
+        drivers: prioritized.map(d => ({
+          driver_id: d.driver_id,
+          driver_name: d.driver_name,
+          driver_type: d.driver_type,
+          start_addr: d.start_addr,
+          end_addr: d.end_addr,
+          depart_time: d.depart_time,
+          matchScore: d.matchScore,
+          priorityScore: d.priorityScore,
+          priorityInfo: d.priorityInfo,
+          license_plate: d.license_plate
+        }))
+      }
+    });
+  }
+
+  // ========== 乡镇全覆盖管理 ==========
+  // GET /api/admin/townships - 获取所有乡镇列表
+  if (pathname === '/api/admin/townships' && method === 'GET') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员可操作' }, 401);
+    const urlParams = new URL(req.url, 'http://localhost');
+    const page = parseInt(urlParams.searchParams.get('page')) || 1;
+    const pageSize = parseInt(urlParams.searchParams.get('pageSize')) || 50;
+    const countyFilter = urlParams.searchParams.get('county');
+    const statusFilter = urlParams.searchParams.get('status');
+    
+    let townships = db.townships || [];
+    if (countyFilter) townships = townships.filter(t => t.county === countyFilter);
+    if (statusFilter !== null) townships = townships.filter(t => t.status === parseInt(statusFilter));
+    
+    const total = townships.length;
+    const paged = townships.slice((page - 1) * pageSize, page * pageSize);
+    return sendJson(res, { code: 0, data: { list: paged, total, page, pageSize } });
+  }
+
+  // PUT /api/admin/townships/:id - 更新乡镇状态(启用/禁用)
+  if (pathname.startsWith('/api/admin/townships/') && method === 'PUT') {
+    if (!user || user.role !== 4) return sendJson(res, { code: 401, msg: '仅管理员可操作' }, 401);
+    const townshipId = parseInt(pathname.split('/')[4]);
+    const body = await parseBody(req);
+    
+    if (!db.townships) db.townships = [];
+    const township = db.townships.find(t => t.id === townshipId);
+    if (!township) return sendJson(res, { code: 404, msg: '乡镇不存在' }, 404);
+    
+    if (body.status !== undefined) township.status = parseInt(body.status);
+    if (body.driver_count !== undefined) township.driver_count = parseInt(body.driver_count);
+    if (body.order_count !== undefined) township.order_count = parseInt(body.order_count);
+    
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '乡镇更新成功', data: township });
+  }
+
+  // GET /api/townships/coverage - 获取乡镇覆盖统计(公开)
+  if (pathname === '/api/townships/coverage' && method === 'GET') {
+    const townships = db.townships || [];
+    const total = townships.length;
+    const covered = townships.filter(t => t.status === 1).length;
+    const counties = [...new Set(townships.map(t => t.county))];
+    
+    const coverage = counties.map(county => {
+      const countyTownships = townships.filter(t => t.county === county);
+      const countyCovered = countyTownships.filter(t => t.status === 1).length;
+      return {
+        county,
+        total: countyTownships.length,
+        covered: countyCovered,
+        percentage: Math.round(countyCovered / countyTownships.length * 100)
+      };
+    });
+    
+    return sendJson(res, {
+      code: 0,
+      data: {
+        total,
+        covered,
+        percentage: Math.round(covered / total * 100),
+        counties: coverage
+      }
+    });
+  }
+
+  // ========== 权限管理API ==========
+  // GET /api/user/permissions - 获取当前用户权限(用于前端控制UI)
+  if (pathname === '/api/user/permissions' && method === 'GET') {
+    if (!user) return sendJson(res, { code: 401, msg: '请先登录' }, 401);
+    const perms = getUserPermissions(user.role);
+    return sendJson(res, {
+      code: 0,
+      data: {
+        role: user.role,
+        role_name: ['', '商家', '货车司机', '私家车', '管理员', '个人'][user.role] || '未知',
+        permissions: perms.permissions,
+        limits: perms.limits,
+        denied: perms.denied
+      }
+    });
   }
 
   // 404

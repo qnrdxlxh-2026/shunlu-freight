@@ -1,5 +1,6 @@
 const app = getApp();
 const api = require('../../../utils/api.js');
+const townshipUtil = require('../../../utils/township');
 
 Page({
   data: {
@@ -11,6 +12,11 @@ Page({
       remark: '',
       license_plate: '',   // 车牌号
     },
+    // 乡镇选择
+    start_township: '',
+    end_township: '',
+    township_list: [],
+    township_names: [],
     // 经纬度
     startLatitude: '',
     startLongitude: '',
@@ -20,6 +26,13 @@ Page({
     vehiclePhotos: [],
     // 提交状态
     loading: false,
+  },
+
+  onLoad() {
+    this.setData({
+      township_list: townshipUtil.TOWNSHIP_DATA,
+      township_names: townshipUtil.TOWNSHIP_DATA.map(t => `${t.county}-${t.name}`)
+    });
   },
 
   // ===== 出发地选址 =====
@@ -32,10 +45,14 @@ Page({
           startLatitude: res.latitude,
           startLongitude: res.longitude,
         });
+        // 自动识别乡镇
+        const township = townshipUtil.identifyTownship(res.address || res.name);
+        if (township) {
+          this.setData({ start_township: `${township.county}-${township.name}` });
+        }
       },
       fail: err => {
         console.error('chooseLocation start fail:', err);
-        // 模拟器/未授权时提示
         wx.showModal({
           title: '无法获取位置',
           content: '请在手机微信中开启位置权限，或在开发者工具中切换到「一般调试」模式使用。',
@@ -55,6 +72,11 @@ Page({
           endLatitude: res.latitude,
           endLongitude: res.longitude,
         });
+        // 自动识别乡镇
+        const township = townshipUtil.identifyTownship(res.address || res.name);
+        if (township) {
+          this.setData({ end_township: `${township.county}-${township.name}` });
+        }
       },
       fail: err => {
         console.error('chooseLocation end fail:', err);
@@ -65,6 +87,16 @@ Page({
         });
       }
     });
+  },
+
+  // ===== 乡镇选择 =====
+  onStartTownshipChange(e) {
+    const index = e.detail.value;
+    this.setData({ start_township: this.data.township_names[index] });
+  },
+  onEndTownshipChange(e) {
+    const index = e.detail.value;
+    this.setData({ end_township: this.data.township_names[index] });
   },
 
   // ===== 出发时间 =====
@@ -123,11 +155,20 @@ Page({
     if (!form.end_addr) return wx.showToast({ title: '请选择目的地', icon: 'none' });
     if (!form.departure_time) return wx.showToast({ title: '请选择出发时间', icon: 'none' });
 
+    // 检查权限
+    const hasPerm = await app.hasPermission('route:publish');
+    if (!hasPerm) {
+      wx.showToast({ title: '权限不足：无法发布路线', icon: 'none' });
+      return;
+    }
+
     this.setData({ loading: true });
 
     const payload = {
       start_addr: form.start_addr,
       end_addr: form.end_addr,
+      start_township: this.data.start_township,
+      end_township: this.data.end_township,
       departure_time: form.departure_time,
       space: parseFloat(form.space) || 0,
       remark: form.remark,

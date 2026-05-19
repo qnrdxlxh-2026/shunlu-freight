@@ -7,7 +7,8 @@ Page({
     goods: [],
     loading: true,
     latitude: 30,
-    longitude: 102
+    longitude: 102,
+    showPriority: false,  // 是否显示优先派单标识
   },
 
   onLoad() {
@@ -33,12 +34,26 @@ Page({
         latitude: this.data.latitude,
         longitude: this.data.longitude
       });
-      const goods = (res.data || []).map(g => ({
+      
+      let goods = (res.data || []).map(g => ({
         ...g,
         price: formatAmount(g.price || g.expect_price),
         stars: getMatchStars(g.match_score),
         distance: g.distance ? g.distance.toFixed(1) + 'km' : ''
       }));
+
+      // 获取优先派单信息（仅第一个货源）
+      if (goods.length > 0) {
+        try {
+          const priorityRes = await app.get(`/api/dispatch/prioritize?goodsId=${goods[0].id}`);
+          const priorityDrivers = priorityRes.data || [];
+          // 标记是否有优先派单司机
+          this.setData({ showPriority: priorityDrivers.length > 0 });
+        } catch (err) {
+          console.log('获取优先派单信息失败', err);
+        }
+      }
+
       this.setData({ goods, loading: false });
     } catch (err) {
       wx.showToast({ title: err.message || '加载失败', icon: 'none' });

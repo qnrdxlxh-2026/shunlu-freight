@@ -48,6 +48,65 @@
   font-size: 26rpx; border-radius: 8rpx; padding: 12rpx 20rpx; text-align: center;
 }
 .btn-virtual { background: #e6f7ff; color: #1890ff; }
+
+/* 中途装卸点样式 */
+.waypoint-item {
+  margin-top: 8rpx;
+}
+.waypoint-dot {
+  background: #1890ff;
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  border: 3rpx solid #fff;
+  box-shadow: 0 0 0 2rpx #1890ff;
+}
+.waypoint-line {
+  background: #1890ff;
+  opacity: 0.5;
+}
+.waypoint-addr {
+  flex: 1;
+  padding: 8rpx 0;
+}
+.waypoint-label {
+  display: inline-block;
+  font-size: 24rpx;
+  background: #1890ff;
+  color: #fff;
+  padding: 4rpx 8rpx;
+  border-radius: 8rpx;
+  margin-bottom: 8rpx;
+}
+.waypoint-address {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 4rpx;
+}
+.waypoint-contact {
+  font-size: 24rpx;
+  color: #666;
+}
+.waypoint-verify-box {
+  display: flex;
+  align-items: center;
+  margin-top: 16rpx;
+  gap: 12rpx;
+}
+.waypoint-verify-input {
+  flex: 1;
+  font-size: 28rpx;
+  padding: 12rpx 16rpx;
+  background: #f5f5f5;
+  border-radius: 8rpx;
+}
+.waypoint-verify-btn {
+  font-size: 28rpx;
+  background: #1890ff;
+  color: #fff;
+  padding: 12rpx 24rpx;
+  border-radius: 8rpx;
+}
 .btn-direct { background: #f5f5f5; color: #666; }
 .contact-hint { font-size: 22rpx; color: #bbb; margin-top: 4rpx; }
 
@@ -66,3 +125,46 @@
 }
 .gps-btn { background: #1890ff; color: #fff; }
 .track-btn { background: #722ed1; color: #fff; }
+
+/* 导航按钮 */
+.nav-btn {
+  margin-top: 16rpx;
+  background: #13c2c2;
+  color: #fff;
+  font-size: 28rpx;
+  padding: 16rpx 0;
+  border-radius: 8rpx;
+  text-align: center;
+}
+
+/* 取件码输入区域 */
+.pickup-code-input-section {
+  margin-top: 24rpx;
+  padding: 24rpx;
+  background: #f6ffed;
+  border-radius: 8rpx;
+  border: 1rpx solid #b7eb8f;
+}
+.pickup-code-label {
+  font-size: 26rpx;
+  color: #52c41a;
+  margin-bottom: 12rpx;
+}
+.pickup-code-input {
+  font-size: 36rpx;
+  padding: 16rpx 24rpx;
+  background: #fff;
+  border: 1rpx solid #d9d9d9;
+  border-radius: 8rpx;
+  text-align: center;
+  letter-spacing: 8rpx;
+  margin-bottom: 16rpx;
+}
+.confirm-delivery-btn {
+  background: #52c41a;
+  color: #fff;
+  font-size: 32rpx;
+  padding: 20rpx 0;
+  border-radius: 8rpx;
+  text-align: center;
+}

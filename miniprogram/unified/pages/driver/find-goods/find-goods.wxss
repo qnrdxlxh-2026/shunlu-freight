@@ -13,6 +13,8 @@
 .arrow { color: #52c41a; margin: 0 16rpx; }
 .price { font-size: 36rpx; font-weight: 600; color: #52c41a; }
 
+.priority-tag { background: #ff4d4f; color: #fff; font-size: 22rpx; padding: 4rpx 12rpx; border-radius: 8rpx; margin-left: 12rpx; display: inline-block; }
+
 .goods-info { font-size: 26rpx; color: #666; margin-bottom: 16rpx; }
 .dot { margin: 0 8rpx; }
 

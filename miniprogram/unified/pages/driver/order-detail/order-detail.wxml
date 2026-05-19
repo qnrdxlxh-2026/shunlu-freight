@@ -8,6 +8,7 @@
     <view class="code-label">📋 取货码 · 给发货方看</view>
     <view class="code-number">{{order.pickup_code || '------'}}</view>
     <view class="code-hint">让发货方扫码或报此码确认取货</view>
+    <button class="nav-btn" bindtap="navigateToStart">🧭 导航去取货</button>
   </view>
 
   <!-- 送达码卡片（配送中状态） -->
@@ -15,11 +16,34 @@
     <view class="code-label">📦 送达码 · 给收货方看</view>
     <view class="code-number">{{order.delivery_code || '------'}}</view>
     <view class="code-hint">让收货方扫码或报此码确认签收</view>
+    <button class="nav-btn" bindtap="navigateToEnd">🧭 导航去目的地</button>
+    <!-- 取件码输入框 -->
+    <view class="pickup-code-input-section">
+      <view class="pickup-code-label">请向收货方索取取件码</view>
+      <input class="pickup-code-input" type="number" maxlength="6" placeholder="输入6位取件码" bindinput="onDeliveryCodeInput" value="{{deliveryCode}}" />
+      <button class="confirm-delivery-btn" bindtap="confirmDelivery">确认送达</button>
+    </view>
   </view>
 
   <!-- 路线区域 -->
   <view class="route-section">
     <view class="route-item"><view class="dot green"></view><view class="addr">{{order.start_addr}}</view></view>
+    <!-- 中途装卸点 -->
+    <block wx:for="{{order.waypoints}}" wx:key="index">
+      <view class="route-line waypoint-line"></view>
+      <view class="route-item waypoint-item">
+        <view class="dot waypoint-dot"></view>
+        <view class="addr waypoint-addr">
+          <text class="waypoint-label">装卸点 {{index + 1}}</text>
+          <text class="waypoint-address">{{item.address}}</text>
+          <text class="waypoint-contact">{{item.contact_name}} {{item.contact_phone}}</text>
+          <view class="waypoint-verify-box" wx:if="{{order.status >= 3}}">
+            <input class="waypoint-verify-input" placeholder="输入取件码" bindinput="onWaypointCodeInput" data-index="{{index}}" value="{{item.verifyCode}}" />
+            <button class="waypoint-verify-btn" bindtap="verifyWaypointCode" data-index="{{index}}" data-goods-id="{{order.goods_id}}">验证</button>
+          </view>
+        </view>
+      </view>
+    </block>
     <view class="route-line"></view>
     <view class="route-item"><view class="dot red"></view><view class="addr">{{order.end_addr}}</view></view>
   </view>

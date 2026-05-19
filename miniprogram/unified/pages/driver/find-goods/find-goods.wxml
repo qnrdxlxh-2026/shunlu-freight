@@ -13,6 +13,7 @@
           <text class="to">{{item.end_addr}}</text>
         </view>
         <view class="price">¥{{item.price}}</view>
+        <view class="priority-tag" wx:if="{{item.showPriority}}">🚩 优先派单</view>
       </view>
 
       <view class="goods-info">

@@ -5,7 +5,8 @@ App({
     userInfo: null,
     token: null,
     currentRole: null,  // 1=商家 2=货车司机 3=私家车 5=个人
-    BASE_URL
+    BASE_URL,
+    permissions: []  // 新增：缓存用户权限
   },
 
   onLaunch() {
@@ -93,9 +94,42 @@ App({
     this.globalData.token = null;
     this.globalData.userInfo = null;
     this.globalData.currentRole = null;
+    this.globalData.permissions = [];
     wx.removeStorageSync('token');
     wx.removeStorageSync('userInfo');
     wx.removeStorageSync('currentRole');
     wx.reLaunch({ url: '/pages/role-select/role-select' });
+  },
+
+  // ========== 新增：权限管理相关方法 ==========
+  
+  // 获取当前用户权限（带缓存）
+  async getUserPermissions() {
+    // 如果已缓存，直接返回
+    if (this.globalData.permissions.length > 0) {
+      return this.globalData.permissions;
+    }
+
+    try {
+      const res = await this.get('/api/user/permissions');
+      const permissions = res.data || [];
+      this.globalData.permissions = permissions;
+      return permissions;
+    } catch (err) {
+      console.error('获取权限失败:', err);
+      return [];
+    }
+  },
+
+  // 检查用户是否有某个权限
+  async hasPermission(permission) {
+    const permissions = await this.getUserPermissions();
+    return permissions.includes(permission) || permissions.includes('*');
+  },
+
+  // 检查并刷新权限（登录后调用）
+  async refreshPermissions() {
+    this.globalData.permissions = [];
+    return await this.getUserPermissions();
   }
 });

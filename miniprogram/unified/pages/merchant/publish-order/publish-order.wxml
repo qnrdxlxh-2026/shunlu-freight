@@ -26,6 +26,13 @@
         <text class="label">发货电话</text>
         <input type="number" placeholder="发货人电话（必填）" bindinput="onSenderPhoneInput" value="{{sender_phone}}" />
       </view>
+      <!-- 取货乡镇 -->
+      <view class="form-item">
+        <text class="label">取货乡镇</text>
+        <picker range="{{township_names}}" value="{{start_township_index}}" bindchange="onStartTownshipChange">
+          <view class="picker-value">{{start_township || '请选择取货乡镇（自动识别）'}}<text class="picker-arrow">›</text></view>
+        </picker>
+      </view>
     </view>
 
     <!-- 送货信息 -->
@@ -51,6 +58,13 @@
       <view class="form-item">
         <text class="label">收货电话</text>
         <input type="number" placeholder="收货人电话（必填）" bindinput="onReceiverPhoneInput" value="{{receiver_phone}}" />
+      </view>
+      <!-- 送货乡镇 -->
+      <view class="form-item">
+        <text class="label">送货乡镇</text>
+        <picker range="{{township_names}}" value="{{end_township_index}}" bindchange="onEndTownshipChange">
+          <view class="picker-value">{{end_township || '请选择送货乡镇（自动识别）'}}<text class="picker-arrow">›</text></view>
+        </picker>
       </view>
     </view>
 
@@ -194,5 +208,22 @@
       </view>
       <button class="btn-use-price" bindtap="useSuggestedPrice">立即使用此价格</button>
     </view>
+  </view>
+</view>
+
+<!-- 发布成功二维码弹窗 -->
+<view class="qrcode-modal-mask {{showQRCode ? 'show' : ''}}" catchtap=""></view>
+<view class="qrcode-modal {{showQRCode ? 'show' : ''}}">
+  <view class="qrcode-header">
+    <text class="qrcode-title">✅ 发布成功</text>
+  </view>
+  <view class="qrcode-body">
+    <view class="qrcode-tip">司机扫码即可接单</view>
+    <image class="qrcode-img" src="{{qrCodeUrl}}" mode="aspectFit" />
+    <view class="goods-id">货源编号：{{publishedGoodsId}}</view>
+  </view>
+  <view class="qrcode-footer">
+    <button class="btn-save-qrcode" bindtap="saveQRCode">保存二维码</button>
+    <button class="btn-close-qrcode" bindtap="closeQRCode">完成</button>
   </view>
 </view>

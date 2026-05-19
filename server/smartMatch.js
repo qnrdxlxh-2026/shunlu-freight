@@ -39,6 +39,22 @@ const REGION_DATA = {
   "乐山": { lat: 29.5521, lng: 103.7662, keywords: ["乐山"], level: "city" },
 };
 
+// 乡镇数据（用于更精细的匹配）
+const TOWNSHIP_DATA = [
+  { name: "炉城镇", county: "康定", lat: 29.9986, lng: 101.9569, keywords: ["炉城镇"] },
+  { name: "姑咱镇", county: "康定", lat: 29.9876, lng: 102.1569, keywords: ["姑咱", "姑咱镇"] },
+  { name: "新都桥镇", county: "康定", lat: 30.0567, lng: 101.7812, keywords: ["新都桥", "新都桥镇"] },
+  { name: "塔公镇", county: "康定", lat: 30.3156, lng: 101.8123, keywords: ["塔公", "塔公镇"] },
+  { name: "泸桥镇", county: "泸定", lat: 29.9281, lng: 102.2335, keywords: ["泸桥", "泸桥镇"] },
+  { name: "冷碛镇", county: "泸定", lat: 29.8567, lng: 102.3123, keywords: ["冷碛", "冷碛镇"] },
+  { name: "磨西镇", county: "泸定", lat: 29.6567, lng: 102.0123, keywords: ["磨西", "磨西镇"] },
+  { name: "章谷镇", county: "丹巴", lat: 30.8786, lng: 101.8906, keywords: ["章谷", "章谷镇"] },
+  { name: "河口镇", county: "雅江", lat: 30.0315, lng: 101.0146, keywords: ["河口", "河口镇"] },
+  { name: "高城镇", county: "理塘", lat: 30.0000, lng: 100.2700, keywords: ["高城", "高城镇"] },
+  { name: "金珠镇", county: "稻城", lat: 29.0369, lng: 100.2983, keywords: ["金珠", "金珠镇"] },
+  { name: "色柯镇", county: "色达", lat: 32.2681, lng: 100.3322, keywords: ["色柯", "色柯镇"] },
+];
+
 // ========== 工具函数 ==========
 
 /**
@@ -75,10 +91,10 @@ function estimateHighwayPercentage(startAddr, endAddr, distance) {
  * 从地址字符串中识别区域
  * 返回 { name, lat, lng, level } 或 null
  */
-function identifyRegion(addr) {
+function identifyRegion(addr, checkTownship = false) {
   if (!addr) return null;
 
-  // 优先匹配关键词
+  // 优先匹配关键词(县/市)
   for (const [name, info] of Object.entries(REGION_DATA)) {
     for (const kw of info.keywords) {
       if (addr.includes(kw)) {
@@ -92,6 +108,17 @@ function identifyRegion(addr) {
   if (countyMatch) {
     const region = REGION_DATA[countyMatch[1]];
     if (region) return { name: countyMatch[1], ...region };
+  }
+
+  // 如果启用乡镇匹配，继续匹配乡镇
+  if (checkTownship) {
+    for (const tw of TOWNSHIP_DATA) {
+      for (const kw of tw.keywords) {
+        if (addr.includes(kw)) {
+          return { name: tw.name, lat: tw.lat, lng: tw.lng, level: 'township', county: tw.county };
+        }
+      }
+    }
   }
 
   return null;
@@ -610,12 +637,81 @@ function globalOptimalMatch(goods, routes, users, orders) {
   return pairs;
 }
 
+/**
+ * 计算司机优先派单分数
+ * 综合考虑: 评分、完成订单数、拒单率、最近活跃时间
+ */
+function calcPriorityScore(driverId, users, orders, driverLocations) {
+  const driver = users.find(u => u.id === driverId);
+  if (!driver) return { score: 0, desc: '司机不存在' };
+
+  // 1. 评分 (满分50)
+  const rating = driver.rating || 0;
+  const ratingScore = Math.min(rating * 10, 50);
+
+  // 2. 完成订单数 (满分30)
+  const completedOrders = orders.filter(o => o.driver_id === driverId && o.status === 4);
+  const completionScore = Math.min(completedOrders.length * 3, 30);
+
+  // 3. 拒单率 (满分20, 拒单越多分越低)
+  const totalOrders = orders.filter(o => o.driver_id === driverId);
+  const rejectedOrders = orders.filter(o => o.driver_id === driverId && o.status === 6);
+  const rejectionRate = totalOrders.length > 0 ? rejectedOrders.length / totalOrders.length : 0;
+  const rejectionScore = Math.max(20 - rejectionRate * 100, 0);
+
+  // 4. 最近活跃 (满分10, 1小时内活跃满分, 超过24小时0分)
+  const lastActive = driver.last_active_time ? new Date(driver.last_active_time) : new Date(0);
+  const minutesSinceActive = (Date.now() - lastActive) / 60000;
+  const activeScore = minutesSinceActive <= 60 ? 10 : minutesSinceActive <= 1440 ? 5 : 0;
+
+  const total = Math.round(ratingScore + completionScore + rejectionScore + activeScore);
+
+  return {
+    score: total,
+    desc: `评分${rating}分,完成${completedOrders.length}单,拒单率${(rejectionRate * 100).toFixed(1)}%`,
+    details: {
+      ratingScore,
+      completionScore,
+      rejectionScore,
+      activeScore
+    }
+  };
+}
+
+/**
+ * 多司机优先派单
+ * 当有货源需要派单时,优先推荐高分司机
+ * @param {Array} drivers - 匹配的司机列表(已按匹配度排序)
+ * @param {Array} users - 所有用户
+ * @param {Array} orders - 所有订单
+ * @param {number} limit - 推荐数量上限
+ * @returns {Array} 按优先派单分数重新排序的司机列表
+ */
+function prioritizeDrivers(drivers, users, orders, limit = 5) {
+  const scoredDrivers = drivers.map(d => {
+    const priority = calcPriorityScore(d.driver_id, users, orders);
+    return {
+      ...d,
+      priorityScore: priority.score,
+      priorityInfo: priority
+    };
+  });
+
+  // 按优先派单分数降序排列
+  scoredDrivers.sort((a, b) => b.priorityScore - a.priorityScore);
+
+  return scoredDrivers.slice(0, limit);
+}
+
 module.exports = {
   matchGoodsForDriver,
   matchDriversForGoods,
   globalOptimalMatch,
+  prioritizeDrivers,
+  calcPriorityScore,
   identifyRegion,
   isSameDirection,
   haversineDistance,
-  REGION_DATA
+  REGION_DATA,
+  TOWNSHIP_DATA
 };

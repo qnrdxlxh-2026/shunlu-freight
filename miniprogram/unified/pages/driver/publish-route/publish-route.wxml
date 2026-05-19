@@ -10,11 +10,33 @@
       <text class="arrow">›</text>
     </view>
 
+    <!-- 出发乡镇 -->
+    <view class="form-item">
+      <text class="label">出发乡镇</text>
+      <picker range="{{township_names}}" value="{{start_township_index}}" bindchange="onStartTownshipChange">
+        <view class="value {{start_township ? '' : 'placeholder'}}">
+          {{start_township || '请选择出发乡镇（自动识别）'}}
+        </view>
+      </picker>
+      <text class="arrow">›</text>
+    </view>
+
     <view class="form-item" bindtap="chooseEnd">
       <text class="label">目的地</text>
       <view class="value {{form.end_addr ? '' : 'placeholder'}}">
         {{form.end_addr || '点击地图选址'}}
       </view>
+      <text class="arrow">›</text>
+    </view>
+
+    <!-- 目的乡镇 -->
+    <view class="form-item">
+      <text class="label">目的乡镇</text>
+      <picker range="{{township_names}}" value="{{end_township_index}}" bindchange="onEndTownshipChange">
+        <view class="value {{end_township ? '' : 'placeholder'}}">
+          {{end_township || '请选择目的乡镇（自动识别）'}}
+        </view>
+      </picker>
       <text class="arrow">›</text>
     </view>
 

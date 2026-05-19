@@ -40,6 +40,11 @@
   <view class="quick-entry">
     <view class="quick-title">快捷服务</view>
     <view class="quick-grid">
+      <view class="quick-item" bindtap="goScanOrder">
+        <view class="quick-icon bg-purple">📷</view>
+        <view class="quick-name">扫码接单</view>
+        <view class="quick-desc">扫描货源二维码</view>
+      </view>
       <view class="quick-item" bindtap="goPublishRoute">
         <view class="quick-icon bg-green">📍</view>
         <view class="quick-name">发布行程</view>

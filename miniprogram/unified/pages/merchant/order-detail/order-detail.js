@@ -43,6 +43,10 @@ Page({
         if (order.photo_urls && order.photo_urls.length > 0) {
           this.setData({ orderPhotos: order.photo_urls });
         }
+        // 加载waypoints二维码
+        if (order.waypoints && order.waypoints.length > 0 && order.goods_id) {
+          this.loadWaypointQRCode(order.goods_id, order.waypoints);
+        }
         // 如果没有二维码URL，尝试加载
         if (!order.qr_url) {
           this.loadQRCode(id);
@@ -55,6 +59,26 @@ Page({
     }).catch(() => {
       wx.showToast({ title: '加载失败', icon: 'none' });
     });
+  },
+
+  // 加载中途装卸点二维码
+  loadWaypointQRCode(goodsId, waypoints) {
+    const promises = waypoints.map((wp, index) => {
+      return app.get(`/api/goods/${goodsId}/waypoint/${index}/qrcode`);
+    });
+    Promise.all(promises).then(results => {
+      const updatedWaypoints = results.map((res, index) => {
+        if (res.data) {
+          return {
+            ...waypoints[index],
+            qr_url: res.data.qr_url || '',
+            pickup_code: res.data.pickup_code || ''
+          };
+        }
+        return waypoints[index];
+      });
+      this.setData({ 'order.waypoints': updatedWaypoints });
+    }).catch(() => {});
   },
 
   // 加载二维码

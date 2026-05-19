@@ -49,7 +49,7 @@
   "compileType": "miniprogram",
   "libVersion": "3.16.0",
   "appid": "wx2eeb6db23cb14dca",
-  "projectname": "shunlu-freight-unified",
+  "projectname": "huoshunlu-freight-unified",
   "condition": {},
   "simulatorPluginLibVersion": {
     "wxext14566970e7e9f62": "2.27.3"

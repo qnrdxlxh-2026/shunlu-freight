@@ -19,3 +19,62 @@
 .value.price{color:#f5222d;font-weight:600}
 .action-section{margin-top:32rpx}
 .pay-btn{background:#1890ff;color:#fff;border-radius:50rpx;padding:28rpx 0;font-size:32rpx;text-align:center}
+
+/* 中途装卸点二维码样式 */
+.qr-waypoints {
+  margin-top: 24rpx;
+}
+.waypoint-qr-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+}
+.waypoint-qr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+.waypoint-qr-index {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+}
+.waypoint-qr-type {
+  font-size: 24rpx;
+  padding: 4rpx 12rpx;
+  background: #1890ff;
+  color: #fff;
+  border-radius: 8rpx;
+}
+.waypoint-qr-info {
+  margin-bottom: 16rpx;
+}
+.waypoint-qr-code-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f0f0f0;
+  padding: 16rpx;
+  border-radius: 16rpx;
+  margin-bottom: 16rpx;
+}
+.waypoint-qr-code-label {
+  font-size: 28rpx;
+  color: #666;
+  margin-right: 12rpx;
+}
+.waypoint-qr-code {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #f5222d;
+}
+.waypoint-qr-img-box {
+  display: flex;
+  justify-content: center;
+}
+.waypoint-qr-img {
+  width: 200rpx;
+  height: 200rpx;
+}

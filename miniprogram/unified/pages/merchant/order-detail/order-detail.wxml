@@ -44,6 +44,32 @@
       </view>
     </view>
 
+    <!-- 中途装卸点二维码区域 -->
+    <view class="qr-section qr-waypoints" wx:if="{{order.waypoints && order.waypoints.length > 0}}">
+      <view class="qr-title">🛤️ 中途装卸点</view>
+      <view class="qr-desc">每个装卸点都有独立的二维码和取件码</view>
+      <block wx:for="{{order.waypoints}}" wx:key="index">
+        <view class="waypoint-qr-card">
+          <view class="waypoint-qr-header">
+            <text class="waypoint-qr-index">装卸点 {{index + 1}}</text>
+            <text class="waypoint-qr-type">{{item.type === 'pickup' ? '装货' : '卸货'}}</text>
+          </view>
+          <view class="waypoint-qr-info">
+            <view class="info-row"><text class="label">地址</text><text class="value">{{item.address}}</text></view>
+            <view class="info-row"><text class="label">联系人</text><text class="value">{{item.contact_name}}</text></view>
+            <view class="info-row"><text class="label">电话</text><text class="value">{{item.contact_phone}}</text></view>
+          </view>
+          <view class="waypoint-qr-code-box">
+            <text class="waypoint-qr-code-label">取件码</text>
+            <text class="waypoint-qr-code">{{item.pickup_code}}</text>
+          </view>
+          <view class="waypoint-qr-img-box" wx:if="{{item.qr_url}}">
+            <image src="{{item.qr_url}}" class="waypoint-qr-img" mode="aspectFit" />
+          </view>
+        </view>
+      </block>
+    </view>
+
     <!-- 货物照片（如果有） -->
     <view class="section" wx:if="{{orderPhotos.length > 0}}">
       <view class="section-title">📷 货物照片</view>

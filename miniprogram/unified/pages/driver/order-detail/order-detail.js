@@ -2,7 +2,7 @@ const app = getApp();
 const { formatDateTime, getOrderStatusText, getOrderStatusClass, formatAmount } = require('../../../utils/util.js');
 
 Page({
-  data: { order: null, orderId: null },
+  data: { order: null, orderId: null, deliveryCode: '' },
 
   onLoad(options) {
     this.setData({ orderId: options.id });
@@ -71,6 +71,69 @@ Page({
         }
       }
     });
+  },
+
+  // 导航去取货点
+  navigateToStart() {
+    const order = this.data.order;
+    if (!order.start_lat || !order.start_lng) {
+      wx.showToast({ title: '取货点无坐标', icon: 'none' });
+      return;
+    }
+    wx.openLocation({
+      latitude: order.start_lat,
+      longitude: order.start_lng,
+      name: order.start_addr,
+      address: order.start_addr,
+      scale: 16
+    });
+  },
+
+  // 导航去目的地
+  navigateToEnd() {
+    const order = this.data.order;
+    if (!order.end_lat || !order.end_lng) {
+      wx.showToast({ title: '目的地无坐标', icon: 'none' });
+      return;
+    }
+    wx.openLocation({
+      latitude: order.end_lat,
+      longitude: order.end_lng,
+      name: order.end_addr,
+      address: order.end_addr,
+      scale: 16
+    });
+  },
+
+  // 取件码输入
+  onDeliveryCodeInput(e) {
+    this.setData({ deliveryCode: e.detail.value });
+  },
+
+  // 确认送达（有取件码）
+  async confirmDelivery() {
+    const order = this.data.order;
+    const inputCode = this.data.deliveryCode;
+    if (!inputCode || inputCode.length !== 6) {
+      wx.showToast({ title: '请输入6位取件码', icon: 'none' });
+      return;
+    }
+    // 验证取件码
+    try {
+      wx.showLoading({ title: '验证中...' });
+      const res = await app.post(`/api/orders/${this.data.orderId}/verify`, { code: inputCode, action: 'delivery' });
+      wx.hideLoading();
+      if (res.code === 0) {
+        wx.showToast({ title: '送达成功', icon: 'success' });
+        this.setData({ deliveryCode: '' });
+        this.loadOrder();
+      } else {
+        wx.showToast({ title: res.msg || '取件码错误', icon: 'none' });
+      }
+    } catch (err) {
+      wx.hideLoading();
+      wx.showToast({ title: '网络错误', icon: 'none' });
+    }
   },
 
   // 确认送达（支持扫码或填码）
@@ -189,6 +252,49 @@ Page({
       }
     } catch (err) {
       wx.showToast({ title: '查询失败', icon: 'none' });
+    }
+  },
+
+  // ===== Waypoint取件码验证 =====
+  // 输入waypoint取件码
+  onWaypointCodeInput(e) {
+    const index = e.currentTarget.dataset.index;
+    const code = e.detail.value;
+    this.setData({
+      [`order.waypoints[${index}].verifyCode`]: code
+    });
+  },
+
+  // 验证waypoint取件码
+  async verifyWaypointCode(e) {
+    const index = e.currentTarget.dataset.index;
+    const goodsId = e.currentTarget.dataset.goodsId;
+    const waypoint = this.data.order.waypoints[index];
+    const code = waypoint.verifyCode;
+    
+    if (!code) {
+      wx.showToast({ title: '请输入取件码', icon: 'none' });
+      return;
+    }
+    
+    wx.showLoading({ title: '验证中...' });
+    try {
+      const res = await app.post(`/api/goods/${goodsId}/waypoint/${index}/verify`, { code });
+      wx.hideLoading();
+      
+      if (res.code === 0) {
+        wx.showToast({ title: '验证成功', icon: 'success' });
+        // 标记该waypoint为已验证
+        this.setData({
+          [`order.waypoints[${index}].verified`]: true,
+          [`order.waypoints[${index}].verifyCode`]: ''
+        });
+      } else {
+        wx.showToast({ title: res.msg || '验证失败', icon: 'none' });
+      }
+    } catch (err) {
+      wx.hideLoading();
+      wx.showToast({ title: '网络错误', icon: 'none' });
     }
   }
 });

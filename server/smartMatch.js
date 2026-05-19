@@ -254,6 +254,22 @@ function calcTimeScore(route, goods) {
 }
 
 /**
+ * 计算载重匹配度 - 货车专用（基于实际剩余载重）
+ */
+function calcCapacityScoreForTruck(actualRemainSpace, goods) {
+  const weight = goods.weight || 0;
+
+  if (actualRemainSpace <= 0 || weight > actualRemainSpace) {
+    return { score: 0, desc: "超出剩余载重", blocked: true };
+  }
+
+  if (weight <= 0) return { score: 60, desc: "未知重量" };
+  if (weight <= actualRemainSpace * 0.5) return { score: 90, desc: "载重充裕" };
+  if (weight <= actualRemainSpace) return { score: 70, desc: "载重匹配" };
+  return { score: 30, desc: "载重偏紧" };
+}
+
+/**
  * 计算载重匹配度
  */
 function calcCapacityScore(route, goods, driverRole) {
@@ -383,13 +399,33 @@ function matchGoodsForDriver(user, goods, routes, orders, driverMode = 0) {
   const driverRoutes = routes.filter(r => r.driver_id === userId && r.status === 1);
   const driverRoute = driverRoutes[0]; // 取最新的活跃路线
 
+  // 计算司机当前已接单的总重量（进行中的订单：状态1-5）
+  const activeStatuses = [1, 2, 3, 4, 5];
+  const acceptedWeight = orders
+    .filter(o => o.driver_id === userId && activeStatuses.includes(o.status))
+    .reduce((sum, o) => {
+      // 从货源中获取重量
+      const orderGoods = goods.find(g => g.id === o.goods_id);
+      return sum + (orderGoods ? (orderGoods.weight || 0) : 0);
+    }, 0);
+
+  // 计算实际剩余载重 = 路线剩余载重 - 已接单总重量
+  let actualRemainSpace = 0;
+  if (driverRoute) {
+    const routeRemainSpace = driverRoute.remain_space || driverRoute.space || 0;
+    actualRemainSpace = routeRemainSpace - acceptedWeight;
+  }
+
   // 司机历史接单统计
   const completedOrders = orders.filter(o => o.driver_id === userId && o.status === 4);
   const reliabilityScore = Math.min(completedOrders.length * 5, 20); // 信誉加分,最多20分
 
   const results = goods.filter(g => g.status === 1).map(g => {
     // 1. 载重匹配(有blocked标记的先排除)
-    const capacity = calcCapacityScore(driverRoute || {}, g, driverRole);
+    // 货车使用实际剩余载重，私家车使用原有逻辑
+    const capacity = driverRole === 2 && driverRoute
+      ? calcCapacityScoreForTruck(actualRemainSpace, g)
+      : calcCapacityScore(driverRoute || {}, g, driverRole);
 
     // 2. 货值风险
     const valueRisk = calcValueRisk(g, driverRole);
@@ -457,7 +493,9 @@ function matchGoodsForDriver(user, goods, routes, orders, driverMode = 0) {
         capacity,
         price,
         valueRisk,
-        reliabilityBonus: reliabilityScore
+        reliabilityBonus: reliabilityScore,
+        acceptedWeight,
+        actualRemainSpace
       }
     };
   });

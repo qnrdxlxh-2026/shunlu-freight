@@ -16,6 +16,10 @@ Page({
     order: null,
     statusText,
     orderPhotos: [],
+    // 司机位置
+    driverLocation: null,
+    driverMarkers: [],
+    locationTimer: null,
     // 评分相关
     hasRated: false,
     comment: '',
@@ -50,6 +54,14 @@ Page({
         // 如果没有二维码URL，尝试加载
         if (!order.qr_url) {
           this.loadQRCode(id);
+        }
+        // 如果配送中，加载司机位置
+        if (order.status === 3 && order.driver_id) {
+          this.loadDriverLocation(order.driver_id);
+          // 每30秒刷新司机位置
+          this.data.locationTimer = setInterval(() => {
+            this.loadDriverLocation(order.driver_id);
+          }, 30000);
         }
         // 已完成订单，加载评分状态
         if (order.status === 6 && order.driver_id) {
@@ -173,6 +185,34 @@ Page({
   callDriver() {
     const phone = this.data.order.driver_phone;
     if (phone) wx.makePhoneCall({ phoneNumber: String(phone) });
+  },
+
+  // 加载司机实时位置
+  loadDriverLocation(driverId) {
+    app.get('/api/driver/location/' + driverId).then(res => {
+      if (res.data && res.data.lat) {
+        const timeStr = res.data.updated_at ? new Date(res.data.updated_at).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}) : '刚刚';
+        this.setData({
+          driverLocation: { lat: res.data.lat, lng: res.data.lng, timeStr },
+          driverMarkers: [{
+            id: 1,
+            latitude: res.data.lat,
+            longitude: res.data.lng,
+            width: 32,
+            height: 40,
+            iconPath: '/assets/icons/driver-marker.png',
+            title: '司机位置',
+            callout: { content: '司机位置', display: 'ALWAYS', fontSize: 12, borderRadius: 4, padding: 4 }
+          }]
+        });
+      }
+    }).catch(() => {});
+  },
+
+  onUnload() {
+    if (this.data.locationTimer) {
+      clearInterval(this.data.locationTimer);
+    }
   },
 
   // 支付订单

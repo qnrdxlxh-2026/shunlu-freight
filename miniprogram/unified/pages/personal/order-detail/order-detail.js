@@ -6,6 +6,7 @@ Page({
   data: {
     order: null, orderId: null,
     hasRated: false, comment: '', ratedComment: '',
+    driverLocation: null, driverMarkers: [], locationTimer: null,
     ratingDimensions: [
       { key: 'timeliness', label: '准时性', score: 0 },
       { key: 'punctuality', label: '守时性', score: 0 },
@@ -34,6 +35,13 @@ Page({
       this.setData({ order });
       // 没有取货码/送达码时主动加载
       if (!order.pickup_code) this.loadCodes();
+      // 如果配送中，加载司机位置
+      if (order.status === 3 && order.driver_id) {
+        this.loadDriverLocation(order.driver_id);
+        this.data.locationTimer = setInterval(() => {
+          this.loadDriverLocation(order.driver_id);
+        }, 30000);
+      }
       // 已完成订单检查评分状态
       if (order.status === 6 && order.driver_id) {
         this.loadRatingStatus(order.driver_id);
@@ -41,6 +49,30 @@ Page({
     } catch (err) {
       wx.showToast({ title: err.message || '加载失败', icon: 'none' });
     }
+  },
+
+  loadDriverLocation(driverId) {
+    app.get('/api/driver/location/' + driverId).then(res => {
+      if (res.data && res.data.lat) {
+        const timeStr = res.data.updated_at ? new Date(res.data.updated_at).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}) : '刚刚';
+        this.setData({
+          driverLocation: { lat: res.data.lat, lng: res.data.lng, timeStr },
+          driverMarkers: [{
+            id: 1,
+            latitude: res.data.lat,
+            longitude: res.data.lng,
+            width: 32, height: 40,
+            iconPath: '/assets/icons/driver-marker.png',
+            title: '司机位置',
+            callout: { content: '司机位置', display: 'ALWAYS', fontSize: 12, borderRadius: 4, padding: 4 }
+          }]
+        });
+      }
+    }).catch(() => {});
+  },
+
+  onUnload() {
+    if (this.data.locationTimer) clearInterval(this.data.locationTimer);
   },
 
   async loadCodes() {

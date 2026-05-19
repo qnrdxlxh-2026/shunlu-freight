@@ -646,6 +646,18 @@ async function handleApi(req, res, pathname, method) {
     goods.status = 2; // 已接单
     goods.pickup_code = pickupCode;
     
+    // 货车拼载：扣减剩余载重
+    if (user.role === 2) {
+      const driverRoute = db.routes.find(r => r.driver_id === user.userId && r.status === 1);
+      if (driverRoute && goods.weight) {
+        driverRoute.remain_space = (driverRoute.remain_space || driverRoute.space || 0) - goods.weight;
+        // 如果已满载，更新状态
+        if (driverRoute.remain_space <= 0) {
+          driverRoute.status = 2; // 已满载
+        }
+      }
+    }
+    
     saveDB(db);
     
     // 发送短信给收件人
@@ -860,6 +872,21 @@ async function handleApi(req, res, pathname, method) {
       order.status = 6; // 已签收
       order.sign_time = new Date().toISOString();
       order.update_time = new Date().toISOString();
+      
+      // 货车拼载：释放载重
+      const orderGoods = db.goods.find(g => g.id === order.goods_id);
+      const driver = db.users.find(u => u.id === order.driver_id);
+      if (driver && driver.role === 2 && orderGoods && orderGoods.weight) {
+        const driverRoute = db.routes.find(r => r.driver_id === order.driver_id && r.status === 2);
+        if (driverRoute) {
+          driverRoute.remain_space = (driverRoute.remain_space || 0) + orderGoods.weight;
+          // 如果重新有载重空间，恢复状态
+          if (driverRoute.remain_space > 0) {
+            driverRoute.status = 1; // 恢复活跃
+          }
+        }
+      }
+      
       // 创建结算单（不再直接打款，改为待审核）
       createSettlement(order, db);
       saveDB(db);
@@ -963,6 +990,44 @@ async function handleApi(req, res, pathname, method) {
     if (!user || (user.role !== 2 && user.role !== 3)) return sendJson(res, { code: 401, msg: '未授权' }, 401);
     const list = db.orders.filter(o => o.driver_id === user.userId);
     return sendJson(res, { code: 0, data: list });
+  }
+
+  // 获取司机当前进行中的订单（含剩余载重信息）
+  if (pathname === '/api/driver/active-orders' && method === 'GET') {
+    if (!user || (user.role !== 2 && user.role !== 3)) return sendJson(res, { code: 401, msg: '未授权' }, 401);
+    // 进行中的订单状态：1-待支付, 2-待取货, 3-配送中, 4-运输中, 5-已送达
+    const activeStatuses = [1, 2, 3, 4, 5];
+    const activeOrders = db.orders.filter(o => 
+      o.driver_id === user.userId && activeStatuses.includes(o.status)
+    ).map(o => {
+      // 附加货源信息
+      const goods = db.goods.find(g => g.id === o.goods_id);
+      return {
+        ...o,
+        goods_weight: goods ? goods.weight : 0,
+        goods_name: goods ? (goods.remark || '货物') : '货物',
+        start_addr: goods ? goods.start_addr : '',
+        end_addr: goods ? goods.end_addr : ''
+      };
+    });
+    
+    // 计算当前已接单总重量
+    const acceptedWeight = activeOrders.reduce((sum, o) => sum + (o.goods_weight || 0), 0);
+    
+    // 获取司机当前路线的剩余载重
+    const driverRoute = db.routes.find(r => r.driver_id === user.userId && r.status === 1);
+    const remainSpace = driverRoute ? (driverRoute.remain_space || driverRoute.space || 0) : 0;
+    
+    return sendJson(res, {
+      code: 0,
+      data: {
+        orders: activeOrders,
+        acceptedWeight,
+        remainSpace,
+        totalSpace: driverRoute ? (driverRoute.space || 0) : 0,
+        orderCount: activeOrders.length
+      }
+    });
   }
 
   // 司机订单详情

@@ -322,6 +322,17 @@ function getAuditStatus() {
   return get('/api/driver/audit-status');
 }
 
+// ========== 司机位置 ==========
+// 上报司机当前位置 → 后端: POST /api/driver/location
+function reportDriverLocation(lat, lng) {
+  return post('/api/driver/location', { lat, lng });
+}
+
+// 获取司机实时位置 → 后端: GET /api/driver/location/:orderId
+function getDriverLocation(orderId) {
+  return get(`/api/driver/location/${orderId}`);
+}
+
 // ========== 投诉 ==========
 // 提交投诉 → 后端: /api/complaint/submit
 function submitComplaint(data) {
@@ -411,4 +422,7 @@ module.exports = {
   // 投诉
   submitComplaint,
   getMyComplaints,
+  // 司机位置
+  reportDriverLocation,
+  getDriverLocation,
 };

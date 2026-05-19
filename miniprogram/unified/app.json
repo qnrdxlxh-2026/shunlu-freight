@@ -82,7 +82,14 @@
       "desc": "用于选择地址和导航"
     }
   },
+  "plugins": {
+    "chooseLocation": {
+      "version": "1.1.7",
+      "provider": "wx76a9a06e79cf4e23"
+    }
+  },
   "requiredPrivateInfos": [
-    "chooseLocation"
+    "chooseLocation",
+    "getLocation"
   ]
 }

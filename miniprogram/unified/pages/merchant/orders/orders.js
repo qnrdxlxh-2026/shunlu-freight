@@ -1,14 +1,14 @@
 const app = getApp();
 
-// 简化版状态：1=待接单, 2=待取货, 3=配送中, 4=已完成, 5=已取消, 6=已签收
-const statusMap = { 1: '待接单', 2: '待取货', 3: '配送中', 4: '已完成', 5: '已取消', 6: '已签收' };
+// 订单状态映射
+const statusMap = { 0: '待支付', 1: '待接单', 2: '待取货', 3: '配送中', 4: '已完成', 5: '已取消', 6: '已签收' };
 
 Page({
   data: {
     orders: [],
     type: 'all',
-    // 简化Tab：只显示新订单、进行中、已完成
-    tabs: ['新订单', '进行中', '已完成'],
+    // 保持所有Tab选项
+    tabs: ['全部', '待接单', '待取货', '配送中', '已完成', '已签收', '已取消'],
     tabIndex: 0,
     loading: false,
     statusText: statusMap
@@ -24,8 +24,9 @@ Page({
     this.loadOrders();
   },
 
+  // 点击Tab切换
   onChangeTab(e) {
-    const index = e.detail !== undefined ? e.detail.value : e.currentTarget.dataset.index;
+    const index = e.currentTarget.dataset.index;
     this.setData({ tabIndex: index });
     this.loadOrders();
   },
@@ -34,21 +35,27 @@ Page({
     this.setData({ loading: true });
     app.get('/api/merchant/orders').then(res => {
       const allOrders = res.data || [];
-      // 简化Tab筛选逻辑
-      // tabIndex: 0=新订单(1), 1=进行中(2,3), 2=已完成(4,6)
-      const tabStatusMap = {
-        0: [1],       // 新订单：待接单
-        1: [2, 3],   // 进行中：待取货、配送中
-        2: [4, 6]   // 已完成：已完成、已签收
-      };
-      const filterStatuses = tabStatusMap[this.data.tabIndex] || [];
-      const orders = allOrders.filter(o => filterStatuses.includes(o.status));
+      // 按Tab筛选状态
+      const statusMap2 = { 0: null, 1: 1, 2: 2, 3: 3, 4: 4, 5: 6, 6: 5 };
+      const filterStatus = statusMap2[this.data.tabIndex];
+      const orders = filterStatus !== null ? allOrders.filter(o => o.status === filterStatus) : allOrders;
       this.setData({ orders, loading: false });
     }).catch(err => {
       wx.showToast({ title: err.message || '加载失败', icon: 'none' });
       this.setData({ loading: false });
     });
   },
+
+  // 点击订单查看详情
+  goDetail(e) {
+    const id = e.currentTarget.dataset.id;
+    wx.navigateTo({ url: '/pages/merchant/order-detail/order-detail?id=' + id });
+  },
+
+  goPublish() {
+    wx.navigateTo({ url: '/pages/merchant/publish-order/publish-order' });
+  }
+});
 
   goDetail(e) {
     wx.navigateTo({ url: '/pages/merchant/order-detail/order-detail?id=' + e.currentTarget.dataset.id });

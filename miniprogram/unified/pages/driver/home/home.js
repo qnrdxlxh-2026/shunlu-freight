@@ -1,6 +1,7 @@
 const app = getApp();
 const api = require('../../../utils/api.js');
 const { getOrderStatusText, getOrderStatusClass, formatAmount } = require('../../../utils/util.js');
+const gpsReporter = require('../../../utils/gpsReporter.js');
 
 Page({
   data: {
@@ -20,6 +21,10 @@ Page({
     this.setData({ userInfo });
   },
 
+  onUnload() {
+    gpsReporter.stopGPSReport();
+  },
+
   onShow() {
     // 登录检查
     if (!app.globalData.token) {
@@ -35,6 +40,10 @@ Page({
       const list = this.getTabBar().data.list;
       const idx = list.findIndex(item => item.pagePath === currentPath);
       this.getTabBar().setData({ selected: idx >= 0 ? idx : 0 });
+    }
+    // 登录后启动 GPS 实时上报
+    if (app.globalData.token) {
+      gpsReporter.startGPSReport();
     }
     this.loadData();
   },

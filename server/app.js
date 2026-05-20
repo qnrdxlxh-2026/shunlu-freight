@@ -746,6 +746,18 @@ async function handleApi(req, res, pathname, method) {
     return Buffer.from(JSON.stringify(data)).toString('base64');
   }
 
+  // Haversine公式计算两点距离（公里）
+  function calcDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
   if (pathname.startsWith('/api/orders/') && pathname.endsWith('/qrcode') && method === 'GET') {
     const orderId = parseInt(pathname.split('/')[3]);
     const order = db.orders.find(o => o.id === orderId);
@@ -2290,9 +2302,46 @@ async function handleApi(req, res, pathname, method) {
 
   // GET /api/driver/location/:id - 获取指定司机位置
   if (pathname.startsWith('/api/driver/location/') && method === 'GET') {
-    const driverId = parseInt(pathname.split('/')[4]);
-    const location = db.driver_locations?.find(l => l.driver_id === driverId);
-    return sendJson(res, { code: 0, data: location ? { lat: location.lat, lng: location.lng, address: location.address || '', updated_at: location.updated_at } : null });
+    const idStr = pathname.split('/')[4];
+    // 支持按order_id查（带driver_id返回位置信息）
+    const isOrderId = idStr.startsWith('order-');
+    let location = null;
+    let distance = null;
+    let eta = null;
+    
+    if (isOrderId) {
+      // 按订单ID查司机位置 + 计算距离
+      const orderId = parseInt(idStr.replace('order-', ''));
+      const order = db.orders.find(o => o.id === orderId);
+      if (!order || !order.driver_id) return sendJson(res, { code: 404, msg: '订单或司机不存在' }, 404);
+      location = db.driver_locations?.find(l => l.driver_id === order.driver_id);
+      
+      // 计算司机到目的地的距离
+      if (location && location.lat && location.lng) {
+        const destLat = order.receiver_lat || (order.goods && db.goods.find(g => g.id === order.goods_id)?.receiver_lat);
+        const destLng = order.receiver_lng || (order.goods && db.goods.find(g => g.id === order.goods_id)?.receiver_lng);
+        if (destLat && destLng) {
+          distance = calcDistance(location.lat, location.lng, destLat, destLng);
+          // 预计到达时间：按汽车均速30km/h估算
+          eta = Math.ceil((distance / 30) * 60); // 分钟
+        }
+      }
+      
+      return sendJson(res, { code: 0, data: {
+        ...location ? { lat: location.lat, lng: location.lng, address: location.address || '', updated_at: location.updated_at } : null,
+        distance: distance ? Math.round(distance * 10) / 10 : null,
+        eta: eta || null,
+        driver_id: order.driver_id,
+        driver_name: db.users.find(u => u.id === order.driver_id)?.real_name || '',
+        driver_phone: db.users.find(u => u.id === order.driver_id)?.phone || '',
+        status: order.status
+      }});
+    } else {
+      // 按司机ID查
+      const driverId = parseInt(idStr);
+      location = db.driver_locations?.find(l => l.driver_id === driverId);
+      return sendJson(res, { code: 0, data: location ? { lat: location.lat, lng: location.lng, address: location.address || '', updated_at: location.updated_at } : null });
+    }
   }
 
   // ========== 后台佣金管理 API (V1.2新增) ==========

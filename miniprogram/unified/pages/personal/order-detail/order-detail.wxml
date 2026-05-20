@@ -57,6 +57,18 @@
   <!-- 司机实时位置（配送中时显示） -->
   <view class="driver-location-section" wx:if="{{order.status == 3 && driverLocation}}">
     <view class="location-title">🚛 司机实时位置</view>
+    <!-- 距离和ETA卡片 -->
+    <view style="background: linear-gradient(135deg, #f3e5f5, #fff3e0); border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-around; align-items: center;">
+      <view style="text-align: center;">
+        <text style="font-size: 24px; font-weight: bold; color: #6a1b9a;">{{driverDistance || '--'}}</text>
+        <text style="display: block; font-size: 11px; color: #888; margin-top: 2px;">距您</text>
+      </view>
+      <view style="width: 1px; height: 36px; background: #ddd;"></view>
+      <view style="text-align: center;">
+        <text style="font-size: 24px; font-weight: bold; color: #ef6c00;">{{driverEta || '--'}}</text>
+        <text style="display: block; font-size: 11px; color: #888; margin-top: 2px;">预计到达</text>
+      </view>
+    </view>
     <map
       class="driver-map"
       latitude="{{driverLocation.lat}}"
@@ -66,7 +78,15 @@
       show-location
       style="width: 100%; height: 200px; border-radius: 8px;"
     ></map>
-    <text style="font-size: 12px; color: #999; margin-top: 6px; display: block;">更新于 {{driverLocation.timeStr}}</text>
+    <text style="font-size: 12px; color: #999; margin-top: 6px; display: block;">📍 位置更新于 {{driverLocation.timeStr}}（每5秒自动刷新）</text>
+  </view>
+
+  <!-- 配送中但尚未获取位置 -->
+  <view class="driver-location-section" wx:if="{{order.status == 3 && !driverLocation}}">
+    <view style="text-align: center; padding: 20px; color: #999;">
+      <text style="font-size: 32px;">🚛</text>
+      <text style="display: block; margin-top: 8px;">司机正在配送中，位置信息加载中...</text>
+    </view>
   </view>
 
   <!-- 操作区域 -->

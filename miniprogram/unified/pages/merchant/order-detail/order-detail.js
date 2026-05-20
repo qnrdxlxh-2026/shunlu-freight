@@ -19,6 +19,8 @@ Page({
     // 司机位置
     driverLocation: null,
     driverMarkers: [],
+    driverDistance: '',
+    driverEta: '',
     locationTimer: null,
     // 评分相关
     hasRated: false,
@@ -57,11 +59,15 @@ Page({
         }
         // 如果配送中，加载司机位置
         if (order.status === 3 && order.driver_id) {
-          this.loadDriverLocation(order.driver_id);
-          // 每30秒刷新司机位置
+          this.loadDriverTracking();
+          // 每5秒刷新司机位置
+          if (this.data.locationTimer) clearInterval(this.data.locationTimer);
           this.data.locationTimer = setInterval(() => {
-            this.loadDriverLocation(order.driver_id);
-          }, 30000);
+            this.loadDriverTracking();
+          }, 5000);
+        } else {
+          // 非配送中状态，停止刷新
+          if (this.data.locationTimer) { clearInterval(this.data.locationTimer); this.data.locationTimer = null; }
         }
         // 已完成订单，加载评分状态
         if (order.status === 6 && order.driver_id) {
@@ -187,23 +193,38 @@ Page({
     if (phone) wx.makePhoneCall({ phoneNumber: String(phone) });
   },
 
-  // 加载司机实时位置
-  loadDriverLocation(driverId) {
-    app.get('/api/driver/location/' + driverId).then(res => {
-      if (res.data && res.data.lat) {
-        const timeStr = res.data.updated_at ? new Date(res.data.updated_at).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}) : '刚刚';
+  // 加载司机实时位置 + 距离 + ETA
+  loadDriverTracking() {
+    const orderId = this.data.orderId;
+    app.get('/api/driver/location/order-' + orderId).then(res => {
+      if (res.data) {
+        const d = res.data;
+        const timeStr = d.updated_at ? new Date(d.updated_at).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}) : '';
+        let distanceText = '';
+        let etaText = '';
+        if (d.distance != null && d.distance < 1) {
+          distanceText = `距您 ${Math.round(d.distance * 1000)}米`;
+        } else if (d.distance != null) {
+          distanceText = `距您 ${d.distance.toFixed(1)}公里`;
+        }
+        if (d.eta != null) {
+          if (d.eta < 1) {
+            etaText = '即将到达';
+          } else {
+            etaText = `约${d.eta}分钟到达`;
+          }
+        }
         this.setData({
-          driverLocation: { lat: res.data.lat, lng: res.data.lng, timeStr },
-          driverMarkers: [{
-            id: 1,
-            latitude: res.data.lat,
-            longitude: res.data.lng,
-            width: 32,
-            height: 40,
-            iconPath: '/assets/icons/driver-marker.png',
+          driverLocation: d.lat ? { lat: d.lat, lng: d.lng, timeStr } : null,
+          driverDistance: distanceText,
+          driverEta: etaText,
+          driverMarkers: d.lat ? [{
+            id: 1, latitude: d.lat, longitude: d.lng,
+            width: 32, height: 40,
+            iconPath: '/assets/icons/truck.png',
             title: '司机位置',
-            callout: { content: '司机位置', display: 'ALWAYS', fontSize: 12, borderRadius: 4, padding: 4 }
-          }]
+            callout: { content: '🚛 司机', display: 'ALWAYS', fontSize: 12, borderRadius: 4, padding: 4 }
+          }] : []
         });
       }
     }).catch(() => {});

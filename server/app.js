@@ -680,9 +680,8 @@ async function handleApi(req, res, pathname, method) {
     if (wallet.balance < order.price) return sendJson(res, { code: 400, msg: '余额不足' }, 400);
     
     wallet.balance -= order.price;
-    // 生成取货码和送达码
+    // 只生成取货码（支付时生成，司机取货用）
     order.pickup_code = generateCode();
-    order.delivery_code = generateCode();
     
     // 生成取货二维码
     const pickupQRPayload = makeQRPayload(order.id, order.pickup_code, 'pickup');
@@ -717,15 +716,9 @@ async function handleApi(req, res, pathname, method) {
       });
     }
     saveDB(db);
+    // 支付成功，不发送短信（取件码在司机取货后才生成和发送）
     
-    // 支付成功后发送送达码(取件码)短信给收件人
-    if (goods && goods.receiver_phone && goods.receiver_phone.length === 11) {
-      sms.sendPickupCodeSMS(goods.receiver_phone, order.delivery_code, order.id.toString())
-        .then(result => console.log(`[短信] 送达码发送成功:`, result))
-        .catch(err => console.log(`[短信] 发送失败:`, err.message));
-    }
-    
-    return sendJson(res, { code: 0, msg: '支付成功', data: { pickup_code: order.pickup_code, delivery_code: order.delivery_code, pickup_qr_url: order.pickup_qr_url } });
+    return sendJson(res, { code: 0, msg: '支付成功', data: { pickup_code: order.pickup_code, pickup_qr_url: order.pickup_qr_url } });
   }
 
   if (pathname === '/api/order/sign' && method === 'POST') {
@@ -860,11 +853,23 @@ async function handleApi(req, res, pathname, method) {
     if (order.pickup_code !== code) return sendJson(res, { code: 400, msg: '取货码错误' }, 400);
     if (order.status < 2) return sendJson(res, { code: 400, msg: '订单状态不允许取货' }, 400);
     
+    // 取货时生成取件码（发给收件人）
+    order.delivery_code = generateCode();
+    
     order.status = 3; // 取货完成，配送中
     order.pickup_time = new Date().toISOString();
     order.update_time = new Date().toISOString();
     saveDB(db);
-    return sendJson(res, { code: 0, msg: '取货确认成功', data: { status: order.status } });
+    
+    // 取货成功后发送取件码短信给收件人
+    const goods = db.goods.find(g => g.id === order.goods_id);
+    if (goods && goods.receiver_phone && goods.receiver_phone.length === 11) {
+      sms.sendPickupCodeSMS(goods.receiver_phone, order.delivery_code, order.id.toString())
+        .then(result => console.log(`[短信] 取件码发送成功:`, result))
+        .catch(err => console.log(`[短信] 发送失败:`, err.message));
+    }
+    
+    return sendJson(res, { code: 0, msg: '取货确认成功，已发送取件码给收件人', data: { status: order.status, delivery_code: order.delivery_code } });
   }
 
   // 司机输入送达码确认签收（收件人报码，司机输入）
@@ -898,26 +903,38 @@ async function handleApi(req, res, pathname, method) {
     return sendJson(res, { code: 0, msg: '签收成功，订单已完成', data: { status: order.status } });
   }
 
-  // 司机扫码确认取货
+  // 司机扫码确认取货（备用API）
   if (pathname.startsWith('/api/orders/') && pathname.includes('/verify') && method === 'POST') {
     const parts = pathname.split('/');
     const orderId = parseInt(parts[3]);
     const { code, action } = await parseBody(req);
     const order = db.orders.find(o => o.id === orderId);
     if (!order) return sendJson(res, { code: 404, msg: '订单不存在' }, 404);
-    // 如果没有码就生成
+    // 如果没有取货码就生成
     if (!order.pickup_code) {
       order.pickup_code = generateCode();
-      order.delivery_code = generateCode();
     }
     if (action === 'pickup') {
       if (order.pickup_code !== code) return sendJson(res, { code: 400, msg: '取货码错误' }, 400);
       if (order.status < 2) return sendJson(res, { code: 400, msg: '订单状态不允许取货' }, 400);
+      
+      // 取货时生成取件码
+      order.delivery_code = generateCode();
+      
       order.status = 3; // 取货完成，配送中
       order.pickup_time = new Date().toISOString();
       order.update_time = new Date().toISOString();
       saveDB(db);
-      return sendJson(res, { code: 0, msg: '取货确认成功', data: { status: order.status } });
+      
+      // 发送取件码短信给收件人
+      const goods = db.goods.find(g => g.id === order.goods_id);
+      if (goods && goods.receiver_phone && goods.receiver_phone.length === 11) {
+        sms.sendPickupCodeSMS(goods.receiver_phone, order.delivery_code, order.id.toString())
+          .then(result => console.log(`[短信] 取件码发送成功:`, result))
+          .catch(err => console.log(`[短信] 发送失败:`, err.message));
+      }
+      
+      return sendJson(res, { code: 0, msg: '取货确认成功，已发送取件码给收件人', data: { status: order.status, delivery_code: order.delivery_code } });
     }
     if (action === 'delivery') {
       if (order.delivery_code !== code) return sendJson(res, { code: 400, msg: '送达码错误' }, 400);

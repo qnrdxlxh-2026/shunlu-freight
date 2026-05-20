@@ -11,7 +11,10 @@
           <text class="addr-text {{pickup_addr ? 'has-value' : 'placeholder'}}">
             {{pickup_addr || '点击地图定位选址'}}
           </text>
-          <text class="addr-arrow">›</text>
+          <view class="addr-btns">
+            <text class="addr-book-btn" bindtap="showAddressBook" data-type="pickup" catchtap>常用</text>
+            <text class="addr-save-btn" bindtap="saveAddress" data-type="pickup" catchtap>收藏</text>
+          </view>
         </view>
       </view>
       <view class="form-item">
@@ -44,7 +47,10 @@
           <text class="addr-text {{delivery_addr ? 'has-value' : 'placeholder'}}">
             {{delivery_addr || '点击地图定位选址'}}
           </text>
-          <text class="addr-arrow">›</text>
+          <view class="addr-btns">
+            <text class="addr-book-btn" bindtap="showAddressBook" data-type="delivery" catchtap>常用</text>
+            <text class="addr-save-btn" bindtap="saveAddress" data-type="delivery" catchtap>收藏</text>
+          </view>
         </view>
       </view>
       <view class="form-item">
@@ -208,6 +214,28 @@
       </view>
       <button class="btn-use-price" bindtap="useSuggestedPrice">立即使用此价格</button>
     </view>
+  </view>
+</view>
+
+<!-- 常用地址弹窗 -->
+<view class="address-book-mask {{showAddressBook ? 'show' : ''}}" bindtap="hideAddressBook"></view>
+<view class="address-book-panel {{showAddressBook ? 'show' : ''}}">
+  <view class="address-book-header">
+    <text>📌 {{addressBookType === 'pickup' ? '常用取货地址' : '常用送达地址'}}</text>
+    <text class="address-book-close" bindtap="hideAddressBook">✕</text>
+  </view>
+  <view class="address-book-list" wx:if="{{savedAddresses.length > 0}}">
+    <view class="address-book-item" wx:for="{{savedAddresses}}" wx:key="index" bindtap="selectAddress" data-index="{{index}}">
+      <view class="address-book-info">
+        <text class="address-book-addr">{{item.addr}}</text>
+        <text class="address-book-contact" wx:if="{{item.name || item.phone}}">{{item.name}} {{item.phone}}</text>
+      </view>
+      <text class="address-book-del" bindtap="deleteAddress" data-index="{{index}}" catchtap>删除</text>
+    </view>
+  </view>
+  <view class="address-book-empty" wx:else>
+    <text>暂无常用地址</text>
+    <text class="address-book-hint">选择地址后点击"收藏"保存</text>
   </view>
 </view>
 

@@ -73,6 +73,46 @@ Page({
     });
   },
 
+  // 扫码取货
+  scanPickupQR() {
+    wx.scanCode({
+      scanType: ['qrCode'],
+      success: async (res) => {
+        const qrContent = res.result;
+        // 解析二维码内容，格式: shunlu://pickup?orderId=xxx&code=xxx
+        try {
+          const url = new URL(qrContent.replace('shunlu://', 'http://temp/'));
+          const orderId = url.searchParams.get('orderId');
+          const code = url.searchParams.get('code');
+          
+          if (!orderId || !code) {
+            wx.showToast({ title: '二维码格式错误', icon: 'none' });
+            return;
+          }
+          
+          // 调用后端验证扫码取货
+          const result = await app.post('/api/order/scan-pickup', {
+            order_id: this.data.orderId || orderId,
+            code: code
+          });
+          
+          if (result.code === 0) {
+            wx.showToast({ title: '取货成功', icon: 'success' });
+            this.loadOrder();
+          } else {
+            wx.showToast({ title: result.msg || '取货失败', icon: 'none' });
+          }
+        } catch (e) {
+          // 如果不是标准URL格式，尝试直接作为取货码处理
+          wx.showToast({ title: '二维码格式错误', icon: 'none' });
+        }
+      },
+      fail: () => {
+        wx.showToast({ title: '扫码取消', icon: 'none' });
+      }
+    });
+  },
+
   // 导航去取货点
   navigateToStart() {
     const order = this.data.order;

@@ -17,15 +17,15 @@
     </view>
 
     <!-- 取货码/送货码区域（待取货/配送中状态显示） -->
-    <view class="qr-section" wx:if="{{order.status == 1}}">
+    <view class="qr-section" wx:if="{{order.status >= 1 && order.status <= 3}}">
       <view class="qr-title">📋 取货码</view>
       <view class="qr-desc">展示给司机扫码确认取货</view>
       <view class="pickup-code-box">
         <text class="pickup-code">{{order.pickup_code || order.pickup_no || '----'}}</text>
       </view>
-      <view class="qr-desc" wx:if="{{order.qr_url}}">扫码下方二维码确认取货</view>
-      <view class="qr-box" wx:if="{{order.qr_url}}">
-        <image src="{{order.qr_url}}" class="qr-img" mode="aspectFit" />
+      <view class="qr-desc" wx:if="{{order.pickup_qr_url}}">或扫描下方二维码确认取货</view>
+      <view class="qr-box" wx:if="{{order.pickup_qr_url}}">
+        <image src="{{order.pickup_qr_url}}" class="qr-img" mode="aspectFit" />
       </view>
       <view class="qr-desc">将取货码或二维码展示给司机扫描</view>
     </view>

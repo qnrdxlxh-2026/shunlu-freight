@@ -92,8 +92,9 @@
     <button class="gps-btn" wx:if="{{order.status >= 2 && order.status <= 4}}" bindtap="reportLocation">📍 上报位置</button>
     <button class="track-btn" wx:if="{{order.status >= 2 && order.status <= 4}}" bindtap="viewDriverTrack">🗺️ 查看轨迹</button>
 
-    <!-- 已接单 → 确认取货 -->
-    <button class="pickup-btn" wx:if="{{order.status == 2}}" bindtap="confirmPickup">确认取货</button>
+    <!-- 已接单 → 扫码取货 + 手动确认 -->
+    <button class="scan-btn" wx:if="{{order.status == 2}}" bindtap="scanPickupQR">📷 扫码取货</button>
+    <button class="pickup-btn" wx:if="{{order.status == 2}}" bindtap="confirmPickup">✋ 手动确认取货</button>
 
     <!-- 配送中 → 确认送达（支持扫码或填码） -->
     <button class="deliver-btn" wx:if="{{order.status == 4}}" bindtap="showDeliveryVerify">确认送达</button>

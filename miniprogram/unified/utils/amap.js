@@ -7,7 +7,7 @@
  * 2. 将下方 AMAP_KEY 替换为申请到的 key
  */
 
-const AMAP_KEY = 'YOUR_AMAP_WEB_SERVICE_KEY'; // TODO: 替换为真实 Key
+const AMAP_KEY = '7d321183417d887d274b21a5bcd0ad50';
 
 /**
  * 逆地理编码：坐标 → 地址文字

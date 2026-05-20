@@ -46,7 +46,11 @@ Page({
     // 发布成功二维码
     showQRCode: false,
     publishedGoodsId: null,
-    qrCodeUrl: ''
+    qrCodeUrl: '',
+    // 常用地址
+    savedAddresses: [],
+    showAddressBook: false,
+    addressBookType: '', // 'pickup' 或 'delivery'
   },
 
   onLoad() {
@@ -59,6 +63,8 @@ Page({
       township_list: townshipUtil.TOWNSHIP_DATA,
       township_names: townshipUtil.TOWNSHIP_DATA.map(t => `${t.county}-${t.name}`)
     });
+    // 加载常用地址
+    this.loadSavedAddresses();
   },
 
   // ===== 出发时间选择 =====
@@ -247,6 +253,57 @@ Page({
     const photos = [...this.data.photos];
     photos.splice(idx, 1);
     this.setData({ photos });
+  },
+
+  // ===== 常用地址管理 =====
+  loadSavedAddresses() {
+    try {
+      const saved = wx.getStorageSync('saved_addresses') || [];
+      this.setData({ savedAddresses: saved });
+    } catch (e) {}
+  },
+  saveAddress(type) {
+    const addr = type === 'pickup'
+      ? { addr: this.data.pickup_addr, name: this.data.sender_name, phone: this.data.sender_phone, lat: this.data.pickup_lat, lng: this.data.pickup_lng }
+      : { addr: this.data.delivery_addr, name: this.data.receiver_name, phone: this.data.receiver_phone, lat: this.data.delivery_lat, lng: this.data.delivery_lng };
+    if (!addr.addr) return wx.showToast({ title: '请先选择地址', icon: 'none' });
+    const saved = this.data.savedAddresses.filter(a => a.addr !== addr.addr);
+    saved.unshift(addr);
+    // 最多保存10个
+    wx.setStorageSync('saved_addresses', saved.slice(0, 10));
+    this.setData({ savedAddresses: saved.slice(0, 10) });
+    wx.showToast({ title: '已保存', icon: 'success' });
+  },
+  showAddressBook(e) {
+    this.setData({ showAddressBook: true, addressBookType: e.currentTarget.dataset.type });
+  },
+  hideAddressBook() {
+    this.setData({ showAddressBook: false });
+  },
+  selectAddress(e) {
+    const idx = e.currentTarget.dataset.index;
+    const addr = this.data.savedAddresses[idx];
+    const type = this.data.addressBookType;
+    if (type === 'pickup') {
+      this.setData({
+        pickup_addr: addr.addr, pickup_lat: addr.lat || '', pickup_lng: addr.lng || '',
+        sender_name: addr.name || '', sender_phone: addr.phone || ''
+      });
+    } else {
+      this.setData({
+        delivery_addr: addr.addr, delivery_lat: addr.lat || '', delivery_lng: addr.lng || '',
+        receiver_name: addr.name || '', receiver_phone: addr.phone || ''
+      });
+    }
+    this.setData({ showAddressBook: false });
+    this.autoEstimateDistance();
+  },
+  deleteAddress(e) {
+    const idx = e.currentTarget.dataset.index;
+    const saved = [...this.data.savedAddresses];
+    saved.splice(idx, 1);
+    wx.setStorageSync('saved_addresses', saved);
+    this.setData({ savedAddresses: saved });
   },
 
   // ===== 发布货源 =====

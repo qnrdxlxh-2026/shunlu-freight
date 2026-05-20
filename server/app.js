@@ -627,8 +627,13 @@ async function handleApi(req, res, pathname, method) {
     
     const orderId = db.nextIds.order++;
     
-    // 生成取件码
+    // 生成取件码和取货二维码
     const pickupCode = generateCode();
+    const deliveryCode = generateCode();
+    
+    // 生成取货二维码（司机扫码确认取货）
+    const pickupQRPayload = makeQRPayload(orderId, pickupCode, 'pickup');
+    const pickupQRUrl = await QRCode.toDataURL('shunlu://pickup?' + pickupQRPayload);
     
     db.orders.push({
       id: orderId,
@@ -639,8 +644,10 @@ async function handleApi(req, res, pathname, method) {
       commission_rate: commissionRate,
       commission_fee: commissionFee,
       driver_amount: driverAmount,
-      pickup_code: pickupCode,  // 取件码
-      status: 1, // 待支付
+      pickup_code: pickupCode,
+      delivery_code: deliveryCode,
+      pickup_qr_url: pickupQRUrl,
+      status: 2, // 已接单（无需支付，直接进入待取货）
       create_time: new Date().toISOString()
     });
     goods.status = 2; // 已接单
@@ -673,7 +680,17 @@ async function handleApi(req, res, pathname, method) {
         });
     }
     
-    return sendJson(res, { code: 0, msg: '接单成功', data: { order_id: orderId } });
+    return sendJson(res, { 
+      code: 0, 
+      msg: '接单成功', 
+      data: { 
+        order_id: orderId,
+        pickup_code: pickupCode,
+        delivery_code: deliveryCode,
+        pickup_qr_url: pickupQRUrl,
+        message: '请前往发货地址，扫描商家取货二维码确认取货'
+      } 
+    });
   }
 
   // ========== 订单相关 ==========
@@ -844,6 +861,24 @@ async function handleApi(req, res, pathname, method) {
     if (waypoint.pickup_code !== code) return sendJson(res, { code: 400, msg: '取件码错误' }, 400);
     
     return sendJson(res, { code: 0, msg: '验证成功', data: { waypoint } });
+  }
+
+  // 司机扫码确认取货（新版简化API）
+  if (pathname === '/api/order/scan-pickup' && method === 'POST') {
+    if (!user || (user.role !== 2 && user.role !== 3)) return sendJson(res, { code: 401, msg: '仅司机可操作' }, 401);
+    const { order_id, code } = await parseBody(req);
+    const orderId = parseInt(order_id);
+    const order = db.orders.find(o => o.id === orderId);
+    if (!order) return sendJson(res, { code: 404, msg: '订单不存在' }, 404);
+    if (order.driver_id !== user.userId) return sendJson(res, { code: 403, msg: '非此订单司机' }, 403);
+    if (order.pickup_code !== code) return sendJson(res, { code: 400, msg: '取货码错误' }, 400);
+    if (order.status < 2) return sendJson(res, { code: 400, msg: '订单状态不允许取货' }, 400);
+    
+    order.status = 3; // 取货完成，配送中
+    order.pickup_time = new Date().toISOString();
+    order.update_time = new Date().toISOString();
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '取货确认成功', data: { status: order.status } });
   }
 
   // 司机扫码确认取货

@@ -627,14 +627,7 @@ async function handleApi(req, res, pathname, method) {
     
     const orderId = db.nextIds.order++;
     
-    // 生成取件码和取货二维码
-    const pickupCode = generateCode();
-    const deliveryCode = generateCode();
-    
-    // 生成取货二维码（司机扫码确认取货）
-    const pickupQRPayload = makeQRPayload(orderId, pickupCode, 'pickup');
-    const pickupQRUrl = await QRCode.toDataURL('shunlu://pickup?' + pickupQRPayload);
-    
+    // 接单时不生成二维码，等待支付后才生成
     db.orders.push({
       id: orderId,
       goods_id: goods.id,
@@ -644,14 +637,10 @@ async function handleApi(req, res, pathname, method) {
       commission_rate: commissionRate,
       commission_fee: commissionFee,
       driver_amount: driverAmount,
-      pickup_code: pickupCode,
-      delivery_code: deliveryCode,
-      pickup_qr_url: pickupQRUrl,
-      status: 2, // 已接单（无需支付，直接进入待取货）
+      status: 1, // 待支付（支付后才生成二维码）
       create_time: new Date().toISOString()
     });
     goods.status = 2; // 已接单
-    goods.pickup_code = pickupCode;
     
     // 货车拼载：扣减剩余载重
     if (user.role === 2) {
@@ -667,28 +656,12 @@ async function handleApi(req, res, pathname, method) {
     
     saveDB(db);
     
-    // 发送短信给收件人
-    const receiverPhone = goods.receiver_phone || '';
-    if (receiverPhone && receiverPhone.length === 11) {
-      // 异步发送短信，不阻塞返回
-      sms.sendPickupCodeSMS(receiverPhone, pickupCode, orderId.toString())
-        .then(result => {
-          console.log(`[短信] 发送给 ${receiverPhone}:`, result);
-        })
-        .catch(err => {
-          console.log(`[短信] 发送失败:`, err.message);
-        });
-    }
-    
     return sendJson(res, { 
       code: 0, 
-      msg: '接单成功', 
+      msg: '接单成功，等待商家支付', 
       data: { 
         order_id: orderId,
-        pickup_code: pickupCode,
-        delivery_code: deliveryCode,
-        pickup_qr_url: pickupQRUrl,
-        message: '请前往发货地址，扫描商家取货二维码确认取货'
+        status: 1
       } 
     });
   }
@@ -710,6 +683,11 @@ async function handleApi(req, res, pathname, method) {
     // 生成取货码和送达码
     order.pickup_code = generateCode();
     order.delivery_code = generateCode();
+    
+    // 生成取货二维码
+    const pickupQRPayload = makeQRPayload(order.id, order.pickup_code, 'pickup');
+    order.pickup_qr_url = await QRCode.toDataURL('shunlu://pickup?' + pickupQRPayload);
+    
     order.status = 2; // 待取货
     order.update_time = new Date().toISOString();
     // 记录支付交易
@@ -739,7 +717,15 @@ async function handleApi(req, res, pathname, method) {
       });
     }
     saveDB(db);
-    return sendJson(res, { code: 0, msg: '支付成功', data: { pickup_code: order.pickup_code, delivery_code: order.delivery_code } });
+    
+    // 支付成功后发送取件码短信给收件人
+    if (goods && goods.receiver_phone && goods.receiver_phone.length === 11) {
+      sms.sendPickupCodeSMS(goods.receiver_phone, order.pickup_code, order.id.toString())
+        .then(result => console.log(`[短信] 取件码发送成功:`, result))
+        .catch(err => console.log(`[短信] 发送失败:`, err.message));
+    }
+    
+    return sendJson(res, { code: 0, msg: '支付成功', data: { pickup_code: order.pickup_code, delivery_code: order.delivery_code, pickup_qr_url: order.pickup_qr_url } });
   }
 
   if (pathname === '/api/order/sign' && method === 'POST') {

@@ -718,10 +718,10 @@ async function handleApi(req, res, pathname, method) {
     }
     saveDB(db);
     
-    // 支付成功后发送取件码短信给收件人
+    // 支付成功后发送送达码(取件码)短信给收件人
     if (goods && goods.receiver_phone && goods.receiver_phone.length === 11) {
-      sms.sendPickupCodeSMS(goods.receiver_phone, order.pickup_code, order.id.toString())
-        .then(result => console.log(`[短信] 取件码发送成功:`, result))
+      sms.sendPickupCodeSMS(goods.receiver_phone, order.delivery_code, order.id.toString())
+        .then(result => console.log(`[短信] 送达码发送成功:`, result))
         .catch(err => console.log(`[短信] 发送失败:`, err.message));
     }
     
@@ -865,6 +865,37 @@ async function handleApi(req, res, pathname, method) {
     order.update_time = new Date().toISOString();
     saveDB(db);
     return sendJson(res, { code: 0, msg: '取货确认成功', data: { status: order.status } });
+  }
+
+  // 司机输入送达码确认签收（收件人报码，司机输入）
+  if (pathname === '/api/order/confirm-delivery' && method === 'POST') {
+    if (!user || (user.role !== 2 && user.role !== 3)) return sendJson(res, { code: 401, msg: '仅司机可操作' }, 401);
+    const { order_id, delivery_code } = await parseBody(req);
+    const orderId = parseInt(order_id);
+    const order = db.orders.find(o => o.id === orderId);
+    if (!order) return sendJson(res, { code: 404, msg: '订单不存在' }, 404);
+    if (order.driver_id !== user.userId) return sendJson(res, { code: 403, msg: '非此订单司机' }, 403);
+    if (order.delivery_code !== delivery_code) return sendJson(res, { code: 400, msg: '送达码错误' }, 400);
+    if (order.status < 3) return sendJson(res, { code: 400, msg: '订单状态不允许签收' }, 400);
+    
+    order.status = 6; // 已签收
+    order.sign_time = new Date().toISOString();
+    order.update_time = new Date().toISOString();
+    
+    // 货车拼载：释放载重
+    const orderGoods = db.goods.find(g => g.id === order.goods_id);
+    if (orderGoods && orderGoods.weight) {
+      const driverRoute = db.routes.find(r => r.driver_id === order.driver_id && r.status === 2);
+      if (driverRoute) {
+        driverRoute.remain_space = (driverRoute.remain_space || 0) + orderGoods.weight;
+        if (driverRoute.remain_space > 0) driverRoute.status = 1;
+      }
+    }
+    
+    // 创建结算单
+    createSettlement(order, db);
+    saveDB(db);
+    return sendJson(res, { code: 0, msg: '签收成功，订单已完成', data: { status: order.status } });
   }
 
   // 司机扫码确认取货

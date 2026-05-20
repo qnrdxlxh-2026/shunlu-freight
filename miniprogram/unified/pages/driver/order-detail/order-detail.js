@@ -176,9 +176,8 @@ Page({
     }
   },
 
-  // 确认送达（支持扫码或填码）
+  // 确认送达（司机输入收件人报的送达码）
   showDeliveryVerify() {
-    const code = this.data.order.delivery_code;
     wx.showModal({
       title: '确认送达',
       content: '请让收货方出示送达码，输入送达码确认：',
@@ -191,16 +190,15 @@ Page({
             wx.showToast({ title: '请输入送达码', icon: 'none' });
             return;
           }
-          if (inputCode !== code) {
-            wx.showToast({ title: '送达码错误', icon: 'none' });
-            return;
-          }
           try {
-            await app.post('/api/orders/' + this.data.orderId + '/verify', { code: inputCode, action: 'delivery' });
-            wx.showToast({ title: '已确认送达', icon: 'success' });
+            await app.post('/api/order/confirm-delivery', { 
+              order_id: this.data.orderId, 
+              delivery_code: inputCode 
+            });
+            wx.showToast({ title: '签收成功', icon: 'success' });
             this.loadOrder();
           } catch (err) {
-            wx.showToast({ title: err.message || '送达确认失败', icon: 'none' });
+            wx.showToast({ title: err.message || '送达码错误', icon: 'none' });
           }
         }
       }
